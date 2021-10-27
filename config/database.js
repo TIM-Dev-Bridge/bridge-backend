@@ -15,7 +15,7 @@ exports.connect = () => {
       console.log("Connected database");
     })
     .catch((err) => {
+      console.log("Failed to connect database");
       console.log(err);
-      console.log('Failed to connect database');
     });
 };
