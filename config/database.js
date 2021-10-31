@@ -1,4 +1,4 @@
-const mongoose = requre("mogoose");
+const mongoose = require("mongoose");
 
 const { MONGO_URI } = process.env;
 
@@ -8,8 +8,8 @@ exports.connect = () => {
     .connect(MONGO_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      useCreateIndex: true,
-      useFindAndModify: false,
+      // useCreateIndex: true,
+      // useFindAndModify: false,
     })
     .then(() => {
       console.log("Connected database");
