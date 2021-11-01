@@ -11,11 +11,10 @@ const auth = require("./middleware/auth");
 const app = express();
 
 app.use(express.json());
-
-app.listen(3000);
-
 app.get("/", (req, res) => {
-  res.send("Bridge Test");
+  //res.send("Bridge Test");
+  //res.render("index");
+  res.sendFile(__dirname + "/index.html");
 });
 
 //Register
@@ -96,8 +95,17 @@ app.post("/login", async (req, res) => {
   } catch (err) {}
 });
 
-app.post('/welcome', auth, (req, res) => {
-  res.status(200).send('Welcome to home')
-})
+app.post("/welcome", auth, (req, res) => {
+  res.status(200).send("Welcome to home");
+});
+
+app.get("/test-socket", (req, res) => {
+  const socket = io.connect("http://localhost:3000");
+
+  socket.on("connect", () => {
+    // either with send()
+    socket.send("Hello!");
+  });
+});
 
 module.exports = app;
