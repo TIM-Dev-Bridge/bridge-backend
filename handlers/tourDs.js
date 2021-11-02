@@ -2,8 +2,7 @@ require("dotenv").config();
 require("../config/database").connect();
 
 const express = require("express");
-const User = require("../model/user");
-const TourR = require("../model/tourR");
+const TourD = require("../model/tourD");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const path = require("path");
@@ -11,16 +10,9 @@ const path = require("path");
 const app = express();
 
 app.use(express.json());
-//Home
-exports.home = (req, res) => {
-  // res.sendFile(
-  //   "C:/Users/Marky/Desktop/Project-D4/Bridge Backend/Bridge-backend-API/index.html"
-  // );
-  res.sendFile(path.dirname(__dirname) + "/index.html");
-};
 
-//Register
-exports.register = async (req, res) => {
+//Register Tournament Director
+exports.registerTourD = async (req, res) => {
   //register logic
   try {
     const { first_name, last_name, email, password } = req.body;
@@ -30,7 +22,7 @@ exports.register = async (req, res) => {
       res.status(400).send("All input is required");
     }
     //Validate if user exist in database
-    const oldUser = await User.findOne({ email });
+    const oldUser = await TourD.findOne({ email });
 
     if (oldUser) {
       res.status(409).send("User already exist. Please login");
@@ -40,7 +32,7 @@ exports.register = async (req, res) => {
     encryptedPassword = await bcrypt.hash(password, 10);
 
     //Create user in database
-    const user = await User.create({
+    const user = await TourD.create({
       first_name,
       last_name,
       email: email.toLowerCase(),
@@ -64,8 +56,8 @@ exports.register = async (req, res) => {
   } catch (err) {}
 };
 
-//Login
-exports.login = async (req, res) => {
+//Login Tournament Director
+exports.loginTourD = async (req, res) => {
   //Login logic
   try {
     //Get user input
@@ -77,7 +69,7 @@ exports.login = async (req, res) => {
     }
 
     // Validate if user exist in database
-    const user = await User.findOne({ email });
+    const user = await TourD.findOne({ email });
 
     if (user && (await bcrypt.compare(password, user.password))) {
       // Create token
@@ -95,41 +87,4 @@ exports.login = async (req, res) => {
     }
     res.status(400).send("Invalid Credentials");
   } catch (err) {}
-};
-
-//Auth test
-exports.home2 = (req, res) => {
-  res.status(200).send("Welcome to home");
-};
-
-exports.joinTournament = async (req, res) => {
-  try {
-    const { tour_name, player_id } = req.body;
-    const hasTour = await TourR.findOne({ tour_name });
-    if (!hasTour) {
-      res.status(409).send("This tour is not found");
-    }
-    //if player < 20 Condition
-    const joinTour = await TourR.updateOne(
-      { tour_name: tour_name },
-      { $push: { player_name: player_id } }
-    );
-    res.status(201).send(joinTour);
-  } catch (error) {}
-};
-
-exports.exitTournament = async (req, res) => {
-  try {
-    const { tour_name, player_id } = req.body;
-    const hasTour = await TourR.findOne({ tour_name });
-    if (!hasTour) {
-      res.status(409).send("This tour is not found");
-    }
-    //if player is in that tour can exit
-    const exitTour = await TourR.updateOne(
-      { tour_name: tour_name },
-      { $pull: { player_name: player_id } }
-    );
-    res.status(201).send(exitTour);
-  } catch (error) {}
 };
