@@ -23,8 +23,9 @@ const {
   updateTournament,
   deleteTournament,
 } = require("./tour/tournaments");
-app.get("/home1", home);
+app.get("/", home);
 app.get("/home2", auth, home2);
+
 app.post("/register", register);
 app.post("/login", login);
 app.post("/joinTour", joinTournament);

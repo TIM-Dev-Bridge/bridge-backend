@@ -5,7 +5,6 @@ const express = require("express");
 const TourR = require("../model/tourR");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const path = require("path");
 
 const app = express();
 

@@ -7,6 +7,7 @@ const TourR = require("../model/tourR");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const path = require("path");
+const { io } = require("../index");
 
 const app = express();
 
@@ -101,7 +102,7 @@ exports.login = async (req, res) => {
 exports.home2 = (req, res) => {
   res.status(200).send("Welcome to home");
 };
-
+//Join tournament
 exports.joinTournament = async (req, res) => {
   try {
     const { tour_name, player_id } = req.body;
@@ -109,15 +110,21 @@ exports.joinTournament = async (req, res) => {
     if (!hasTour) {
       res.status(409).send("This tour is not found");
     }
-    //if player < 20 Condition
+    // if player < 20 Condition & not prime number
     const joinTour = await TourR.updateOne(
       { tour_name: tour_name },
       { $push: { player_name: player_id } }
     );
-    res.status(201).send(joinTour);
-  } catch (error) {}
-};
 
+    //Join room
+    res.status(201).send(joinTour);
+  } catch (error) {
+    console.log("error");
+    console.log(error);
+    res.send(error);
+  }
+};
+//Exit tournament
 exports.exitTournament = async (req, res) => {
   try {
     const { tour_name, player_id } = req.body;
@@ -133,3 +140,4 @@ exports.exitTournament = async (req, res) => {
     res.status(201).send(exitTour);
   } catch (error) {}
 };
+//Pair
