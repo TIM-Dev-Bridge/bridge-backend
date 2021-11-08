@@ -11,9 +11,35 @@
 <body>
     <div>iosdrghjiorsgjiog</div>
     <div>test2</div>
+    <input type="button" onclick="login1()" value="login1()">
+    <input type="button" onclick="login2()" value="login2()">
+    <input type="button" onclick="login3()" value="login3()">
+    <input type="button" onclick="manageRoom()" value="manageRoom()">
+    <input type="button" onclick="joinTeam()" value="joinTeam()">
+
 </body>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.1/socket.io.js"></script>
-<script> var socket = io()
-socket.emit('join-server','Mark')</script>
+<script>
+    function login1() {
+        var socket = io()
+        socket.emit('join-room', 'Mark', 'room1')
+    }
+    function login2() {
+        var socket = io()
+        socket.emit('join-room', 'Tae', 'room1')
+    }
+    function login3() {
+        var socket = io()
+        socket.emit('join-room', 'Ice', 'room2')
+    }
+    function manageRoom() {
+        var socket = io()
+        socket.emit('manage-room', 'room1')
+    }
+    function joinTeam() {
+        var socket = io()
+        socket.emit('join-team', 'Mark', 'team1')
+    }
+</script>
 
 </html>
