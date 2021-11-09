@@ -23,10 +23,19 @@
     function login1() {
         var socket = io()
         socket.emit('join-room', 'Mark', 'room1')
+        socket.emit('join-room', 'Mark', 'room2')
+        socket.on('join-room', msg => {
+            console.log(msg);
+        })
     }
     function login2() {
-        var socket = io()
+        ///How to acces object in object
+        // const { token } = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjE4MTEwZWYyNThjY2FmNzVlMmYzNDkzIiwiZW1haWwiOiJ0ZXN0MDFAZW1haWwuY29tIiwiaWF0IjoxNjM2NDQyMDI4LCJleHAiOjE2MzY0NDkyMjh9.JLbeKOJp8RDYC86FzfU55S-7PzhmguUt_Ptcltjc5Xk"
+        // const { token } = "123"
+        const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjE4MTEwZWYyNThjY2FmNzVlMmYzNDkzIiwiZW1haWwiOiJ0ZXN0MDFAZW1haWwuY29tIiwiaWF0IjoxNjM2NDQyMDI4LCJleHAiOjE2MzY0NDkyMjh9.JLbeKOJp8RDYC86FzfU55S-7PzhmguUt_Ptcltjc5Xk"
+        var socket = io.connect({ query: {token} })
         socket.emit('join-room', 'Tae', 'room1')
+        console.log('login2 running');
     }
     function login3() {
         var socket = io()

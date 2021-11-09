@@ -6,6 +6,10 @@ const io = require("socket.io")(server);
 const { API_PORT } = process.env;
 const port = process.env.PORT || API_PORT;
 
+//Authen
+const jwt = require('jsonwebtoken');
+const config = process.env;
+
 //----------------------------Database----------------------------//
 const TourR = require("./model/tourR");
 
@@ -20,6 +24,22 @@ let users = [];
 //     next();
 //   } catch (err) {}
 // });
+
+io.use(function(socket, next){
+  if (socket.handshake.query && socket.handshake.query.token){
+    console.log('pass');
+    // console.log(socket.handshake.query);
+    console.log(socket.handshake.query.token);
+    jwt.verify(socket.handshake.query.token, config.TOKEN_KEY, function(err, decoded) {
+      if (err) return next(new Error('Authentication error'));
+      socket.decoded = decoded;
+      next();
+    });
+  }
+  else {
+    next(new Error('Authentication error'));
+  }    
+})
 
 io.on("connection", (socket) => {
   console.log("A new user connected");
@@ -40,6 +60,8 @@ io.on("connection", (socket) => {
   socket.on("join-room",  (user, roomName) => {
     socket.join(roomName);
     console.log(`username ${user} is join the ${roomName} room`);
+    //Send response to client
+    socket.emit('join-room',`${user} connected Server`)
     // socket.on("join-team",  (user, team) => {
     //   socket.join(team);
     //   console.log(`username ${user} is join the ${team} team`);
