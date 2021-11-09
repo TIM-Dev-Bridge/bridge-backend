@@ -44,6 +44,7 @@ io.use(function(socket, next){
 io.on("connection", (socket) => {
   console.log("A new user connected");
   console.log(socket.id);
+  console.log('Data of user is ' + socket.handshake.query.userName);
   //Save session
 
   //Join socket io server

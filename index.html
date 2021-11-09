@@ -32,8 +32,9 @@
         ///How to acces object in object
         // const { token } = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjE4MTEwZWYyNThjY2FmNzVlMmYzNDkzIiwiZW1haWwiOiJ0ZXN0MDFAZW1haWwuY29tIiwiaWF0IjoxNjM2NDQyMDI4LCJleHAiOjE2MzY0NDkyMjh9.JLbeKOJp8RDYC86FzfU55S-7PzhmguUt_Ptcltjc5Xk"
         // const { token } = "123"
-        const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjE4MTEwZWYyNThjY2FmNzVlMmYzNDkzIiwiZW1haWwiOiJ0ZXN0MDFAZW1haWwuY29tIiwiaWF0IjoxNjM2NDQyMDI4LCJleHAiOjE2MzY0NDkyMjh9.JLbeKOJp8RDYC86FzfU55S-7PzhmguUt_Ptcltjc5Xk"
-        var socket = io.connect({ query: {token} })
+        const userName = "Tae"
+        const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjE4MTEwZWYyNThjY2FmNzVlMmYzNDkzIiwiZW1haWwiOiJ0ZXN0MDFAZW1haWwuY29tIiwiaWF0IjoxNjM2NDYwMjI2LCJleHAiOjE2MzY0Njc0MjZ9.i3iDdIWW_cXVAYfuMA81FVdANnB2AGpRNSjafP6kQlQ"
+        var socket = io.connect({ query: {token,userName} })
         socket.emit('join-room', 'Tae', 'room1')
         console.log('login2 running');
     }
