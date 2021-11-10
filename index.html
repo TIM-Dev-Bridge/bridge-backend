@@ -33,10 +33,13 @@
         // const { token } = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjE4MTEwZWYyNThjY2FmNzVlMmYzNDkzIiwiZW1haWwiOiJ0ZXN0MDFAZW1haWwuY29tIiwiaWF0IjoxNjM2NDQyMDI4LCJleHAiOjE2MzY0NDkyMjh9.JLbeKOJp8RDYC86FzfU55S-7PzhmguUt_Ptcltjc5Xk"
         // const { token } = "123"
         const userName = "Tae"
-        const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjE4MTEwZWYyNThjY2FmNzVlMmYzNDkzIiwiZW1haWwiOiJ0ZXN0MDFAZW1haWwuY29tIiwiaWF0IjoxNjM2NTUwNDk2LCJleHAiOjE2MzY1NTc2OTZ9.3NCGtcLzOUJyV4P83t1qW7_YOmRmuDZJk6p4BcF8mkQ"
-        var socket = io.connect({ query: {token,userName} })
+        const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjE4MTEwZWYyNThjY2FmNzVlMmYzNDkzIiwiZW1haWwiOiJ0ZXN0MDFAZW1haWwuY29tIiwiaWF0IjoxNjM2NTY1NDc0LCJleHAiOjE2MzY1NzI2NzR9.YdBFKWnjKJpvrBJY2s-IdPdryLna8IwNm-PrHqooe5U"
+        var socket = io.connect({ query: { token, userName } })
         socket.emit('join-room', 'Tae', 'room1')
         console.log('login2 running');
+        socket.on('force-user', msg => {
+            console.log('ll', msg);
+        })
     }
     function login3() {
         var socket = io()

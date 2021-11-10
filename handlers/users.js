@@ -24,16 +24,35 @@ exports.home = (req, res) => {
 exports.register = async (req, res) => {
   //register logic
   try {
-    const { first_name, last_name, email, password } = req.body;
+    const {
+      first_name,
+      last_name,
+      display_name,
+      birth_date,
+      email,
+      username,
+      password,
+    } = req.body;
 
     //Validate user input
-    if (!(email && password && first_name && last_name)) {
+    if (
+      !(
+        first_name &&
+        last_name &&
+        display_name &&
+        birth_date &&
+        email &&
+        username &&
+        password
+      )
+    ) {
       res.status(400).send("All input is required");
     }
     //Validate if user exist in database
-    const oldUser = await User.findOne({ email });
+    const oldUserEmail = await User.findOne({ email });
+    const oldUserUsername = await User.findOne({ username });
 
-    if (oldUser) {
+    if (oldUserEmail || oldUserUsername) {
       res.status(409).send("User already exist. Please login");
     }
 
@@ -44,7 +63,10 @@ exports.register = async (req, res) => {
     const user = await User.create({
       first_name,
       last_name,
+      display_name,
+      birth_date,
       email: email.toLowerCase(),
+      username,
       password: encryptedPassword,
     });
 

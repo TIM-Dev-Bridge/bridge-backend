@@ -54,10 +54,10 @@ io.on("connection", (socket) => {
 
   //test time
   //socket.emit('datetime', { datetime: new Date().getTime() });
-  let timer = new Date().toLocaleString("en-US", {timeZone: "Asia/Jakarta"});
+  let timer = new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" });
   console.log("timer", timer);
-    //find way to 
-    //set time out (millisec)
+  //find way to
+  //set time out (millisec)
   //Save session
 
   //Join socket io server
@@ -88,6 +88,31 @@ io.on("connection", (socket) => {
 
       //Send response to client
       socket.emit("join-tour", joinTour);
+
+      //Force user to the room when time arrive
+      //Test time out emit
+    const withTimeout = (onSuccess, onTimeout, timeout) => {
+      let called = false;
+    
+      const timer = setTimeout(() => {
+        if (called) return;
+        called = true;
+        onTimeout();
+      }, timeout);
+    
+      return (...args) => {
+        if (called) return;
+        called = true;
+        clearTimeout(timer);
+        onSuccess.apply(this, args);
+      }
+    }
+    
+    socket.emit("force-user", 1, 2, withTimeout(() => {
+      console.log("success!");
+    }, () => {
+      console.log("timeout!");
+    }, 1000));
     } catch (error) {
       console.log("error");
       console.log(error);
@@ -101,10 +126,6 @@ io.on("connection", (socket) => {
     console.log(`username ${user} is join the ${roomName} room`);
     //Send response to client
     socket.emit("join-room", `${user} connected Server`);
-    // socket.on("join-team",  (user, team) => {
-    //   socket.join(team);
-    //   console.log(`username ${user} is join the ${team} team`);
-    // });
   });
   //Leave room
   socket.on("leave-room", async (user, roomName) => {
