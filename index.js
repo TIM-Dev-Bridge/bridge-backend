@@ -9,6 +9,7 @@ const port = process.env.PORT || API_PORT;
 //Authen
 const jwt = require("jsonwebtoken");
 const config = process.env;
+const bcrypt = require("bcryptjs");
 
 //----------------------------Database----------------------------//
 const TourR = require("./model/tourR");
@@ -16,20 +17,9 @@ const { log } = require("console");
 
 let users = [];
 
-// Authentication with socket io
-// io.use(async (socket, next) => {
-//   try {
-//     const token = socket.handshake.query.token;
-//     const payload = await jwt.verify(token, process.env.SECRET);
-//     socket.userId = payload.id;
-//     next();
-//   } catch (err) {}
-// });
-
+//Authentication user
 io.use(function (socket, next) {
   if (socket.handshake.query && socket.handshake.query.token) {
-    console.log("pass");
-    // console.log(socket.handshake.query);
     console.log(socket.handshake.query.token);
     jwt.verify(
       socket.handshake.query.token,
@@ -70,15 +60,51 @@ io.on("connection", (socket) => {
     io.emit("new user", users);
     console.log(users);
   });
+
+  //Create tour
+  socket.on("create-tour", async (tour_data) => {
+    // console.log("tourdata", tour_data);
+    // const this_tour_data = tour_data;
+    //console.log('td',tour_data.tour_name);
+    try {
+      //fist time not have
+      const sameTour = await TourR.findOne({ tour_name: tour_data.tour_name });
+      if (sameTour) {
+        return socket.emit("create-tour", "This tour already create");
+      }
+      //Encrypt password tour
+      encryptedPassword = await bcrypt.hash(tour_data.password, 10);
+      //Create tournament on database
+      const tournament = await TourR.create({
+        tour_name: tour_data.tour_name,
+        max_player: tour_data.max_player,
+        type: tour_data.type,
+        password: encryptedPassword,
+        player_name: tour_data.player_name,
+        time_start: tour_data.time_start,
+        status: tour_data.status,
+        board_to_play: tour_data.board_to_play,
+        minute_board: tour_data.minute_board,
+        board_round: tour_data.board_round,
+        movement: tour_data.movement,
+        scoring: tour_data.scoring,
+        barometer: tour_data.barometer,
+        createBy: tour_data.createBy,
+      });
+      console.log("tournament is " + tournament);
+    } catch (error) {}
+  });
+
   //Join tour
   socket.on("join-tour", async (player_name, tour_name) => {
     socket.join(tour_name);
+    //Response that player joined room
     console.log(`username ${player_name} is join the ${tour_name} tour`);
     //Add user to tour
     try {
       const hasTour = await TourR.findOne({ tour_name });
       if (!hasTour) {
-        socket.emit("join-tour", "This tour is not found");
+        return socket.emit("join-tour", "This tour is not found");
       }
       // if player < 20 Condition & not prime number
       const joinTour = await TourR.updateOne(
@@ -91,28 +117,37 @@ io.on("connection", (socket) => {
 
       //Force user to the room when time arrive
       //Test time out emit
-    const withTimeout = (onSuccess, onTimeout, timeout) => {
-      let called = false;
-    
-      const timer = setTimeout(() => {
-        if (called) return;
-        called = true;
-        onTimeout();
-      }, timeout);
-    
-      return (...args) => {
-        if (called) return;
-        called = true;
-        clearTimeout(timer);
-        onSuccess.apply(this, args);
-      }
-    }
-    
-    socket.emit("force-user", 1, 2, withTimeout(() => {
-      console.log("success!");
-    }, () => {
-      console.log("timeout!");
-    }, 1000));
+      const withTimeout = (onSuccess, onTimeout, timeout) => {
+        let called = false;
+
+        const timer = setTimeout(() => {
+          if (called) return;
+          called = true;
+          onTimeout();
+        }, timeout);
+
+        return (...args) => {
+          if (called) return;
+          called = true;
+          clearTimeout(timer);
+          onSuccess.apply(this, args);
+        };
+      };
+
+      socket.emit(
+        "force-user",
+        1,
+        2,
+        withTimeout(
+          () => {
+            console.log("success!");
+          },
+          () => {
+            console.log("timeout!");
+          },
+          1000
+        )
+      );
     } catch (error) {
       console.log("error");
       console.log(error);

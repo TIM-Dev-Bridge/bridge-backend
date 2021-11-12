@@ -7,7 +7,6 @@ const TourR = require("../model/tourR");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const path = require("path");
-const { io } = require("../index");
 
 const app = express();
 
@@ -103,6 +102,7 @@ exports.login = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (user && (await bcrypt.compare(password, user.password))) {
+      console.log(user.password);
       // Create token
       const token = jwt.sign(
         { user_id: user._id, email },
