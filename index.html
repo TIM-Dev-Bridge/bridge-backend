@@ -21,6 +21,7 @@
 </body>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.1/socket.io.js"></script>
 <script>
+    const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjE4YzA3OWIwM2JlYzIzODNkNjY0OTNhIiwiZW1haWwiOiJ0ZXN0MUBlbWFpbC5jb20iLCJpYXQiOjE2MzY3MjgzMDIsImV4cCI6MTYzNjczNTUwMn0.uQ4t9PbcyTm8bA6Q40Ye7XT1VrK8vlnQ-gCON39wqjg"
     function login1() {
         var socket = io()
         socket.emit('join-room', 'Mark', 'room1')
@@ -34,7 +35,7 @@
         // const { token } = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjE4MTEwZWYyNThjY2FmNzVlMmYzNDkzIiwiZW1haWwiOiJ0ZXN0MDFAZW1haWwuY29tIiwiaWF0IjoxNjM2NDQyMDI4LCJleHAiOjE2MzY0NDkyMjh9.JLbeKOJp8RDYC86FzfU55S-7PzhmguUt_Ptcltjc5Xk"
         // const { token } = "123"
         const userName = "Tae"
-        const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjE4MTEwZWYyNThjY2FmNzVlMmYzNDkzIiwiZW1haWwiOiJ0ZXN0MDFAZW1haWwuY29tIiwiaWF0IjoxNjM2NTY1NDc0LCJleHAiOjE2MzY1NzI2NzR9.YdBFKWnjKJpvrBJY2s-IdPdryLna8IwNm-PrHqooe5U"
+        //const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjE4MTEwZWYyNThjY2FmNzVlMmYzNDkzIiwiZW1haWwiOiJ0ZXN0MDFAZW1haWwuY29tIiwiaWF0IjoxNjM2NTY1NDc0LCJleHAiOjE2MzY1NzI2NzR9.YdBFKWnjKJpvrBJY2s-IdPdryLna8IwNm-PrHqooe5U"
         var socket = io.connect({ query: { token, userName } })
         socket.emit('join-room', 'Tae', 'room1')
         console.log('login2 running');
@@ -50,7 +51,7 @@
             type: "Pairs",
             password: "123",
             player_name: [],
-            time_start: "11/11/2021, 1:07:20 AM",
+            time_start: "11/12/2021, 11:18:00 PM",
             status: "Pending",
             board_to_play: 2,
             minute_board: 2,
@@ -60,7 +61,7 @@
             barometer: true,
             createBy: userName,
         }
-        const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjE4YzA3OWIwM2JlYzIzODNkNjY0OTNhIiwiZW1haWwiOiJ0ZXN0MUBlbWFpbC5jb20iLCJpYXQiOjE2MzY3MjgzMDIsImV4cCI6MTYzNjczNTUwMn0.uQ4t9PbcyTm8bA6Q40Ye7XT1VrK8vlnQ-gCON39wqjg"
+        //const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjE4YzA3OWIwM2JlYzIzODNkNjY0OTNhIiwiZW1haWwiOiJ0ZXN0MUBlbWFpbC5jb20iLCJpYXQiOjE2MzY3MjgzMDIsImV4cCI6MTYzNjczNTUwMn0.uQ4t9PbcyTm8bA6Q40Ye7XT1VrK8vlnQ-gCON39wqjg"
         var socket = io.connect({ query: { token, userName } })
         console.log('Tour 2 working');
         socket.emit("create-tour", tourdata)
@@ -75,9 +76,12 @@
     }
     function joinTour() {
         const userName = "Mark"
-        const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjE4MTEwZWYyNThjY2FmNzVlMmYzNDkzIiwiZW1haWwiOiJ0ZXN0MDFAZW1haWwuY29tIiwiaWF0IjoxNjM2NTY1NDc0LCJleHAiOjE2MzY1NzI2NzR9.YdBFKWnjKJpvrBJY2s-IdPdryLna8IwNm-PrHqooe5U"
+        //const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjE4MTEwZWYyNThjY2FmNzVlMmYzNDkzIiwiZW1haWwiOiJ0ZXN0MDFAZW1haWwuY29tIiwiaWF0IjoxNjM2NTY1NDc0LCJleHAiOjE2MzY1NzI2NzR9.YdBFKWnjKJpvrBJY2s-IdPdryLna8IwNm-PrHqooe5U"
         var socket = io.connect({ query: { token, userName } })
-        socket.emit('join-tour', userName, 'tour1')
+        socket.emit('join-tour', userName, 'tour-f1')
+        socket.on('force-user', msg => {
+            console.log('ll', msg);
+        })
     }
 </script>
 

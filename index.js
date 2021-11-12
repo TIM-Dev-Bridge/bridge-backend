@@ -45,7 +45,9 @@ io.on("connection", (socket) => {
   //test time
   //socket.emit('datetime', { datetime: new Date().getTime() });
   let timer = new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" });
+  let timer2 = new Date().getTime();
   console.log("timer", timer);
+  console.log("timer2", timer2);
   //find way to
   //set time out (millisec)
   //Save session
@@ -97,21 +99,30 @@ io.on("connection", (socket) => {
 
   //Join tour
   socket.on("join-tour", async (player_name, tour_name) => {
-    socket.join(tour_name);
     //Response that player joined room
     console.log(`username ${player_name} is join the ${tour_name} tour`);
     //Add user to tour
     try {
-      const hasTour = await TourR.findOne({ tour_name });
-      if (!hasTour) {
+      const tour_data = await TourR.findOne({ tour_name });
+      if (!tour_data) {
         return socket.emit("join-tour", "This tour is not found");
       }
+      //Time set
+      //For human
+      // let time = new Date().toLocaleString("en-US", {
+      //   timeZone: "Asia/Jakarta",
+      // });
+      //For millisecond
+      let current_mil_time = new Date().getTime();
+      let start_mil_time = new Date(tour_data.time_start).getTime();
+      let diff_time = start_mil_time - current_mil_time;
+
       // if player < 20 Condition & not prime number
       const joinTour = await TourR.updateOne(
         { tour_name: tour_name },
         { $push: { player_name: player_name } }
       );
-
+      socket.join(tour_name);
       //Send response to client
       socket.emit("join-tour", joinTour);
 
@@ -145,7 +156,7 @@ io.on("connection", (socket) => {
           () => {
             console.log("timeout!");
           },
-          1000
+          diff_time
         )
       );
     } catch (error) {
