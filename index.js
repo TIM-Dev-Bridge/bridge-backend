@@ -54,7 +54,7 @@ io.on("connection", (socket) => {
   //Save session
 
   //Get current user data
-  socket.on("get-user-data", (username) => {
+  socket.on("get-user-data", async (username) => {
     try {
       const user_data = await User.findOne({ username: username });
       socket.emit("get-user-data", user_data);
