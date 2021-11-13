@@ -5,7 +5,12 @@ const server = http.createServer(app);
 const io = require("socket.io")(server);
 const { API_PORT } = process.env;
 const port = process.env.PORT || API_PORT;
-
+const cors = require("cors");
+app.use(
+  cors({
+    origin: "*",
+  })
+);
 //Authen
 const jwt = require("jsonwebtoken");
 const config = process.env;
@@ -42,6 +47,7 @@ io.on("connection", (socket) => {
   console.log("decode = " + JSON.stringify(socket.decoded));
   console.log("Data of user is " + socket.handshake.query.userName);
   console.log("gettime", socket.handshake.getTime);
+  socket.emit("connected", "A new user connected");
 
   //test time
   //socket.emit('datetime', { datetime: new Date().getTime() });
@@ -73,7 +79,7 @@ io.on("connection", (socket) => {
   });
 
   //Create tour
-  socket.on("create-tour", async (tour_data) => {
+  socket.on("create-tour", async (tour_data, callback) => {
     // console.log("tourdata", tour_data);
     // const this_tour_data = tour_data;
     //console.log('td',tour_data.tour_name);
@@ -81,6 +87,7 @@ io.on("connection", (socket) => {
       //fist time not have
       const sameTour = await TourR.findOne({ tour_name: tour_data.tour_name });
       if (sameTour) {
+        callback(false, "This tour already create");
         return socket.emit("create-tour", "This tour already create");
       }
       //Encrypt password tour
@@ -103,7 +110,10 @@ io.on("connection", (socket) => {
         createBy: tour_data.createBy,
       });
       console.log("tournament is " + tournament);
-    } catch (error) {}
+      callback(true, "Room created");
+    } catch (error) {
+      callback(false, "Failed to create room");
+    }
   });
 
   //Join tour
@@ -134,7 +144,6 @@ io.on("connection", (socket) => {
       socket.join(tour_name);
       //Send response to client
       socket.emit("join-tour", joinTour);
-
       //Force user to the room when time arrive
       //Test time out emit
       const withTimeout = (onSuccess, onTimeout, timeout) => {
@@ -156,14 +165,11 @@ io.on("connection", (socket) => {
 
       socket.emit(
         "force-user",
-        1,
-        2,
+        "success",
         withTimeout(
+          () => {},
           () => {
-            console.log("success!");
-          },
-          () => {
-            console.log("timeout!");
+            socket.emit("force-user", "Force");
           },
           diff_time
         )
