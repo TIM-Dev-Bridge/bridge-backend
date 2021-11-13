@@ -13,6 +13,7 @@ const bcrypt = require("bcryptjs");
 
 //----------------------------Database----------------------------//
 const TourR = require("./model/tourR");
+const User = require("./model/user");
 const { log } = require("console");
 
 let users = [];
@@ -51,6 +52,14 @@ io.on("connection", (socket) => {
   //find way to
   //set time out (millisec)
   //Save session
+
+  //Get current user data
+  socket.on("get-user-data", (username) => {
+    try {
+      const user_data = await User.findOne({ username: username });
+      socket.emit("get-user-data", user_data);
+    } catch (error) {}
+  });
 
   //Join socket io server
   socket.on("join-server", (username) => {
