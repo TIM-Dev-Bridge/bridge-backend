@@ -80,9 +80,6 @@ io.on("connection", (socket) => {
 
   //Create tour
   socket.on("create-tour", async (tour_data, callback) => {
-    // console.log("tourdata", tour_data);
-    // const this_tour_data = tour_data;
-    //console.log('td',tour_data.tour_name);
     try {
       //fist time not have
       const sameTour = await TourR.findOne({ tour_name: tour_data.tour_name });
