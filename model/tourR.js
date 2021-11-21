@@ -6,6 +6,7 @@ const userSchema = new mongoose.Schema({
   type: { type: String, default: "Pairs" },
   password: { type: String },
   player_name: { type: Array, default: [] },
+  player_team: { type: Array, default: [] },
   time_start: { type: String, default: null },
   status: { type: String, default: "Pending" },
   board_to_play: { type: Number, default: 0 },

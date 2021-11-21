@@ -9,39 +9,35 @@
 </head>
 
 <body>
-    <div>iosdrghjiorsgjiog</div>
-    <div>test2</div>
-    <input type="button" onclick="login1()" value="login1()">
-    <input type="button" onclick="login2()" value="login2()">
+    <input type="button" onclick="player1()" value="player1()">
+    <input type="button" onclick="player2()" value="player2()">
     <input type="button" onclick="createTour()" value="createTour()">
     <input type="button" onclick="manageRoom()" value="manageRoom()">
     <input type="button" onclick="joinTeam()" value="joinTeam()">
     <input type="button" onclick="joinTour()" value="joinTour()">
+    <input type="button" onclick="player1invite2()" value="player1invite2()">
+    <input type="button" onclick="player2recieve1()" value="player2recieve1()">
+    <input type="button" onclick="GetTour()" value="GetTour()">
 
 </body>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.1/socket.io.js"></script>
 <script>
     const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjE4YzA3OWIwM2JlYzIzODNkNjY0OTNhIiwiZW1haWwiOiJ0ZXN0MUBlbWFpbC5jb20iLCJpYXQiOjE2MzY3MjgzMDIsImV4cCI6MTYzNjczNTUwMn0.uQ4t9PbcyTm8bA6Q40Ye7XT1VrK8vlnQ-gCON39wqjg"
-    function login1() {
-        var socket = io()
-        socket.emit('join-room', 'Mark', 'room1')
-        socket.emit('join-room', 'Mark', 'room2')
-        socket.on('join-room', msg => {
-            console.log(msg);
-        })
+    function player1() {
+        //var socket = io.connect({ query: { token, userName } })
+        const username = "Mark"
+        var socket = io.connect({ query: { username } })
+        socket.emit('join-tour', 'Mark', 'tour-f1')
     }
-    function login2() {
-        ///How to acces object in object
-        // const { token } = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjE4MTEwZWYyNThjY2FmNzVlMmYzNDkzIiwiZW1haWwiOiJ0ZXN0MDFAZW1haWwuY29tIiwiaWF0IjoxNjM2NDQyMDI4LCJleHAiOjE2MzY0NDkyMjh9.JLbeKOJp8RDYC86FzfU55S-7PzhmguUt_Ptcltjc5Xk"
-        // const { token } = "123"
-        const userName = "Tae"
-        //const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjE4MTEwZWYyNThjY2FmNzVlMmYzNDkzIiwiZW1haWwiOiJ0ZXN0MDFAZW1haWwuY29tIiwiaWF0IjoxNjM2NTY1NDc0LCJleHAiOjE2MzY1NzI2NzR9.YdBFKWnjKJpvrBJY2s-IdPdryLna8IwNm-PrHqooe5U"
-        var socket = io.connect({ query: { token, userName } })
-        socket.emit('join-room', 'Tae', 'room1')
-        console.log('login2 running');
-        socket.on('force-user', msg => {
-            console.log('ll', msg);
-        })
+    function player2() {
+        var socket = io.connect({ username: "Tae" })
+        socket.emit('join-tour', 'Tae', 'tour-f1')
+    }
+    function player1invite2() {
+        socket.emit('invite-team', "tour-f1", 'Mark', 'Tae')
+    }
+    function player2recieve1() {
+        socket.emit('recieve-team', "tour-f1", 'Tae', 'Mark')
     }
     function createTour() {
         var userName = "td1"
@@ -51,7 +47,8 @@
             type: "Pairs",
             password: "123",
             player_name: [],
-            time_start: "11/12/2021, 11:18:00 PM",
+            player_team: [],
+            time_start: "11/21/2021, 9:30:00 PM",
             status: "Pending",
             board_to_play: 2,
             minute_board: 2,
@@ -62,7 +59,8 @@
             createBy: userName,
         }
         //const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjE4YzA3OWIwM2JlYzIzODNkNjY0OTNhIiwiZW1haWwiOiJ0ZXN0MUBlbWFpbC5jb20iLCJpYXQiOjE2MzY3MjgzMDIsImV4cCI6MTYzNjczNTUwMn0.uQ4t9PbcyTm8bA6Q40Ye7XT1VrK8vlnQ-gCON39wqjg"
-        var socket = io.connect({ query: { token, userName } })
+        //var socket = io.connect({ query: { token, userName } })
+        var socket = io()
         console.log('Tour 2 working');
         socket.emit("create-tour", tourdata)
     }
@@ -76,12 +74,19 @@
     }
     function joinTour() {
         const userName = "Mark"
-        //const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjE4MTEwZWYyNThjY2FmNzVlMmYzNDkzIiwiZW1haWwiOiJ0ZXN0MDFAZW1haWwuY29tIiwiaWF0IjoxNjM2NTY1NDc0LCJleHAiOjE2MzY1NzI2NzR9.YdBFKWnjKJpvrBJY2s-IdPdryLna8IwNm-PrHqooe5U"
         var socket = io.connect({ query: { token, userName } })
         socket.emit('join-tour', userName, 'tour-f1')
         socket.on('force-user', msg => {
             console.log('ll', msg);
         })
+    }
+    function GetTour() {
+        username = 'Ice'
+        var socket = io.connect({ query: { username } })
+        socket.emit("get-tour-client", 'tour-f1')
+        socket.on("get-tour-client", (tour_name) => {
+            console.log(tour_name);
+        });
     }
 </script>
 
