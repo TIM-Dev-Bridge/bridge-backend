@@ -19,6 +19,7 @@ const bcrypt = require("bcryptjs");
 //----------------------------Database----------------------------//
 const TourR = require("./model/tourR");
 const User = require("./model/user");
+const Board = require("./model/board");
 const { log } = require("console");
 
 let users = [];
@@ -44,9 +45,9 @@ let users = [];
 io.on("connection", (socket) => {
   // console.log("A new user connected");
   //console.log(socket);
-   socket.username = socket.handshake.query.username
+  socket.username = socket.handshake.query.username;
   // console.log(socket.id);
-   console.log(socket.username);
+  console.log(socket.username);
   // console.log(socket.username);
 
   // console.log("decode = " + JSON.stringify(socket.decoded));
@@ -273,9 +274,18 @@ io.on("connection", (socket) => {
   socket.on("get-username-room", async (roomName) => {
     let userList = io.sockets.adapter.rooms.get(roomName);
     console.log(userList);
-    socket.emit("get-username-room",);
+    socket.emit("get-username-room");
   });
 
+  //create board
+  socket.on("create-board", async (admin_name, title, data) => {
+    const board = await TourR.create({
+      admin_name: admin_name,
+      title: title,
+      data: data,
+    });
+    socket.emit("create-board", board);
+  });
   socket.on("disconnect", () => {
     console.log("User was disconnect");
   });
