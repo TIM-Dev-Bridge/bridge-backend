@@ -23,31 +23,42 @@ const Board = require("./model/board");
 const { log } = require("console");
 
 let users = [];
+let tours = [];
 
 //Authentication user
-// io.use(function (socket, next) {
-//   if (socket.handshake.query && socket.handshake.query.token) {
-//     console.log(socket.handshake.query.token);
-//     jwt.verify(
-//       socket.handshake.query.token,
-//       config.TOKEN_KEY,
-//       function (err, decoded) {
-//         if (err) return next(new Error("Authentication error"));
-//         socket.decoded = decoded;
-//         next();
-//       }
-//     );
-//   } else {
-//     next(new Error("Authentication error"));
-//   }
-// });
+io.use(function (socket, next) {
+  if (socket.handshake.query && socket.handshake.query.token) {
+    console.log(socket.handshake.query.token);
+    jwt.verify(
+      socket.handshake.query.token,
+      config.TOKEN_KEY,
+      function (err, decoded) {
+        if (err) return next(new Error("Authentication error"));
+        socket.decoded = decoded;
+        //Check login 1 get token and go login 2 -> pass
+        if (socket.handshake.query.username != socket.decoded.username) {
+          return next(new Error("Authentication error by user"));
+        }
+        next();
+      }
+    );
+  } else {
+    next(new Error("Authentication error"));
+  }
+});
 
 io.on("connection", (socket) => {
-  // console.log("A new user connected");
-  //console.log(socket);
-  socket.username = socket.handshake.query.username;
-  // console.log(socket.id);
-  console.log(socket.username);
+  if (users[socket.handshake.query.username] == undefined) {
+    const user = {
+      socket_id: socket.id,
+      username: socket.handshake.query.username,
+      tour: undefined,
+      session: undefined,
+    };
+    users[socket.handshake.query.username] = user;
+    console.log("User created", users[socket.handshake.query.username]);
+  }
+
   // console.log(socket.username);
 
   // console.log("decode = " + JSON.stringify(socket.decoded));
@@ -96,10 +107,11 @@ io.on("connection", (socket) => {
   //Create tour
   socket.on("create-tour", async (tour_data) => {
     try {
+      console.log(tour_data);
       //fist time not have
       const sameTour = await TourR.findOne({ tour_name: tour_data.tour_name });
       if (sameTour) {
-        callback(false, "This tour already create");
+        //callback(false, "This tour already create");
         return socket.emit("create-tour", "This tour already create");
       }
       //Encrypt password tour
@@ -122,8 +134,14 @@ io.on("connection", (socket) => {
         createBy: tour_data.createBy,
       });
       console.log("tournament is " + tournament);
+      //Create temp tour
+      console.log("test");
+      temp_tour_data.push(tour_data);
+      console.log("temp is", temp_tour_data);
+      console.log("last");
       //callback(true, "Room created");
     } catch (error) {
+      console.log("error is", error);
       //callback(false, "Failed to create room");
     }
   });
@@ -198,21 +216,24 @@ io.on("connection", (socket) => {
     try {
       const hasTour = await TourR.findOne({ tour_name });
       if (!hasTour) {
-        res.status(409).send("This tour is not found");
+        return socket
+          .to(tour_name)
+          .emit("leave-tour", "This tour is not found");
       }
       //if player is in that tour can exit
       const exitTour = await TourR.updateOne(
         { tour_name: tour_name },
         { $pull: { player_name: user } }
       );
-      res.status(201).send(exitTour);
+      socket
+        .to(tour_name)
+        .emit("leave-tour", `User ${user} is exit this tournament`);
     } catch (error) {}
   });
 
   //Get user tour
   socket.on("get-tour-client", (tour_name) => {
     clients = io.sockets.adapter.rooms.get(tour_name);
-    //clients = io.sockets[0].username;
     console.log(clients);
     socket.emit("get-tour-client", clients);
   });

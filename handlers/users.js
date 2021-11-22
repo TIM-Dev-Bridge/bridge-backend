@@ -7,6 +7,10 @@ const TourR = require("../model/tourR");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const path = require("path");
+const {
+  validateSignupData,
+  validateLoginData,
+} = require("../middleware/validators");
 
 const app = express();
 
@@ -33,20 +37,16 @@ exports.register = async (req, res) => {
       password,
     } = req.body;
 
-    //Validate user input
-    if (
-      !(
-        first_name &&
-        last_name &&
-        display_name &&
-        birth_date &&
-        email &&
-        username &&
-        password
-      )
-    ) {
-      res.status(400).send("All input is required");
-    }
+    const { valid, errors } = validateSignupData({
+      first_name,
+      last_name,
+      display_name,
+      birth_date,
+      email,
+      username,
+      password,
+    });
+    if (!valid) return res.status(400).json(errors);
     //Validate if user exist in database
     const oldUserEmail = await User.findOne({ email });
     const oldUserUsername = await User.findOne({ username });
@@ -64,6 +64,7 @@ exports.register = async (req, res) => {
       last_name,
       display_name,
       birth_date,
+      access,
       email: email.toLowerCase(),
       username,
       password: encryptedPassword,
@@ -71,7 +72,12 @@ exports.register = async (req, res) => {
 
     //Create token
     const token = jwt.sign(
-      { user_id: user._id, email },
+      {
+        user_id: user._id,
+        email,
+        username: user.username,
+        access: user.access,
+      },
       process.env.TOKEN_KEY,
       {
         expiresIn: "2h",
@@ -94,9 +100,14 @@ exports.login = async (req, res) => {
     const { email, password } = req.body;
 
     //Validate user input
-    if (!(email && password)) {
-      res.status(400).send("All input is required");
-    }
+    // if (!(email && password)) {
+    //   res.status(400).send("All input is required");
+    // }
+    const { valid, errors } = validateLoginData({
+      email,
+      password,
+    });
+    if (!valid) return res.status(400).json(errors);
 
     // Validate if user exist in database
     const user = await User.findOne({ email });
@@ -105,7 +116,12 @@ exports.login = async (req, res) => {
       console.log(user.password);
       // Create token
       const token = jwt.sign(
-        { user_id: user._id, email },
+        {
+          user_id: user._id,
+          email,
+          username: user.username,
+          access: user.access,
+        },
         process.env.TOKEN_KEY,
         {
           expiresIn: "2h",

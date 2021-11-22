@@ -22,15 +22,17 @@
 </body>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.1/socket.io.js"></script>
 <script>
-    const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjE4YzA3OWIwM2JlYzIzODNkNjY0OTNhIiwiZW1haWwiOiJ0ZXN0MUBlbWFpbC5jb20iLCJpYXQiOjE2MzY3MjgzMDIsImV4cCI6MTYzNjczNTUwMn0.uQ4t9PbcyTm8bA6Q40Ye7XT1VrK8vlnQ-gCON39wqjg"
     function player1() {
         //var socket = io.connect({ query: { token, userName } })
-        const username = "Mark"
-        var socket = io.connect({ query: { username } })
+        const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjE5YTk1ODQyY2M3ZjM3ZmZhMmU4MjJmIiwiZW1haWwiOiJ0ZXN0MUBlbWFpbC5jb20iLCJ1c2VybmFtZSI6InBsYW50QSIsImFjY2VzcyI6InVzZXIiLCJpYXQiOjE2Mzc2MTAwNTgsImV4cCI6MTYzNzYxNzI1OH0.SyvMsRDB1dTRXFFAP6FREhRsM4z-8WomApwK-naiJ8E"
+        const username = "plantA"
+        var socket = io.connect({ query: { token, username } })
         socket.emit('join-tour', 'Mark', 'tour-f1')
     }
     function player2() {
-        var socket = io.connect({ username: "Tae" })
+        const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjE5YTk1OTUyY2M3ZjM3ZmZhMmU4MjMzIiwiZW1haWwiOiJ0ZXN0MkBlbWFpbC5jb20iLCJ1c2VybmFtZSI6InBsYW50QiIsImFjY2VzcyI6InVzZXIiLCJpYXQiOjE2Mzc2MTAwODQsImV4cCI6MTYzNzYxNzI4NH0._qhVVOGF7tkVm591WhJ17cYOEdc813xNDZoVu5pHwQY"
+        const username = "plantB"
+        var socket = io.connect({ query: { token, username } })
         socket.emit('join-tour', 'Tae', 'tour-f1')
     }
     function player1invite2() {
