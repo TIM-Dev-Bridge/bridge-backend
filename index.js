@@ -92,6 +92,13 @@ io.on("connection", (socket) => {
       socket.emit("get-user-data", user_data);
     } catch (error) {}
   });
+  //Get tournament
+  socket.on("get-tour-data", async (tour_name) => {
+    try {
+      const tour_data = await TourR.findOne({ tour_name: tour_name.tour_name });
+      socket.emit("get-tour-data", tour_data);
+    } catch (error) {}
+  });
 
   //Join socket io server
   socket.on("join-server", (username) => {
