@@ -144,8 +144,9 @@ exports.home2 = (req, res) => {
 
 //Get tournament name
 exports.getTournament = async (req, res) => {
+  const { tour_name } = req.body;
   try {
-    const tour_data = await TourR.findOne({ tour_name: tour_name.tour_name });
+    const tour_data = await TourR.findOne({ tour_name: tour_name });
     res.status(201).send(tour_data);
   } catch (error) {
     console.log(err);
