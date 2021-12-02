@@ -104,10 +104,29 @@ io.on("connection", (socket) => {
     console.log(users);
   });
 
+  //Update user data
+  socket.on("update-user", async (user_data) => {
+    try {
+      const hasUser = await User.findOne({ username: user_data.username });
+      if (!hasUser) {
+        return socket.emit("update-user", "Not has a user in database");
+      }
+      const user = await User.updateOne({
+        first_name : user_data.first_name,
+        last_name: user_data.last_name,
+        display_name: user_data.display_name,
+        birth_date: user_data.birth_date,
+        email: user_data.email,
+        username: user_data.username,
+        password: user_data.password,
+      });
+      console.log("update user data successful");
+    } catch (error) {console.log(err);}
+  });
+
   //Create tour
   socket.on("create-tour", async (tour_data) => {
     try {
-      console.log(tour_data);
       //fist time not have
       const sameTour = await TourR.findOne({ tour_name: tour_data.tour_name });
       if (sameTour) {
@@ -133,18 +152,79 @@ io.on("connection", (socket) => {
         barometer: tour_data.barometer,
         createBy: tour_data.createBy,
       });
-      console.log("tournament is " + tournament);
-      //Create temp tour
-      console.log("test");
-      temp_tour_data.push(tour_data);
-      console.log("temp is", temp_tour_data);
-      console.log("last");
+      console.log("created tournament successful");
       //callback(true, "Room created");
     } catch (error) {
       console.log("error is", error);
       //callback(false, "Failed to create room");
     }
   });
+  //Update tour
+  socket.on("update-tour", async (tour_data) => {
+    try {
+      //fist time not have
+      const haveTour = await TourR.findOne({ tour_name: tour_data.tour_name });
+      if (!haveTour) {
+        //callback(false, "This tour already create");
+        console.log("failed");
+        return socket.emit(
+          "update-tour",
+          "This tour name not have in our tournament"
+        );
+      }
+      //Encrypt password tour
+      encryptedPassword = await bcrypt.hash(tour_data.password, 10);
+      //Create tournament on database
+      const tournament = await TourR.updateOne({
+        tour_name: tour_data.tour_name,
+        max_player: tour_data.max_player,
+        type: tour_data.type,
+        password: encryptedPassword,
+        player_name: tour_data.player_name,
+        time_start: tour_data.time_start,
+        status: tour_data.status,
+        board_to_play: tour_data.board_to_play,
+        minute_board: tour_data.minute_board,
+        board_round: tour_data.board_round,
+        movement: tour_data.movement,
+        scoring: tour_data.scoring,
+        barometer: tour_data.barometer,
+        createBy: tour_data.createBy,
+      });
+      console.log("updated success");
+      //callback(true, "Room created");
+    } catch (error) {
+      console.log("error is", error);
+      //callback(false, "Failed to create room");
+    }
+  });
+  //Delete tour
+  socket.on("delete-tour", async (tour_name, current_TD) => {
+    try {
+      //fist time not have
+      console.log("1");
+      const haveTour = await TourR.findOne({ tour_name: tour_name });
+      if (!haveTour) {
+        //callback(false, "This tour already create");
+        return socket.emit(
+          "delete-tour",
+          "This tour name not have in our tournament"
+        );
+      }
+      //Create tournament on database
+      const tournament = await TourR.deleteOne({
+        tour_name: tour_name,
+        createBy: current_TD,
+      });
+      console.log("delete successful");
+      //Create temp tour
+      //callback(true, "Room created");
+    } catch (error) {
+      console.log("error is", error);
+      //callback(false, "Failed to create room");
+    }
+  });
+  //Update tour
 
   //Join tour
   socket.on("join-tour", async (player_name, tour_name) => {

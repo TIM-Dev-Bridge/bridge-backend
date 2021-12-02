@@ -11,6 +11,7 @@ const {
   validateSignupData,
   validateLoginData,
 } = require("../middleware/validators");
+const { log } = require("console");
 
 const app = express();
 
@@ -54,22 +55,21 @@ exports.register = async (req, res) => {
     if (oldUserEmail || oldUserUsername) {
       res.status(409).send("User already exist. Please login");
     }
-
     //Encrypt user password
     encryptedPassword = await bcrypt.hash(password, 10);
-
     //Create user in database
     const user = await User.create({
       first_name,
       last_name,
       display_name,
       birth_date,
-      access,
+      access: "User",
       email: email.toLowerCase(),
       username,
       password: encryptedPassword,
     });
-
+    console.log(1);
+    
     //Create token
     const token = jwt.sign(
       {
@@ -86,10 +86,9 @@ exports.register = async (req, res) => {
 
     //Save user token
     user.token = token;
-
     //return new user
     res.status(201).json(user);
-  } catch (err) {}
+  } catch (err) {console.log(err);}
 };
 
 //Login
@@ -178,4 +177,65 @@ exports.exitTournament = async (req, res) => {
     res.status(201).send(exitTour);
   } catch (error) {}
 };
-//Pair
+//PairTeam
+exports.manageTour = async (req, res) => {
+  try {
+    console.log("start");
+    let tour_match = {};
+    let objectManage = {
+      player1: "player2",
+    };
+    let teamSlot = {
+      Team1: { s1: "player1", s2: "player2" },
+      Team2: { s1: "player3", s2: "player4" },
+      Team3: { s1: "player5", s2: "player6" },
+      Team4: { s1: "player7", s2: "player8" },
+    };
+    let ArraySlot = [
+      { s1: "player1", s2: "player2" },
+      { s1: "player3", s2: "player4" },
+      { s1: "player5", s2: "player6" },
+      { s1: "player7", s2: "player8" },
+    ];
+    let TempSlot = [];
+    console.log(Object.keys(teamSlot));
+    //Push
+    console.log(ArraySlot);
+    ArraySlot.push({ s1: "player9", s2: "player10" });
+    ArraySlot.push({ s1: "player11", s2: "player12" });
+    console.log(ArraySlot[0]);
+    for (var temp in ArraySlot) {
+      TempSlot["Team" + temp] = ArraySlot[temp];
+    }
+    //Slice
+    let first_pair = Object.keys(TempSlot).slice(
+      0,
+      Object.keys(TempSlot).length / 2
+    );
+    let second_pair = Object.keys(TempSlot).slice(
+      Object.keys(TempSlot).length / 2,
+      Object.keys(TempSlot).length
+    );
+    console.log(Object.keys(TempSlot).length);
+    console.log("num", first_pair);
+    console.log("num", second_pair);
+    //Mitchell full
+    let Table = {};
+    let play_round = 3;
+    for (var round = 0; round < play_round; round++) {
+      Table["round" + round] = {};
+      for (var table = 0; table < Object.keys(TempSlot).length / 2; table++) {
+        Table["round" + round]["table" + table] =
+          first_pair[table] + "," + second_pair[table];
+      }
+      let temp_second = second_pair.shift();
+      second_pair.push(temp_second);
+    }
+    console.log(Table);
+
+    console.log("finish");
+    res.status(201).send("back");
+  } catch (error) {
+    console.log(error);
+  }
+};

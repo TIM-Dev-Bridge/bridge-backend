@@ -18,6 +18,8 @@
     <input type="button" onclick="player1invite2()" value="player1invite2()">
     <input type="button" onclick="player2recieve1()" value="player2recieve1()">
     <input type="button" onclick="GetTour()" value="GetTour()">
+    <input type="button" onclick="deleteTour()" value="deleteTour()">
+    <input type="button" onclick="updateTour()" value="updateTour()">
 
 </body>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.1/socket.io.js"></script>
@@ -42,7 +44,7 @@
         socket.emit('recieve-team', "tour-f1", 'Tae', 'Mark')
     }
     function createTour() {
-        var userName = "td1"
+        var username = "td1"
         var tourdata = {
             tour_name: "tour-f1",
             max_player: 20,
@@ -58,13 +60,42 @@
             movement: "Clocked",
             scoring: "MP",
             barometer: true,
-            createBy: userName,
+            createBy: username,
         }
+        let token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjFhOGFiNTU0ZjFiZmVmMmVjOTc3OWZhIiwiZW1haWwiOiJ0ZDFAZW1haWwuY29tIiwidXNlcm5hbWUiOiJ0ZDEiLCJhY2Nlc3MiOiJVc2VyIiwiaWF0IjoxNjM4NDQzODYxLCJleHAiOjE2Mzg0NTEwNjF9.uvXJL5EAy6PEW2RSObJs_THjQeb4P4jYS-OcWlBsMU8"
         //const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjE4YzA3OWIwM2JlYzIzODNkNjY0OTNhIiwiZW1haWwiOiJ0ZXN0MUBlbWFpbC5jb20iLCJpYXQiOjE2MzY3MjgzMDIsImV4cCI6MTYzNjczNTUwMn0.uQ4t9PbcyTm8bA6Q40Ye7XT1VrK8vlnQ-gCON39wqjg"
-        //var socket = io.connect({ query: { token, userName } })
-        var socket = io()
+        var socket = io.connect({ query: { token, username } })
         console.log('Tour 2 working');
         socket.emit("create-tour", tourdata)
+    }
+    function updateTour() {
+        let username = 'td1'
+        var tourdata = {
+            tour_name: "tour-f1",
+            max_player: 10,
+            type: "Pairs",
+            password: "123",
+            player_name: [],
+            player_team: [],
+            time_start: "11/21/2021, 9:30:00 PM",
+            status: "Pending",
+            board_to_play: 2,
+            minute_board: 2,
+            board_round: 1,
+            movement: "Clocked",
+            scoring: "MP",
+            barometer: true,
+            createBy: username,
+        }
+        let token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjFhOGFiNTU0ZjFiZmVmMmVjOTc3OWZhIiwiZW1haWwiOiJ0ZDFAZW1haWwuY29tIiwidXNlcm5hbWUiOiJ0ZDEiLCJhY2Nlc3MiOiJVc2VyIiwiaWF0IjoxNjM4NDQzODYxLCJleHAiOjE2Mzg0NTEwNjF9.uvXJL5EAy6PEW2RSObJs_THjQeb4P4jYS-OcWlBsMU8"
+        var socket = io.connect({ query: { token, username } })
+        socket.emit("update-tour", tourdata)
+    }
+    function deleteTour() {
+        let username = 'td1'
+        let token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjFhOGFiNTU0ZjFiZmVmMmVjOTc3OWZhIiwiZW1haWwiOiJ0ZDFAZW1haWwuY29tIiwidXNlcm5hbWUiOiJ0ZDEiLCJhY2Nlc3MiOiJVc2VyIiwiaWF0IjoxNjM4NDQzODYxLCJleHAiOjE2Mzg0NTEwNjF9.uvXJL5EAy6PEW2RSObJs_THjQeb4P4jYS-OcWlBsMU8"
+        var socket = io.connect({ query: { token, username } })
+        socket.emit("delete-tour", 'tour-f1', username)
     }
     function manageRoom() {
         var socket = io()
