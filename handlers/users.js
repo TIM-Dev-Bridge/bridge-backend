@@ -69,7 +69,7 @@ exports.register = async (req, res) => {
       password: encryptedPassword,
     });
     console.log(1);
-    
+
     //Create token
     const token = jwt.sign(
       {
@@ -88,7 +88,9 @@ exports.register = async (req, res) => {
     user.token = token;
     //return new user
     res.status(201).json(user);
-  } catch (err) {console.log(err);}
+  } catch (err) {
+    console.log(err);
+  }
 };
 
 //Login
@@ -139,44 +141,18 @@ exports.login = async (req, res) => {
 exports.home2 = (req, res) => {
   res.status(200).send("Welcome to home");
 };
-//Join tournament
-exports.joinTournament = async (req, res) => {
-  try {
-    const { tour_name, player_id } = req.body;
-    const hasTour = await TourR.findOne({ tour_name });
-    if (!hasTour) {
-      res.status(409).send("This tour is not found");
-    }
-    // if player < 20 Condition & not prime number
-    const joinTour = await TourR.updateOne(
-      { tour_name: tour_name },
-      { $push: { player_name: player_id } }
-    );
 
-    //Join room
-    res.status(201).send(joinTour);
+//Get tournament name
+exports.getTournament = async (req, res) => {
+  try {
+    const tour_data = await TourR.findOne({ tour_name: tour_name.tour_name });
+    res.status(201).send(tour_data);
   } catch (error) {
-    console.log("error");
-    console.log(error);
-    res.send(error);
+    console.log(err);
+    res.status(409).send("This tour is not found");
   }
 };
-//Exit tournament
-exports.exitTournament = async (req, res) => {
-  try {
-    const { tour_name, player_id } = req.body;
-    const hasTour = await TourR.findOne({ tour_name });
-    if (!hasTour) {
-      res.status(409).send("This tour is not found");
-    }
-    //if player is in that tour can exit
-    const exitTour = await TourR.updateOne(
-      { tour_name: tour_name },
-      { $pull: { player_name: player_id } }
-    );
-    res.status(201).send(exitTour);
-  } catch (error) {}
-};
+
 //PairTeam
 exports.manageTour = async (req, res) => {
   try {

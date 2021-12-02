@@ -90,14 +90,8 @@ io.on("connection", (socket) => {
     try {
       const user_data = await User.findOne({ username: username });
       socket.emit("get-user-data", user_data);
-    } catch (error) {}
-  });
-  //Get tournament
-  socket.on("get-tour-data", async (tour_name) => {
-    try {
-      const tour_data = await TourR.findOne({ tour_name: tour_name.tour_name });
-      socket.emit("get-tour-data", tour_data);
-    } catch (error) {}
+    } catch (error) {console.log(err);
+      socket.emit("get-user-data", 'Cannot find user data');}
   });
 
   //Join socket io server

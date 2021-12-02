@@ -14,9 +14,8 @@ const {
   register,
   login,
   home2,
-  joinTournament,
-  exitTournament,
   manageTour,
+  getTournament,
 } = require("./handlers/users");
 const { registerTourD, loginTourD } = require("./handlers/tourDs");
 const {
@@ -29,8 +28,7 @@ app.get("/home2", auth, home2);
 
 app.post("/register", register);
 app.post("/login", login);
-app.post("/joinTour", joinTournament);
-app.delete("/exitTour", exitTournament);
+app.get("/getTournament", getTournament);
 
 app.post("/registerTourD", registerTourD);
 app.post("/loginTourD", loginTourD);
@@ -40,6 +38,6 @@ app.post("/updateTour", updateTournament);
 app.delete("/deleteTour", deleteTournament);
 
 //Delete
-app.get("/manageTour", manageTour)
+app.get("/manageTour", manageTour);
 
 module.exports = app;
