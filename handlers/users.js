@@ -142,15 +142,64 @@ exports.home2 = (req, res) => {
   res.status(200).send("Welcome to home");
 };
 
-//Get tournament name
-exports.getTournament = async (req, res) => {
-  const { tour_name } = req.body;
+//Get tournament data
+exports.getTournamentData = async (req, res) => {
   try {
+    const { tour_name } = req.body;
     const tour_data = await TourR.findOne({ tour_name: tour_name });
     res.status(201).send(tour_data);
   } catch (error) {
     console.log(err);
     res.status(409).send("This tour is not found");
+  }
+};
+//Get user data
+exports.getUserData = async (req, res) => {
+  try {
+    const { username } = req.body;
+    const user_data = await User.findOne({ username: username });
+    res.status(201).send(user_data);
+  } catch (error) {
+    console.log(err);
+    res.status(409).send("This tour is not found");
+  }
+};
+
+//Update user data
+exports.updateUserData = async (req, res) => {
+  try {
+    const {
+      username,
+      first_name,
+      last_name,
+      display_name,
+      birth_date,
+      password,
+    } = req.body;
+    const hasUser = await User.findOne({ username: username });
+    if (!hasUser) {
+      return socket.emit("update-user", "Not has a user in database");
+    }
+    const user_data = await User.updateOne(
+      {
+        username: username,
+      },
+      {
+        $set: {
+          first_name: first_name,
+          last_name: last_name,
+          display_name: display_name,
+          birth_date: birth_date,
+          // email: user_data.email,
+          // username: user_data.username,
+          password: password,
+        },
+      }
+    );
+    console.log("update user data successful");
+    res.status(201).send(user_data);
+  } catch (error) {
+    console.log(err);
   }
 };
 

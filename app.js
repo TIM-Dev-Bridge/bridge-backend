@@ -15,7 +15,9 @@ const {
   login,
   home2,
   manageTour,
-  getTournament,
+  getTournamentData,
+  getUserData,
+  updateUserData,
 } = require("./handlers/users");
 const { registerTourD, loginTourD } = require("./handlers/tourDs");
 const {
@@ -28,7 +30,9 @@ app.get("/home2", auth, home2);
 
 app.post("/register", register);
 app.post("/login", login);
-app.get("/getTournament", getTournament);
+app.get("/getUserData", getUserData);
+app.get("/getTournamentData", getTournamentData);
+app.post("/updateUserData", updateUserData);
 
 app.post("/registerTourD", registerTourD);
 app.post("/loginTourD", loginTourD);
