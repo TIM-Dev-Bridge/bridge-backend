@@ -116,8 +116,8 @@ io.on("connection", (socket) => {
         last_name: user_data.last_name,
         display_name: user_data.display_name,
         birth_date: user_data.birth_date,
-        email: user_data.email,
-        username: user_data.username,
+        // email: user_data.email,
+        // username: user_data.username,
         password: user_data.password,
       });
       console.log("update user data successful");
