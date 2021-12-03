@@ -145,7 +145,7 @@ exports.home2 = (req, res) => {
 //Get tournament data
 exports.getTournamentData = async (req, res) => {
   try {
-    const { tour_name } = req.body;
+    const { tour_name } = req.query;
     const tour_data = await TourR.findOne({ tour_name: tour_name });
     res.status(201).send(tour_data);
   } catch (error) {
@@ -156,7 +156,7 @@ exports.getTournamentData = async (req, res) => {
 //Get user data
 exports.getUserData = async (req, res) => {
   try {
-    const { username } = req.body;
+    const { username } = req.query;
     const user_data = await User.findOne({ username: username });
     res.status(201).send(user_data);
   } catch (error) {
