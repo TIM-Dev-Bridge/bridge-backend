@@ -18,6 +18,7 @@ const {
   getTournamentData,
   getUserData,
   updateUserData,
+  updateTourData,
 } = require("./handlers/users");
 const { registerTourD, loginTourD } = require("./handlers/tourDs");
 const {
@@ -33,6 +34,7 @@ app.post("/login", login);
 app.get("/getUserData", getUserData);
 app.get("/getTournamentData", getTournamentData);
 app.post("/updateUserData", updateUserData);
+app.post("/updateTourData", updateTourData);
 
 app.post("/registerTourD", registerTourD);
 app.post("/loginTourD", loginTourD);

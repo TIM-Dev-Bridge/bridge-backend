@@ -178,7 +178,7 @@ exports.updateUserData = async (req, res) => {
     } = req.body;
     const hasUser = await User.findOne({ username: username });
     if (!hasUser) {
-      return socket.emit("update-user", "Not has a user in database");
+      return res.status(409).send("This user is not found");
     }
     const user_data = await User.updateOne(
       {
@@ -200,6 +200,61 @@ exports.updateUserData = async (req, res) => {
     res.status(201).send(user_data);
   } catch (error) {
     console.log(err);
+  }
+};
+
+exports.updateTourData = async (req, res) => {
+  try {
+    const {
+      tour_name,
+      max_player,
+      type,
+      password,
+      player_name,
+      time_start,
+      status,
+      board_to_play,
+      minute_board,
+      board_round,
+      movement,
+      scoring,
+      barometer,
+      createBy,
+    } = req.body;
+    //fist time not have
+    const haveTour = await TourR.findOne({ tour_name: tour_name });
+    if (!haveTour) {
+      //callback(false, "This tour already create");
+      return res.status(409).send("This tour is not found");
+    }
+    //Encrypt password tour
+    encryptedPassword = await bcrypt.hash(password, 10);
+    //Update tournament on database
+    const tour_data = await TourR.updateOne(
+      { tour_name: tour_name },
+      {
+        $set: {
+          tour_name: tour_name,
+          max_player: max_player,
+          type: type,
+          password: password,
+          player_name: player_name,
+          time_start: time_start,
+          status: status,
+          board_to_play: board_to_play,
+          minute_board: minute_board,
+          board_round: board_round,
+          movement: movement,
+          scoring: scoring,
+          barometer: barometer,
+          createBy: createBy,
+        },
+      }
+    );
+    console.log("updated success");
+    res.status(201).send(tour_data);
+  } catch (error) {
+    console.log("error is", error);
   }
 };
 
