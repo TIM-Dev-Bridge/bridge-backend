@@ -36,6 +36,7 @@ exports.register = async (req, res) => {
       email,
       username,
       password,
+      confirm_password,
     } = req.body;
 
     const { valid, errors } = validateSignupData({
@@ -46,6 +47,7 @@ exports.register = async (req, res) => {
       email,
       username,
       password,
+      confirm_password,
     });
     if (!valid) return res.status(400).json(errors);
     //Validate if user exist in database

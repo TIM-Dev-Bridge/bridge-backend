@@ -55,6 +55,9 @@ exports.validateSignupData = (data) => {
     errors.password = "Password should contain less than 32 character";
   }
   //TC_SU_25 match with confirmed password
+  if (data.password != data.confirm_password) {
+    errors.confirm_password = "Password do not match";
+  }
   return {
     errors,
     valid: Object.keys(errors).length === 0 ? true : false,
@@ -63,9 +66,17 @@ exports.validateSignupData = (data) => {
 
 exports.validateLoginData = (data) => {
   let errors = {};
-
+  //TC_LI_01
   if (!data.email) errors.email = "Must not be empty";
   if (!data.password) errors.password = "Must not be empty";
+  //TC_LI_05-07
+  if (!isEmail(data.email)) {
+    errors.email = "Invalid email format";
+  }
+  //TC_LI_10-11
+  if (data.password.match(/^ (?=.{8,32})$/)) {
+    errors.password = "Invalid Password";
+  }
 
   return {
     errors,
