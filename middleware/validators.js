@@ -21,10 +21,40 @@ exports.validateSignupData = (data) => {
   ) {
     errors.required = "All input is required";
   }
-  if (!isEmail(data.email)) {
-    errors.email = "Must be a valid email address";
+  //TS_SU_06-07
+  if (!data.first_name.match(/^[A-Za-z]+$/)) {
+    errors.first_name = "Firstname only accept alphabet";
   }
-
+  //TS_SU_09-10
+  if (data.last_name.match(/^[A-Za-z]+$/)) {
+    errors.last_name = "Lastname only accept alphabet";
+  }
+  //TS_SU_12-14
+  if (!isEmail(data.email)) {
+    errors.email = "Invalid email format";
+  }
+  //TC_SU_16-17
+  if (data.display_name <= 5 || data.display_name >= 16) {
+    errors.display_name = "Length of displayname should between 5 and 16 ";
+  }
+  //TC_SU_22
+  if (
+    data.password.match(
+      /^(?=.*\d)(?=.*[A-Z])(?=.*[a-z])(?=.*[a-zA-Z!#$%&? "])[a-zA-Z0-9!#$%&?]$/
+    )
+  ) {
+    errors.password =
+      "Password should include Capital Letter, small Letter, number and special character";
+  }
+  //TC_SU_23
+  if (data.password.match(/^ (?=.{8,})$/)) {
+    errors.password = "Password should contain at least 8 characters";
+  }
+  //TC_SU_24
+  if (data.password.match(/^ (?=.{,32})$/)) {
+    errors.password = "Password should contain less than 32 character";
+  }
+  //TC_SU_25 match with confirmed password
   return {
     errors,
     valid: Object.keys(errors).length === 0 ? true : false,
