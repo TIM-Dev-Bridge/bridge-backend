@@ -22,7 +22,7 @@ const {
 } = require("./handlers/users");
 const { registerTourD, loginTourD } = require("./handlers/tourDs");
 app.get("/", home);
-app.get("/home2", auth, home2);
+app.get("/home2", home2);
 
 app.post("/register", register);
 app.post("/login", login);

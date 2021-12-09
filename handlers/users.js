@@ -63,12 +63,11 @@ exports.register = async (req, res) => {
       last_name,
       display_name,
       birth_date,
-      access: "User",
+      access: "user",
       email: email.toLowerCase(),
       username,
       password: encryptedPassword,
     });
-    console.log(1);
 
     //Create token
     const token = jwt.sign(
@@ -137,9 +136,16 @@ exports.login = async (req, res) => {
   } catch (err) {}
 };
 
-//Auth test
+//Test
 exports.home2 = (req, res) => {
-  res.status(200).send("Welcome to home");
+  let errors = {};
+  //let email = "test@gmail.com";
+  //let password = "12345678";
+  let email = "";
+  let password = "";
+  if (!email) errors.email = "Must not be empty";
+  if (!password) errors.password = "Must not be empty";
+  res.status(409).send(errors);
 };
 
 //Get tournament data
