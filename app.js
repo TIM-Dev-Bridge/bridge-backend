@@ -21,11 +21,6 @@ const {
   updateTourData,
 } = require("./handlers/users");
 const { registerTourD, loginTourD } = require("./handlers/tourDs");
-const {
-  createTournament,
-  updateTournament,
-  deleteTournament,
-} = require("./tour/tournaments");
 app.get("/", home);
 app.get("/home2", auth, home2);
 
@@ -39,9 +34,6 @@ app.post("/updateTourData", updateTourData);
 app.post("/registerTourD", registerTourD);
 app.post("/loginTourD", loginTourD);
 
-app.post("/createTour", createTournament);
-app.post("/updateTour", updateTournament);
-app.delete("/deleteTour", deleteTournament);
 
 //Delete
 app.get("/manageTour", manageTour);
