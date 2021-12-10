@@ -84,14 +84,22 @@ io.on("connection", (socket) => {
   //find way to
   //set time out (millisec)
   //Save session
-
+  socket.on("test", (msg) => {
+    try {
+      socket.emit("test", msg);
+    } catch (error) {
+      socket.emit("test", msg);
+    }
+  });
   //Get current user data
   socket.on("get-user-data", async (username) => {
     try {
       const user_data = await User.findOne({ username: username });
       socket.emit("get-user-data", user_data);
-    } catch (error) {console.log(err);
-      socket.emit("get-user-data", 'Cannot find user data');}
+    } catch (error) {
+      console.log(err);
+      socket.emit("get-user-data", "Cannot find user data");
+    }
   });
 
   //Join socket io server

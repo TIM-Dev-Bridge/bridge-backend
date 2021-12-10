@@ -1,51 +1,54 @@
-const http = require("http");
-const app = require("../app");
-const Server = require("socket.io");
-const Client = require("socket.io-client");
+const io = require("socket.io-client");
+describe("Suite of unit tests", function () {
+  var socket;
 
-
-describe("my awesome project", () => {
-  let io, serverSocket, clientSocket;
-
-  beforeAll((done) => {
-
-    // let token ="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjFiMmY3NGEyZjJlMTJjZmIyNDAwNjMwIiwiZW1haWwiOiJ1c2VyQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoidXNlciIsImFjY2VzcyI6InVzZXIiLCJpYXQiOjE2MzkxMjA3ODgsImV4cCI6MTYzOTEyNzk4OH0.FZhdLkjMOuybY3h6RdQKL9iv1AP1A1D1EFBT8C9SXbc"
-    // let username = "user"
-    // httpServerAddr = httpServer.listen().address();
-    // io = new Server();
-    // serverSocket = io.connect(`http://localhost:${port}`, {'query': { token, username }});
-
-    const httpServer = http.createServer(app);
-    io = new Server(httpServer);
-    httpServer.listen(8000, () => {
-      clientSocket = new Client(`http://localhost:8000`);
-      io.on("connection", (socket) => {
-        serverSocket = socket;
-      });
-      clientSocket.on("connect", done);
+  beforeEach(function (done) {
+    // Setup
+    let token =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjFiMzAyYjgzNGFhMjFkMDVmNjg5Zjc4IiwiZW1haWwiOiJhZG1pbkBlbWFpbC5jb20iLCJ1c2VybmFtZSI6IkFkbWluIiwiYWNjZXNzIjoidXNlciIsImlhdCI6MTYzOTEyMTY0MiwiZXhwIjoxNjM5MTI4ODQyfQ.3JLWR5AH5PH8j6Yzq0vFYtArSs1kRPvW67qCCmJdQF0";
+    let username = "Admin";
+    socket = io.connect("http://localhost:3000", {
+      query: { token, username },
     });
-  });
-
-  afterAll(() => {
-    serverSocket.close();
-    clientSocket.close();
-  });
-
-  test("should work", (done) => {
-    clientSocket.on("hello", (arg) => {
-      expect(arg).toBe("world");
+    socket.on("connect", function () {
+      console.log("worked...");
       done();
     });
-    serverSocket.emit("hello", "world");
+    socket.on("disconnect", function () {
+      console.log("disconnected...");
+    });
   });
 
-//   test("should work (with ack)", (done) => {
-//     serverSocket.on("hi", (cb) => {
-//       cb("hola");
-//     });
-//     clientSocket.emit("hi", (arg) => {
-//       expect(arg).toBe("hola");
-//       done();
-//     });
-//   });
+  afterEach(function (done) {
+    // Cleanup
+    // if (socket.connected) {
+    //   console.log("disconnecting...");
+    //   socket.disconnect();
+    // } else {
+    //   // There will not be a connection unless you have done() in beforeEach, socket.on('connect'...)
+    //   console.log("no connection to break...");
+    // }
+    done();
+  });
+
+  test("should work", () => {
+    socket.on("test", (arg) => {
+      expect(arg).toBe("test done");
+      done();
+    });
+    //serverSocket.emit("test", "test done");
+  });
+  // describe("First (hopefully useful) test", function () {
+  //   it("Doing some things with indexOf()", function (done) {
+  //     expect([1, 2, 3].indexOf(5)).to.be.equal(-1);
+  //     expect([1, 2, 3].indexOf(0)).to.be.equal(-1);
+  //     done();
+  //   });
+
+  //   it("Doing something else with indexOf()", function (done) {
+  //     expect([1, 2, 3].indexOf(5)).to.be.equal(-1);
+  //     expect([1, 2, 3].indexOf(0)).to.be.equal(-1);
+  //     done();
+  //   });
+  // });
 });
