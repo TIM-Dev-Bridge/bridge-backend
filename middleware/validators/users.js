@@ -26,7 +26,7 @@ exports.validateSignupData = (data) => {
     errors.first_name = "Firstname only accept alphabet";
   }
   //TS_SU_09-10
-  if (data.last_name.match(/^[A-Za-z]+$/)) {
+  if (!data.last_name.match(/^[A-Za-z]+$/)) {
     errors.last_name = "Lastname only accept alphabet";
   }
   //TS_SU_12-14

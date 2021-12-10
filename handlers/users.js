@@ -10,7 +10,7 @@ const path = require("path");
 const {
   validateSignupData,
   validateLoginData,
-} = require("../middleware/validators");
+} = require("../middleware/validators/users");
 const { log } = require("console");
 
 const app = express();
