@@ -34,25 +34,25 @@ exports.validateSignupData = (data) => {
     errors.email = "Invalid email format";
   }
   //TC_SU_16-17
-  if (data.display_name <= 5 || data.display_name >= 16) {
-    errors.display_name = "Length of displayname should between 5 and 16 ";
+  if (!data.display_name.match(/^ (?=.{5,16})$/)) {
+    errors.display_name = "Length of displayname should between 5 and 16";
   }
   //TC_SU_22
   if (
-    data.password.match(
+    !data.password.match(
       /^(?=.*\d)(?=.*[A-Z])(?=.*[a-z])(?=.*[a-zA-Z!#$%&? "])[a-zA-Z0-9!#$%&?]$/
     )
   ) {
-    errors.password =
+    errors.format_password =
       "Password should include Capital Letter, small Letter, number and special character";
   }
   //TC_SU_23
   if (data.password.match(/^ (?=.{8,})$/)) {
-    errors.password = "Password should contain at least 8 characters";
+    errors.password_short = "Password should contain at least 8 characters";
   }
   //TC_SU_24
   if (data.password.match(/^ (?=.{,32})$/)) {
-    errors.password = "Password should contain less than 32 character";
+    errors.password_long = "Password should contain less than 32 character";
   }
   //TC_SU_25 match with confirmed password
   if (data.password != data.confirm_password) {

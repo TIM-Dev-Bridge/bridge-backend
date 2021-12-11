@@ -37,6 +37,22 @@ describe("Login",() => {
             expect(response.body.username).toBeDefined()
         })
 
+        test("user not exist : return error Invalid Credentials", async () => {
+            const response = await request(app).post("/login").send({
+                email: "user10@gmail.com",
+                password: "Qq123456!"
+            })
+            expect(response.text).toBe("Invalid Credentials")
+        })
+
+        test("wrong password : return error Invalid Credentials", async () => {
+            const response = await request(app).post("/login").send({
+                email: "user10@gmail.com",
+                password: "Qq123456"
+            })
+            expect(response.text).toBe("Invalid Credentials")
+        })
+
     })
     
     describe("Check Login with Invalid Credentials",() =>{
