@@ -71,11 +71,11 @@ exports.validateLoginData = (data) => {
   if (!data.password) errors.password = "Must not be empty";
   //TC_LI_05-07
   if (!isEmail(data.email)) {
-    errors.email = "Invalid email format";
+    errors.format_email = "Invalid email format";
   }
   //TC_LI_10-11
-  if (data.password.match(/^ (?=.{8,32})$/)) {
-    errors.password = "Invalid Password";
+  if (!data.password.match(/^ (?=.{8,32})$/)) {
+    errors.format_password = "Invalid Password";
   }
 
   return {
