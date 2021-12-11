@@ -2,16 +2,16 @@ const request = require("supertest");
 const app = require("../app.js");
 const mongoose = require("mongoose");
 
-beforeAll(done => {
-    done()
-  })
+describe("Login Testing",() => {
 
-afterAll(done => {
-    mongoose.connection.close()
-    done()
-})
-
-describe("Login",() => {
+    beforeAll(done => {
+        done()
+      })
+    
+    afterAll(done => {
+        mongoose.connection.close()
+        done()
+    })
 
     describe("Check Login with valid Credentials",() =>{
         test("Respond with 200", async () => {

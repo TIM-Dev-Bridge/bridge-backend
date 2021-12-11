@@ -2,16 +2,17 @@ const request = require("supertest");
 const app = require("../app.js");
 const mongoose = require("mongoose");
 
-beforeAll(done => {
-    done()
-  })
+describe("Register Testing", () => {
 
-afterAll(done => {
-    mongoose.connection.close()
-    done()
-})
+    beforeAll(done => {
+        done()
+      })
+    
+    afterAll(done => {
+        mongoose.connection.close()
+        done()
+    })
 
-describe("Register", () => {
     describe("Valid Credentials", () => {
         test("not already exist : return 201", async () => {
             const response = await request(app).post("/register").send({
