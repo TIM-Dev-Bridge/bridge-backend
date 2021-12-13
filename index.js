@@ -84,23 +84,27 @@ io.on("connection", (socket) => {
   //find way to
   //set time out (millisec)
   //Save session
-  socket.on("test", (msg) => {
-    try {
-      socket.emit("test", msg);
-    } catch (error) {
-      socket.emit("test", msg);
-    }
-  });
-  //Get current user data
-  socket.on("get-user-data", async (username) => {
-    try {
-      const user_data = await User.findOne({ username: username });
-      socket.emit("get-user-data", user_data);
-    } catch (error) {
-      console.log(err);
-      socket.emit("get-user-data", "Cannot find user data");
-    }
-  });
+  // socket.on("test", (cb) => {
+  //   console.log("asdadsadsadasdassad")
+  //   console.log(`callback`, cb)
+  //   cb({
+  //     msg : "MARKPONGTAI"
+  //   });
+  // });
+
+  // socket.on("test2", () => {
+  //   socket.emit("test2", "KODTAE")
+  // });
+  // //Get current user data
+  // socket.on("get-user-data", async (username) => {
+  //   try {
+  //     const user_data = await User.findOne({ username: username });
+  //     socket.emit("get-user-data", user_data);
+  //   } catch (error) {
+  //     console.log(err);
+  //     socket.emit("get-user-data", "Cannot find user data");
+  //   }
+  // });
 
   //Join socket io server
   socket.on("join-server", (username) => {
@@ -149,6 +153,7 @@ io.on("connection", (socket) => {
       const sameTour = await TourR.findOne({ tour_name: tour_data.tour_name });
       if (sameTour) {
         //callback(false, "This tour already create");
+        console.log("Tournament already exist")
         return socket.emit("create-tour", "This tour already create");
       }
       //Encrypt password tour
@@ -171,9 +176,11 @@ io.on("connection", (socket) => {
         createBy: tour_data.createBy,
       });
       console.log("created tournament successful");
+      return socket.emit("create-tour", "Tournament created successfully");
       //callback(true, "Room created");
     } catch (error) {
       console.log("error is", error);
+      return socket.emit("create-tour", "Error Occured")
       //callback(false, "Failed to create room");
     }
   });

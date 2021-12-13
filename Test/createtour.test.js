@@ -1,54 +1,87 @@
-const io = require("socket.io-client");
-describe("Suite of unit tests", function () {
-  var socket;
+const { JsonWebTokenError } = require("jsonwebtoken");
+const { io } = require("socket.io-client");
 
-  beforeEach(function (done) {
-    // Setup
-    let token =
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjFiMzAyYjgzNGFhMjFkMDVmNjg5Zjc4IiwiZW1haWwiOiJhZG1pbkBlbWFpbC5jb20iLCJ1c2VybmFtZSI6IkFkbWluIiwiYWNjZXNzIjoidXNlciIsImlhdCI6MTYzOTEyMTY0MiwiZXhwIjoxNjM5MTI4ODQyfQ.3JLWR5AH5PH8j6Yzq0vFYtArSs1kRPvW67qCCmJdQF0";
-    let username = "Admin";
-    socket = io.connect("http://localhost:3000", {
-      query: { token, username },
-    });
-    socket.on("connect", function () {
-      console.log("worked...");
-      done();
-    });
-    socket.on("disconnect", function () {
-      console.log("disconnected...");
-    });
+// Setup
+
+const token =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjFiNGI4MWNlYWVhNGQ1YjdjYzBlZTU0IiwiZW1haWwiOiJ0ZEBnbWFpbC5jb20iLCJ1c2VybmFtZSI6InRkMDAwMSIsImFjY2VzcyI6InRkIiwiaWF0IjoxNjM5Mzg5MjcyLCJleHAiOjE2MzkzOTY0NzJ9.sHQbK-apFuy7awpj9BzQdmtLtEyWT47c26YJ1IB2vEw";
+const username = "td0001";
+var socket = io("http://localhost:3000", { query: { token, username } });
+jest.setTimeout(10000);
+
+beforeAll(async () => {
+  socket.on("connect", function () {
+    console.log("worked...");
   });
-
-  afterEach(function (done) {
-    // Cleanup
-    // if (socket.connected) {
-    //   console.log("disconnecting...");
-    //   socket.disconnect();
-    // } else {
-    //   // There will not be a connection unless you have done() in beforeEach, socket.on('connect'...)
-    //   console.log("no connection to break...");
-    // }
-    done();
+  socket.on("disconnect", function () {
+    console.log("disconnected...");
   });
+  await new Promise((resolve) => {
+    setTimeout(resolve, 3000);
+  });
+});
 
-  test("should work", () => {
-    socket.on("test", (arg) => {
-      expect(arg).toBe("test done");
-      done();
+// test("should work", () => {
+//   const aaa = new Promise((resolve) => {
+//     console.log("MARK");
+//     socket.emit("test", (arg) => {
+//       console.log(arg.msg);
+//       resolve("MARKKODTAE");
+//     });
+//   });
+//   return aaa.then((msg) =>{
+//     expect(msg).toBe("MARKKODTAE");
+//   });
+// });
+
+// test("should work 2", () => {
+//   return new Promise((resolve) => {
+//     console.log("MARK");
+//     socket.on("test2", (arg) => {
+//       console.log(arg);
+//       resolve(arg);
+//     });
+//     socket.emit("test2")
+//   }).then((msg) =>{
+//     expect(msg).toBe("KODTAE");
+//     expect(msg).toBe("KODMARK");
+//   });
+// });
+
+// test("should work", done => {
+//   console.log("MARK");
+//   socket.emit("test", (arg) => {
+//     console.log(arg.msg);
+//     expect(msg).toBe("MARKPONGTAI")
+//     expect(msg).toBe("MARKHEETAD")
+//     done()
+//   });
+// });
+
+test("Create tournament with valid infomation", () => {
+  return new Promise((resolve) => {
+    console.log("Start");
+    socket.on("create-tour", (arg) => {
+      console.log(arg);
+      resolve(arg);
     });
-    //serverSocket.emit("test", "test done");
+    socket.emit("create-tour", {
+      tour_name: "testtournament",
+      max_player: 20,
+      type: "Pairs",
+      password: "11501112",
+      player_name: [],
+      time_start: "13/12/2021, 5:08:00 PM",
+      status: "Pending",
+      board_to_play: 8,
+      minute_board: 15,
+      board_round: 6,
+      movement: "Pairs",
+      scoring: "MP",
+      barometer: true,
+      createBy: "td0001",
+    })
+  }).then((msg) =>{
+    expect(msg).toBe("Tournament created successfully");
   });
-  // describe("First (hopefully useful) test", function () {
-  //   it("Doing some things with indexOf()", function (done) {
-  //     expect([1, 2, 3].indexOf(5)).to.be.equal(-1);
-  //     expect([1, 2, 3].indexOf(0)).to.be.equal(-1);
-  //     done();
-  //   });
-
-  //   it("Doing something else with indexOf()", function (done) {
-  //     expect([1, 2, 3].indexOf(5)).to.be.equal(-1);
-  //     expect([1, 2, 3].indexOf(0)).to.be.equal(-1);
-  //     done();
-  //   });
-  // });
 });
