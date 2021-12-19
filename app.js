@@ -34,6 +34,10 @@ app.post("/updateTourData", updateTourData);
 app.post("/registerTourD", registerTourD);
 app.post("/loginTourD", loginTourD);
 
+app.get('/getAnnouncement', getAnnouncement);
+app.get('/getAnnouncements', getAnnouncementsByOffset);
+app.post('/addAnnouncement', addAnnouncement);
+app.post('/updateAnnouncement', updateAnnouncement);
 
 //Delete
 app.get("/manageTour", manageTour);
