@@ -19,6 +19,10 @@ const {
   getUserData,
   updateUserData,
   updateTourData,
+  getAnnouncement,
+  getAnnouncementsByOffset,
+  addAnnouncement,
+  updateAnnouncement,
 } = require("./handlers/users");
 const { registerTourD, loginTourD } = require("./handlers/tourDs");
 app.get("/", home);
