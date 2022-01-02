@@ -46,4 +46,7 @@ app.post('/updateAnnouncement', updateAnnouncement);
 //Delete
 app.get("/manageTour", manageTour);
 
+//Test function//
+var random_card = require('./handlers/card')
+random_card.random_card()
 module.exports = app;

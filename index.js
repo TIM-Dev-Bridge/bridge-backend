@@ -712,33 +712,9 @@ io.on("connection", (socket) => {
       let temp_second = second_pair.shift();
       second_pair.push(temp_second);
     }
-    console.log(Table);
-
-    console.log("finish");
     io.in(tour_name).emit("start-tour", Table);
     // res.status(201).send("back");
   });
-
-  // //Invite to team
-  // socket.on("invite-team", (tour_name, from, to) => {
-  //   try {
-  //     socket.emit("invite-team", (from, to), `${from} is invited ${to}`);
-  //   } catch (error) {}
-  // });
-  // //Recieve invited team
-  // socket.on("recieve-invite-team", (tour_name, from, to, msg) => {
-  //   try {
-  //     //Save on DB
-  //     //Check user in Socket Server
-  //     if (msg == "Accept" && from.status_team == 0 && to.status_team == 0) {
-  //       from.status_team = 1;
-  //       to.status_team = 1;
-  //       return socket.emit("pair-team", tour_name, from, to, msg);
-  //     } else if (msg == "Decline") {
-  //       return socket.emit("pair-team", tour_name, from, to, msg);
-  //     }
-  //   } catch (error) {}
-  // });
   //Leave team
   socket.on("leave-team", (user) => {});
   //Manage team
