@@ -192,7 +192,7 @@ io.on("connection", (socket) => {
     }
   });
   socket.on("get-tours", () => {
-    socket.emit("get-tours", tours)
+    socket.emit("get-tours", tours);
     console.log(tours);
   });
 
@@ -219,16 +219,7 @@ io.on("connection", (socket) => {
       }
       tourList.push(tourData);
     }
-
-    //   for (const tour_name in temp) {
-    //     let tourData = {
-    //       host: "",
-    //       title: tours[tour_name].tour_name,
-    //       type: String(tours[tour_name].type),
-    //       players: String(tours[tour_name].player_name.length),
-    //     }
-    //     tourList.push(tourData)
-    // }
+    console.log(`tourList`, tourList);
     callback(tourList);
   });
 
@@ -277,7 +268,7 @@ io.on("connection", (socket) => {
       //callback(false, "Failed to create room");
     }
   });
-  //Delete tour
+  //Delete tour x/
   socket.on("delete-tour", async (tour_name, current_TD) => {
     try {
       //fist time not have
@@ -289,14 +280,14 @@ io.on("connection", (socket) => {
           "This tour name not have in our tournament"
         );
       }
+      delete tours[tour_data.tour_name];
       //Create tournament on database
       const tournament = await TourR.deleteOne({
         tour_name: tour_name,
         createBy: current_TD,
       });
       console.log("delete successful");
-      //Create temp tour
-      //callback(true, "Room deleted");
+
       io.emit("delete-tour");
     } catch (error) {
       console.log("error is", error);
@@ -353,6 +344,9 @@ io.on("connection", (socket) => {
       //   };
       // };
       // console.log(tours[tour_name].player)
+      console.log(tours[tour_name].player_name.length);
+      console.log(tours[tour_name].max_player);
+      console.log(users[player_name].tour);
       if (
         tours[tour_name].player_name.length < tours[tour_name].max_player &&
         users[player_name].tour == undefined
@@ -368,7 +362,7 @@ io.on("connection", (socket) => {
         var waitingPlayer = tours[tour_name].player_name
           .filter((player) => player.status == "waiting")
           .map((player) => player.name);
-        if (tours["tour-f2"].player_pair.length == 0) {
+        if (tours[tour_name].player_pair.length == 0) {
           tours[tour_name].player_pair.push({ user_a: "p1", user_b: "p2" });
           tours[tour_name].player_pair.push({
             user_a: "pthoven",
@@ -394,11 +388,10 @@ io.on("connection", (socket) => {
         io.in(tour_name).emit("");
         io.in(tour_name).emit("update-player-waiting", waitingPlayer);
         updateTourList();
-        callback(true);
+        // callback(true);
       }
     } catch (error) {
-      console.log("error");
-      console.log(error);
+      console.log(`error`, error);
     }
     //Send response to client
     socket.emit("join-tour", `${player_name} connected Server`);
@@ -712,25 +705,19 @@ io.on("connection", (socket) => {
       let temp_second = second_pair.shift();
       second_pair.push(temp_second);
     }
+    console.log("table", Table);
     io.in(tour_name).emit("start-tour", Table);
     // res.status(201).send("back");
   });
+
+  socket.on("send-bidding", (player_name, roomname, bid, status, callback) => {
+    //Check play have status to use this socket
+    socket.to(roomname).emit("send-bidding");
+  });
   //Leave team
-  socket.on("leave-team", (user) => {});
+  socket.on("leave-team", (user, tour_name) => {});
   //Manage team
   //Join room
-  socket.on("join-room", (user, roomName) => {
-    socket.join(roomName);
-    console.log(`username ${user} is join the ${roomName} room`);
-    //Send response to client
-    socket.to(roomName).emit("join-room", `${user} connected Server`);
-  });
-  //Leave room
-  socket.on("leave-room", async (user, roomName) => {
-    socket.leave(roomName);
-    socket.to(roomName).emit("leave-room", `${user} disconnected Server`);
-    console.log(`user name ${user} is join the ${roomName} room`);
-  });
   //Manage room
   socket.on("manage-room", async (roomName) => {
     TourR.find()
@@ -742,11 +729,6 @@ io.on("connection", (socket) => {
         console.log("len = " + lenUser);
       });
     //Find player
-  });
-  //Join team
-  socket.on("join-team", (user, team) => {
-    socket.join(team);
-    console.log(`username ${user} is join the ${team} team`);
   });
   //--Check user in a room
   socket.on("get-username-room", async (roomName) => {
