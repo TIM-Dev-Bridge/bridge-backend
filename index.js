@@ -695,18 +695,22 @@ io.on("connection", (socket) => {
     console.log("num", second_pair);
     //Mitchell full
     let Table = {};
-    let play_round = 3;
+    let tables = [];
+    let rounds = [];
+    let play_round = 3; //must change
+
     for (var round = 0; round < play_round; round++) {
       Table["round" + round] = {};
       for (var table = 0; table < Object.keys(TempSlot).length / 2; table++) {
-        Table["round" + round]["table" + table] =
-          first_pair[table] + "," + second_pair[table];
+        tables.push({ table_id:`r${round}tb${table}`,versus: `${first_pair[table]},${second_pair[table]}` });
       }
+      rounds.push({round_id:`${round}`,tables:tables})
+      tables = []
       let temp_second = second_pair.shift();
       second_pair.push(temp_second);
     }
-    console.log("table", Table);
-    io.in(tour_name).emit("start-tour", Table);
+    tours[tour_name][`rounds`] = rounds
+    io.in(tour_name).emit("start-tour", rounds);
     // res.status(201).send("back");
   });
 
