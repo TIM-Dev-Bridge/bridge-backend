@@ -22,6 +22,8 @@ const User = require("./model/user");
 const Board = require("./model/board");
 const { log } = require("console");
 
+let card = require("./handlers/card");
+
 let users = {};
 let tours = {};
 
@@ -636,10 +638,7 @@ io.on("connection", (socket) => {
 
   socket.on("start", (tour_name) => {
     console.log("start");
-    let tour_match = {};
-    let objectManage = {
-      player1: "player2",
-    };
+    tours[tour_name][card] = card.random_card()
     var teams = tours[tour_name].player_pair;
     var teamSlot = {};
     var ArraySlot = [];
@@ -648,35 +647,10 @@ io.on("connection", (socket) => {
       ArraySlot.push(teams[i]);
     }
 
-    // teamSlot[`Team1`] = { user_a: 'taetae12', user_b: 'taetae13' }
-    // ArraySlot.push({ user_a: 'taetae12', user_b: 'taetae13' })
-    // teamSlot[`Team2`] = { user_a: 'taetae15', user_b: 'taetae16' }
-    // ArraySlot.push({ user_a: 'taetae15', user_b: 'taetae16' })
-    // teamSlot[`Team3`] = { user_a: 'taetae17', user_b: 'taetae18' }
-    // ArraySlot.push({ user_a: 'taetae17', user_b: 'taetae18' })
-    // teamSlot[`Team4`] = { user_a: 'taetae19', user_b: 'taetae20' }
-    // ArraySlot.push({ user_a: 'taetae19', user_b: 'taetae20' })
-    // teamSlot[`Team5`] = { user_a: 'taetae20', user_b: 'taetae21' }
-    // ArraySlot.push({ user_a: 'taetae20', user_b: 'taetae21' })
-
-    // let teamSlot = {
-    //   Team1: { s1: "player1", s2: "player2" },
-    //   Team2: { s1: "player3", s2: "player4" },
-    //   Team3: { s1: "player5", s2: "player6" },
-    //   Team4: { s1: "player7", s2: "player8" },
-    // };
-    // let ArraySlot = [
-    //   { s1: "player1", s2: "player2" },
-    //   { s1: "player3", s2: "player4" },
-    //   { s1: "player5", s2: "player6" },
-    //   { s1: "player7", s2: "player8" },
-    // ];
     let TempSlot = [];
     console.log(Object.keys(teamSlot));
     //Push
     console.log(ArraySlot);
-    // ArraySlot.push({ s1: "player9", s2: "player10" });
-    // ArraySlot.push({ s1: "player11", s2: "player12" });
     console.log(ArraySlot[0]);
     for (var temp in ArraySlot) {
       TempSlot["Team" + temp] = ArraySlot[temp];
@@ -694,22 +668,24 @@ io.on("connection", (socket) => {
     console.log("num", first_pair);
     console.log("num", second_pair);
     //Mitchell full
-    let Table = {};
     let tables = [];
     let rounds = [];
     let play_round = 3; //must change
 
     for (var round = 0; round < play_round; round++) {
-      Table["round" + round] = {};
       for (var table = 0; table < Object.keys(TempSlot).length / 2; table++) {
-        tables.push({ table_id:`r${round}tb${table}`,versus: `${first_pair[table]},${second_pair[table]}` });
+        tables.push({
+          table_id: `r${round}tb${table}`,
+          versus: `${first_pair[table]},${second_pair[table]}`,
+        });
       }
-      rounds.push({round_id:`${round}`,tables:tables})
-      tables = []
+      rounds.push({ round_id: `${round}`, tables: tables });
+      tables = [];
       let temp_second = second_pair.shift();
       second_pair.push(temp_second);
     }
-    tours[tour_name][`rounds`] = rounds
+    tours[tour_name][`rounds`] = rounds;
+    console.log(`tours`, tours[tour_name][card])
     io.in(tour_name).emit("start-tour", rounds);
     // res.status(201).send("back");
   });
