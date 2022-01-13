@@ -22,6 +22,7 @@ const User = require("./model/user");
 const Board = require("./model/board");
 const { log } = require("console");
 
+const _ = require("lodash");
 let card = require("./handlers/card");
 
 let users = {};
@@ -123,14 +124,17 @@ io.on("connection", (socket) => {
           username: user_data.username,
         },
         {
+          // $set: {
+          //   first_name: user_data.first_name,
+          //   last_name: user_data.last_name,
+          //   display_name: user_data.display_name,
+          //   birth_date: user_data.birth_date,
+          //   // email: user_data.email,
+          //   // username: user_data.username,
+          //   password: user_data.password,
+          // },
           $set: {
-            first_name: user_data.first_name,
-            last_name: user_data.last_name,
-            display_name: user_data.display_name,
-            birth_date: user_data.birth_date,
-            // email: user_data.email,
-            // username: user_data.username,
-            password: user_data.password,
+            ...user_data,
           },
         }
       );
@@ -158,7 +162,7 @@ io.on("connection", (socket) => {
       //   max_player: tour_data.max_player,
       //   type: tour_data.type,
       //   password: encryptedPassword,
-      //   player_name: tour_data.player_name,
+      //   players: tour_data.players,
       //   time_start: tour_data.time_start,
       //   status: tour_data.status,
       //   board_to_play: tour_data.board_to_play,
@@ -170,7 +174,7 @@ io.on("connection", (socket) => {
       //   createBy: tour_data.createBy,
       // });
       // console.log("created tournament successful");
-      tour_data["player_pair"] = [];
+      //tour_data["player_pair"] = [];
       tour_data["player_waiting"] = [];
       tours[tour_data.tour_name] = tour_data;
       console.log(tours[tour_data.tour_name]);
@@ -181,7 +185,7 @@ io.on("connection", (socket) => {
           host: "",
           title: tours[tour_name].tour_name,
           type: String(tours[tour_name].type),
-          players: String(tours[tour_name].player_name.length),
+          players: String(tours[tour_name].players.length),
         };
         tourList.push(tourData);
       }
@@ -214,10 +218,10 @@ io.on("connection", (socket) => {
         host: "",
         title: tours[tour_name].tour_name,
         type: String(tours[tour_name].type),
-        players: String(tours[tour_name].player_name.length),
+        players: String(tours[tour_name].players.length),
       };
       if (tourData.title == "tour-f2") {
-        tourData.players = 10 + tours[tour_name].player_name.length;
+        tourData.players = 10 + tours[tour_name].players.length;
       }
       tourList.push(tourData);
     }
@@ -249,7 +253,7 @@ io.on("connection", (socket) => {
             max_player: tour_data.max_player,
             type: tour_data.type,
             password: encryptedPassword,
-            player_name: tour_data.player_name,
+            players: tour_data.players,
             time_start: tour_data.time_start,
             status: tour_data.status,
             board_to_play: tour_data.board_to_play,
@@ -325,10 +329,10 @@ io.on("connection", (socket) => {
       //   { $push: { player_name: player_name } }
       // );
       socket.join(tour_name);
-      //Send response to client
+      // //Send response to client
       // socket.emit("join-tour", joinTour);
-      //Force user to the room when time arrive
-      //Test time out emit
+      // // Force user to the room when time arrive
+      // // Test time out emit
       // const withTimeout = (onSuccess, onTimeout, timeout) => {
       //   let called = false;
 
@@ -346,47 +350,71 @@ io.on("connection", (socket) => {
       //   };
       // };
       // console.log(tours[tour_name].player)
-      console.log(tours[tour_name].player_name.length);
+      console.log(tours[tour_name].players.length);
       console.log(tours[tour_name].max_player);
       console.log(users[player_name].tour);
       if (
-        tours[tour_name].player_name.length < tours[tour_name].max_player &&
+        tours[tour_name].players.length < tours[tour_name].max_player &&
         users[player_name].tour == undefined
       ) {
-        tours[tour_name].player_name.push({
+        tours[tour_name].players.push({
+          id: "",
           name: player_name,
-          status: "waiting",
+          status: "in-pair",
+          pair_id: "team1",
         });
-        console.log("PUSH", tours[tour_name].player_name);
-        // tours[tour_name].player_name.push(player_name)
+        console.log("PUSH", tours[tour_name].players);
+        // tours[tour_name].players.push(player_name)
         users[player_name].tour = tour_name;
         // tours[tour_name].player_waiting.push(player_name)
-        var waitingPlayer = tours[tour_name].player_name
+        var waitingPlayer = tours[tour_name].players
           .filter((player) => player.status == "waiting")
           .map((player) => player.name);
-        if (tours[tour_name].player_pair.length == 0) {
-          tours[tour_name].player_pair.push({ user_a: "p1", user_b: "p2" });
-          tours[tour_name].player_pair.push({
-            user_a: "pthoven",
-            user_b: "pp",
+        if (tours[tour_name].players.length == 1) {
+          tours[tour_name].players.push({
+            id: "",
+            name: "peterpan",
+            status: "in-pair",
+            pair_id: "team1",
           });
-          tours[tour_name].player_pair.push({
-            user_a: "pikachu",
-            user_b: "max_verstappen",
+          tours[tour_name].players.push({
+            id: "",
+            name: "mutizaki",
+            status: "in-pair",
+            pair_id: "team3",
           });
-          tours[tour_name].player_pair.push({
-            user_a: "Sharl_leCHair",
-            user_b: "mich_schumacher",
+          tours[tour_name].players.push({
+            id: "",
+            name: "seperite",
+            status: "in-pair",
+            pair_id: "team3",
           });
-          tours[tour_name].player_pair.push({
-            user_a: "lando_norris",
-            user_b: "carlos_sainz",
+          tours[tour_name].players.push({
+            id: "",
+            name: "pokemon",
+            status: "in-pair",
+            pair_id: "team2",
+          });
+          tours[tour_name].players.push({
+            id: "",
+            name: "carspian",
+            status: "in-pair",
+            pair_id: "team4",
+          });
+          tours[tour_name].players.push({
+            id: "",
+            name: "qwerty",
+            status: "in-pair",
+            pair_id: "team4",
+          });
+          tours[tour_name].players.push({
+            id: "",
+            name: "teseded",
+            status: "in-pair",
+            pair_id: "team2",
           });
         }
-        io.in(tour_name).emit(
-          "update-player-pair",
-          tours[tour_name].player_pair
-        );
+        io.in(tour_name).emit("update-player-pair", tours[tour_name].players);
         io.in(tour_name).emit("");
         io.in(tour_name).emit("update-player-waiting", waitingPlayer);
         updateTourList();
@@ -406,10 +434,10 @@ io.on("connection", (socket) => {
         host: "",
         title: tours[tour_name].tour_name,
         type: String(tours[tour_name].type),
-        players: String(tours[tour_name].player_name.length),
+        players: String(tours[tour_name].players.length),
       };
       if (tour_name == "tour-f2") {
-        tourData.players = 10 + tours[tour_name].player_name.length;
+        tourData.players = 10 + tours[tour_name].players.length;
       }
       tourList.push(tourData);
     }
@@ -435,15 +463,14 @@ io.on("connection", (socket) => {
         const tour_name = users[player_name].tour;
         console.log("player", player_name, "want to leave");
         if (
-          tours[tour_name].player_name.find(
-            (player) => player.name == player_name
-          ).status == "in-pair"
+          tours[tour_name].players.find((player) => player.name == player_name)
+            .status == "in-pair"
         ) {
           const yourPair = tours[tour_name].player_pair.find(
             (pair) => pair.user_a == player_name || pair.user_b == player_name
           );
           //remove your pair from list
-          const newPair = tours[tour_name].player_pair.filter(
+          const newPair = tours[tour_name].players.filter(
             (pair) => pair != yourPair
           );
           tours[tour_name].player_pair = newPair;
@@ -451,28 +478,28 @@ io.on("connection", (socket) => {
           const yourPairName =
             player_name == yourPair.user_a ? yourPair.user_b : yourPair.user_a;
           //move your pair back to waiting
-          tours[tour_name].player_name.find(
+          tours[tour_name].players.find(
             (player) => player.name == yourPairName
           ).status = "waiting";
-          console.log("players after leave :", tours[tour_name].player_name);
+          console.log("players after leave :", tours[tour_name].players);
         }
         //remove tour from your data
         users[player_name].tour = undefined;
         console.log("player :=> ", player_name, "leave!");
         //remove you from tour
 
-        tours[tour_name].player_name = tours[tour_name].player_name.filter(
+        tours[tour_name].players = tours[tour_name].players.filter(
           (player) => player.name != player_name
         );
-        const newList = tours[tour_name].player_name
+        const newList = tours[tour_name].players
           .filter((player) => player.status == "waiting")
           .map((player) => player.name);
-        const waitingPlayers = tours[tour_name].player_name.filter(
+        const waitingPlayers = tours[tour_name].players.filter(
           (player) => player.status == "waiting"
         );
         console.log(
           "player after really leave ",
-          tours[tour_name].player_name,
+          tours[tour_name].players,
           newList
         );
         io.in(tour_name).emit("update-player-waiting", newList);
@@ -484,10 +511,10 @@ io.on("connection", (socket) => {
             host: "",
             title: tours[tour_name].tour_name,
             type: String(tours[tour_name].type),
-            players: String(tours[tour_name].player_name.length),
+            players: String(tours[tour_name].players.length),
           };
           if (tour_name == "tour-f2") {
-            tourData.players = 10 + tours[tour_name].player_name.length;
+            tourData.players = 10 + tours[tour_name].players.length;
           }
           tourList.push(tourData);
         }
@@ -502,9 +529,8 @@ io.on("connection", (socket) => {
       const tour_name = users[player_name].tour;
       console.log("player", player_name, "want to leave");
       if (
-        tours[tour_name].player_name.find(
-          (player) => player.name == player_name
-        ).status == "in-pair"
+        tours[tour_name].players.find((player) => player.name == player_name)
+          .status == "in-pair"
       ) {
         const yourPair = tours[tour_name].player_pair.find(
           (pair) => pair.user_a == player_name || pair.user_b == player_name
@@ -518,28 +544,28 @@ io.on("connection", (socket) => {
         const yourPairName =
           player_name == yourPair.user_a ? yourPair.user_b : yourPair.user_a;
         //move your pair back to waiting
-        tours[tour_name].player_name.find(
+        tours[tour_name].players.find(
           (player) => player.name == yourPairName
         ).status = "waiting";
-        console.log("players after leave :", tours[tour_name].player_name);
+        console.log("players after leave :", tours[tour_name].players);
       }
       //remove tour from your data
       users[player_name].tour = undefined;
       console.log("player :=> ", player_name, "leave!");
       //remove you from tour
 
-      tours[tour_name].player_name = tours[tour_name].player_name.filter(
+      tours[tour_name].players = tours[tour_name].players.filter(
         (player) => player.name != player_name
       );
-      const newList = tours[tour_name].player_name
+      const newList = tours[tour_name].players
         .filter((player) => player.status == "waiting")
         .map((player) => player.name);
-      const waitingPlayers = tours[tour_name].player_name.filter(
+      const waitingPlayers = tours[tour_name].players.filter(
         (player) => player.status == "waiting"
       );
       console.log(
         "player after really leave ",
-        tours[tour_name].player_name,
+        tours[tour_name].players,
         newList
       );
       console.log(tours[tour_name]);
@@ -552,10 +578,10 @@ io.on("connection", (socket) => {
           host: "",
           title: tours[tour_name].tour_name,
           type: String(tours[tour_name].type),
-          players: String(tours[tour_name].player_name.length),
+          players: String(tours[tour_name].players.length),
         };
         if (tour_name == "tour-f2") {
-          tourData.players = 10 + tours[tour_name].player_name.length;
+          tourData.players = 10 + tours[tour_name].players.length;
         }
         tourList.push(tourData);
       }
@@ -615,10 +641,10 @@ io.on("connection", (socket) => {
         user_a: invite_player_name,
         user_b: player_name,
       };
-      tours[tour_name].player_name.find(
+      tours[tour_name].players.find(
         (player) => player.name == invite_player_name
       ).status = "in-pair";
-      tours[tour_name].player_name.find(
+      tours[tour_name].players.find(
         (player) => player.name == player_name
       ).status = "in-pair";
       // const filterPlayer = tours[tour_name].player_waiting.filter((user)=> { return user != invite_player_name})
@@ -626,7 +652,7 @@ io.on("connection", (socket) => {
       // tours[tour_name].player_waiting = finalPlayer
       tours[tour_name].player_pair.push(pair);
       console.log(tours[tour_name]);
-      const waitingPlayer = tours[tour_name].player_name
+      const waitingPlayer = tours[tour_name].players
         .filter((player) => player.status == "waiting")
         .map((player) => player.name);
 
@@ -638,55 +664,40 @@ io.on("connection", (socket) => {
 
   socket.on("start", (tour_name) => {
     console.log("start");
-    tours[tour_name][card] = card.random_card()
-    var teams = tours[tour_name].player_pair;
-    var teamSlot = {};
-    var ArraySlot = [];
-    for (var i = 0; i < teams.length; i++) {
-      teamSlot[`Team${i}`] = teams[i];
-      ArraySlot.push(teams[i]);
-    }
+    var teams = tours[tour_name].players.filter(
+      (player) => player.status == "in-pair"
+    );
+    console.log(`teams`, teams);
+    const unique = [...new Set(teams.map((player) => player.pair_id))];
+    let half = Math.ceil(unique.length / 2);
 
-    let TempSlot = [];
-    console.log(Object.keys(teamSlot));
-    //Push
-    console.log(ArraySlot);
-    console.log(ArraySlot[0]);
-    for (var temp in ArraySlot) {
-      TempSlot["Team" + temp] = ArraySlot[temp];
-    }
     //Slice
-    let first_pair = Object.keys(TempSlot).slice(
-      0,
-      Object.keys(TempSlot).length / 2
-    );
-    let second_pair = Object.keys(TempSlot).slice(
-      Object.keys(TempSlot).length / 2,
-      Object.keys(TempSlot).length
-    );
-    console.log(Object.keys(TempSlot).length);
-    console.log("num", first_pair);
-    console.log("num", second_pair);
+    let first_pair = unique.slice(0, half);
+    let second_pair = unique.slice(-half);
+    
     //Mitchell full
     let tables = [];
     let rounds = [];
-    let play_round = 3; //must change
 
-    for (var round = 0; round < play_round; round++) {
-      for (var table = 0; table < Object.keys(TempSlot).length / 2; table++) {
+    //Chenge to function
+    for (var round = 1; round <= tours[tour_name].board_round; round++) {
+      for (var table = 1; table <= unique.length / 2; table++) {
         tables.push({
-          table_id: `r${round}tb${table}`,
+          table_id: `r${round}b${table}`, //mongodb id
           versus: `${first_pair[table]},${second_pair[table]}`,
         });
       }
-      rounds.push({ round_id: `${round}`, tables: tables });
+      rounds.push({
+        round_id: `${round}`,
+        card: card.random_card(),
+        tables: tables,
+      });
       tables = [];
       let temp_second = second_pair.shift();
       second_pair.push(temp_second);
     }
     tours[tour_name][`rounds`] = rounds;
-    console.log(`tours`, tours[tour_name][card])
-    io.in(tour_name).emit("start-tour", rounds);
+    io.in(tour_name).emit("start-tour", _.omit(...rounds, "card"));
     // res.status(201).send("back");
   });
 
@@ -695,21 +706,7 @@ io.on("connection", (socket) => {
     socket.to(roomname).emit("send-bidding");
   });
   //Leave team
-  socket.on("leave-team", (user, tour_name) => {});
-  //Manage team
   //Join room
-  //Manage room
-  socket.on("manage-room", async (roomName) => {
-    TourR.find()
-      .select("player_name -_id")
-      .then((result) => {
-        let lenUser = result[0].player_name.length;
-        socket.emit("output-rooms", result);
-        console.log(result);
-        console.log("len = " + lenUser);
-      });
-    //Find player
-  });
   //--Check user in a room
   socket.on("get-username-room", async (roomName) => {
     let userList = io.sockets.adapter.rooms.get(roomName);
@@ -720,9 +717,9 @@ io.on("connection", (socket) => {
   //create board
   socket.on("create-board", async (admin_name, title, data) => {
     const board = await TourR.create({
-      admin_name: admin_name,
-      title: title,
-      data: data,
+      admin_name,
+      title,
+      data,
     });
     socket.emit("create-board", board);
   });

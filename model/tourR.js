@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 var myId = mongoose.Types.ObjectId();
 const userSchema = new mongoose.Schema({
   _id: false,
-  tour_id: {type: Object, default:myId, unique:true},
+  tour_id: { type: Object, default: myId, unique: true },
   tour_name: { type: String, unique: true },
   max_player: { type: Number, default: 20 },
   type: { type: String, default: "Pairs" },
