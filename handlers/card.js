@@ -24,6 +24,51 @@ const _ = require("lodash");
 //   25: "A_D",
 //   26: "1_H",
 // };
+var tours = {
+  t1: {
+    t_id: "t1",
+    tour_name: String,
+    // player_pair: [[player1, player2]], // player_pair -> team
+    // player_waiting: [],
+    player: [
+      {
+        player_name: "",
+        player_id: "",
+        status: "pair,waiting",
+        pair_id: "team1",
+      },
+    ],
+    rounds: [
+      {
+        round_id: "r1",
+        card: [[13], [13], [13], [13]], //Create when use barometer
+        board_minuite: 8, //Change board
+        tables: [
+          //table is same a roomname of socketIO {tour_id + match + table}
+          {
+            table_id: "b1",
+            bidTemp: {
+              round: 1,
+              declarer: 0,
+              passCount: 0,
+              isPassOut: true,
+              maxContract: -1,
+              prevBidDirection: 0,
+              firstDirectionSuites: [
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0],
+              ],
+              doubles: [
+                [false, false],
+                [false, false],
+              ],
+            },
+          },
+        ],
+      },
+    ],
+  },
+};
 
 //------------------------------------------------------Bridge------------------------------------------------------//
 exports.value_to_card = (value) => {
@@ -60,3 +105,5 @@ exports.bid_contract = () => {
     bidding.push(...bid_pic.map((pic) => num + "_" + pic));
   });
 };
+
+

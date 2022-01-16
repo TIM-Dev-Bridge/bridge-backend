@@ -28,27 +28,85 @@ let card = require("./handlers/card");
 let users = {};
 let tours = {};
 
+const DIRECTION = {
+  N: 0,
+  E: 1,
+  S: 2,
+  W: 3,
+};
+
+const INIT = {
+  doubles: [
+    [false, false],
+    [false, false],
+  ],
+};
+
+const TYPE = {
+  DBL: 0,
+  RDBL: 1,
+};
+
+const CONTRACT = {
+  PASS: -1,
+  DBL: 99,
+};
+
+const ioToRoomOnPlaying = ({ status = "", room = "", payload = {} }) => {
+  io.to(room).emit("playing", { status, payload });
+};
+
+const ioToRoomOnBiddingPhase = ({
+  room = "",
+  contract = -1,
+  nextDirection = access_table(tour_name, round_id, table_id).round % 4,
+}) => {
+  ioToRoomOnPlaying({
+    room,
+    status: "waiting_for_bid",
+    payload: {
+      contract,
+      nextDirection,
+      round: access_table(tour_name, round_id, table_id).round,
+      turn: access_table(tour_name, round_id, table_id).playing.turn,
+    },
+  });
+};
+
+const access_table = (tour_name, round_id, table_id) => {
+  console.log(tours[tour_name]);
+  let index_round = _.findIndex(tours[tour_name].rounds, [
+    "round_id",
+    round_id,
+  ]);
+  let index_table = _.findIndex(tours[tour_name].rounds[index_round].tables, [
+    "table_id",
+    table_id,
+  ]);
+  return tours[tour_name].rounds[index_round].tables[index_table];
+};
+
 //Authentication user
-io.use(function (socket, next) {
-  if (socket.handshake.query && socket.handshake.query.token) {
-    console.log(socket.handshake.query.token);
-    jwt.verify(
-      socket.handshake.query.token,
-      config.TOKEN_KEY,
-      function (err, decoded) {
-        if (err) return next(new Error("Authentication error"));
-        socket.decoded = decoded;
-        //Check login 1 get token and go login 2 -> pass
-        if (socket.handshake.query.username != socket.decoded.username) {
-          return next(new Error("Authentication error by user"));
-        }
-        next();
-      }
-    );
-  } else {
-    next(new Error("Authentication error"));
-  }
-});
+// io.use(function (socket, next) {
+//   if (socket.handshake.query && socket.handshake.query.token) {
+//     console.log(socket.handshake.query.token);
+//     jwt.verify(
+//       socket.handshake.query.token,
+//       config.TOKEN_KEY,
+//       function (err, decoded) {
+//         if (err) return next(new Error("Authentication error"));
+//         socket.decoded = decoded;
+//         //Check login 1 get token and go login 2 -> pass
+//         if (socket.handshake.query.username != socket.decoded.username) {
+//           return next(new Error("Authentication error by user"));
+//         }
+//         next();
+//       }
+//     );
+//   } else {
+//     next(new Error("Authentication error"));
+//   }
+// });
 
 io.on("connection", (socket) => {
   if (users[socket.handshake.query.username] == undefined) {
@@ -91,10 +149,12 @@ io.on("connection", (socket) => {
   //Save session
 
   //Get current user data
-  socket.on("get-user-data", async (username) => {
+  socket.on("get-user-data", () => {
     try {
-      const user_data = await User.findOne({ username: username });
-      socket.emit("get-user-data", user_data);
+      // const user_data = await User.findOne({ username: username });
+      // socket.emit("get-user-data", user_data);
+      console.log(users);
+      console.log("in function");
     } catch (error) {
       console.log(err);
       socket.emit("get-user-data", "Cannot find user data");
@@ -674,21 +734,51 @@ io.on("connection", (socket) => {
     //Slice
     let first_pair = unique.slice(0, half);
     let second_pair = unique.slice(-half);
-    
+
     //Mitchell full
     let tables = [];
     let rounds = [];
+    /*
+     * Init function game is here #bf1
+     */
+    const bidding = {
+      round: 0,
+      declarer: 0,
+      passCount: 0,
+      isPassOut: true,
+      maxContract: -1,
+      prevBidDirection: 0,
+      firstDirectionSuites: [
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+      ],
+      doubles: [
+        [false, false],
+        [false, false],
+      ],
+    };
 
-    //Chenge to function
-    for (var round = 1; round <= tours[tour_name].board_round; round++) {
-      for (var table = 1; table <= unique.length / 2; table++) {
+    const playing = {
+      turn: 0,
+      doubles: [],
+      bidSuite: 0,
+      communityCards: [],
+      initSuite: undefined,
+    };
+
+    //Change to function create tournament round
+    for (var round = 0; round < tours[tour_name].board_round; round++) {
+      for (var table = 0; table < unique.length / 2; table++) {
         tables.push({
-          table_id: `r${round}b${table}`, //mongodb id
+          table_id: `r${round + 1}b${table + 1}`, //mongodb id
           versus: `${first_pair[table]},${second_pair[table]}`,
+          bidding: bidding,
+          playing: playing,
+          count_player: [],
         });
       }
       rounds.push({
-        round_id: `${round}`,
+        round_id: `${round + 1}`,
         card: card.random_card(),
         tables: tables,
       });
@@ -697,19 +787,289 @@ io.on("connection", (socket) => {
       second_pair.push(temp_second);
     }
     tours[tour_name][`rounds`] = rounds;
-    io.in(tour_name).emit("start-tour", _.omit(...rounds, "card"));
-    // res.status(201).send("back");
+    io.in(tour_name).emit(
+      "start-tour",
+      rounds.map(({ round_id, tables }) => {
+        let new_table = tables.map(({ table_id, versus }) => ({
+          table_id,
+          versus,
+        }));
+        return { round_id, tables: new_table };
+      })
+
+      // rounds.map(({ card, ...round }) => {
+      //   let new_table = round.tables.map(({ bidding, playing, ...table }) => ({
+      //     ...table,
+      //   }));
+      //   return { ...round, tables: new_table };
+      // }),
+
+      // rounds.map((round) => {
+      //   let newTable = round.tables.map((table) =>
+      //     _.omit(table, ["bidding", "playing"])
+      //   );
+      //   console.log(`newTable`, newTable)
+      //   return { round: _.omit(round, ["card","tables"]), tables: newTable };
+      // }),
+    );
   });
 
-  socket.on("send-bidding", (player_name, roomname, bid, status, callback) => {
-    //Check play have status to use this socket
-    socket.to(roomname).emit("send-bidding");
+  /*
+   * Join table #jt
+   */
+  socket.on("join", ({ player_id, player_name, room = "room_1" }) => {
+    socket.join(room);
+    let clients = io.sockets.adapter.rooms.get(room);
+
+    /// return current players.
+    io.to(room).emit("waiting_for_start", tours[tour_name].players);
+
+    /// if fully player, change to 'bidding phase'.
+    if (clients === 4) {
+      ioToRoomOnBiddingPhase({ room });
+      console.log("can go bidding phase");
+    }
   });
+
+  /*
+   * Bidding phase #bp
+   */
+  socket.on(
+    "bid",
+    ({
+      player_id,
+      room = "room_1",
+      contract = CONTRACT.PASS,
+      direction = DIRECTION.N,
+    }) => {
+      const nextDirection = direction < 3 ? parseInt(direction, 10) + 1 : 0;
+
+      /// convert contract to suite.
+      const suite = contract % 5;
+      const team = direction % 2;
+      const anotherTeam = nextDirection % 2;
+      const isPass = suite === -1;
+
+      let access_bidding = access_table(
+        (tour_name = "Mark1"),
+        (round_id = "1"),
+        (table_id = "r1b1")
+      ).bidding;
+
+      let access_playing = access_table(
+        (tour_name = "Mark1"),
+        (round_id = "1"),
+        (table_id = "r1b1")
+      ).playing;
+
+      console.log(`access_table`, access_bidding);
+      if (isPass) {
+        ++access_bidding.passCount;
+        if (access_bidding.passCount === 3 && !access_bidding.isPassOut) {
+          const winnerSuite = access_bidding.maxContract % 5;
+          const winnerTeam = access_bidding.declarer % 2;
+          const isSameTeam =
+            access_bidding.firstDirectionSuites[winnerTeam][winnerSuite] % 2 ===
+            winnerTeam;
+
+          /// if winner is the first one who bidding this suite (max contract suite), he is declarer.
+          /// else another player in his team is declarer.
+          /// leader is next direction of declarer.
+          const declarer = isSameTeam
+            ? access_bidding.firstDirectionSuites[winnerTeam][winnerSuite]
+            : access_bidding.declarer;
+          const leader = declarer < 3 ? declarer + 1 : 0;
+
+          access_bidding.playing.bidSuite = winnerSuite;
+          access_bidding.playing.doubles = access_bidding(
+            tour_name,
+            round_id,
+            table_id
+          ).doubles;
+
+          /// clear access_table here ...
+          access_bidding.passCount = 0;
+          access_bidding.isPassOut = true;
+          access_bidding.doubles = INIT.doubles;
+
+          console.log(`playing.doubles`, access_bidding.playing.doubles);
+
+          ioToRoomOnPlaying({
+            room,
+            status: "initial_playing",
+            payload: {
+              leader,
+              round: access_bidding.round,
+              bidSuite: winnerSuite,
+              turn: ++access_playing.playing.turn,
+            },
+          });
+          return;
+        }
+        if (access_bidding.passCount === 4) {
+          access_bidding.passCount = 0;
+
+          if (++access_bidding.round >= tour.maxRound) {
+            /// clear all temp var here ...
+            ioToRoomOnPlaying({
+              room,
+              status: "ending",
+              payload: {},
+            });
+            return;
+          }
+
+          ioToRoomOnBiddingPhase({ room });
+
+          return;
+        }
+      } else {
+        /// reset passCount to zero.
+        access_bidding.passCount = 0;
+        access_bidding.isPassOut = false;
+
+        /* 
+                TODO: check and handle available to dbl or rdbl. 
+                * handle on impossible case.
+            */
+        if (contract === CONTRACT.DBL) {
+          if (
+            !access_bidding.doubles[team][TYPE.DBL] &&
+            !access_bidding.doubles[anotherTeam][TYPE.DBL]
+          )
+            access_bidding.doubles[team][TYPE.DBL] = true;
+          else access_bidding.doubles[team][TYPE.RDBL] = true;
+        } else {
+          access_bidding.doubles = INIT.doubles;
+
+          /// did player bidding first suite of his team.
+          const isFirst =
+            access_bidding.firstDirectionSuites[team][suite] === 0;
+
+          if (isFirst)
+            access_bidding.firstDirectionSuites[team][suite] = direction;
+
+          if (access_bidding.maxContract < contract) {
+            access_bidding.declarer = direction;
+            access_bidding.maxContract = contract;
+          }
+        }
+      }
+
+      ioToRoomOnBiddingPhase({ room, contract, nextDirection });
+    }
+  );
+
+  socket.on(
+    "play_card",
+    ({ player_id, room = "room_1", card, direction, turn }) => {
+      /* 
+            TODO: check client and server property are according together. 
+        */
+      let access_bidding = access_table(
+        (tour_name = "Mark1"),
+        (round_id = "1"),
+        (table_id = "r1b1")
+      ).bidding;
+
+      let access_playing = access_table(
+        (tour_name = "Mark1"),
+        (round_id = "1"),
+        (table_id = "r1b1")
+      ).playing;
+      if (turn !== access_playing.turn) return;
+
+      const nextDirection = direction < 3 ? parseInt(direction, 10) + 1 : 0;
+      const suite = parseInt(card / 13, 10);
+
+      access_playing.communityCards.push({
+        card,
+        direction,
+      });
+
+      /// if initSuite is 'undefined', it mean you are leader.
+      access_playing.initSuite =
+        access_playing.initSuite === undefined
+          ? suite
+          : access_playing.initSuite;
+
+      if (access_playing.communityCards.length === 4) {
+        const bidSuite = access_playing.bidSuite;
+        const sameBidSuiteCards = access_playing.communityCards.filter(
+          ({ card }) => parseInt(card / 13, 10) === bidSuite
+        );
+        const sameInitSuiteCards = access_playing.communityCards.filter(
+          ({ card }) => parseInt(card / 13, 10) === access_playing.initSuite
+        );
+        let maxCard = 0;
+
+        /* 
+                playing card of 'leader' affect to his card suite become to the secondary most valuable suite of this turn.
+                the most valuable suite of round is 'bidding_suite' from 'bidding_phase' (if is not 'no trump').
+                bidSuite 4 is mean 'no trump'.
+            */
+        if (sameBidSuiteCards.length > 0 && bidSuite !== 4)
+          maxCard = maxBy(sameBidSuiteCards, "card");
+        else maxCard = maxBy(sameInitSuiteCards, "card");
+
+        const { direction: leader } = find(
+          access_playing.communityCards,
+          maxCard
+        );
+
+        console.log(`access_playing`, access_playing);
+        console.log(`leader`, leader);
+
+        access_playing.initSuite = undefined;
+        access_playing.communityCards = [];
+
+        /// playing for 13 turn.
+        if (access_playing.turn >= tour.maxTurn) {
+          if (++access_bidding.round >= tour.maxRound) {
+            /// clear all temp var here ...
+            ioToRoomOnPlaying({
+              room,
+              status: "ending",
+              payload: {},
+            });
+            return;
+          }
+
+          ioToRoomOnBiddingPhase({ room });
+
+          access_playing.turn = 0;
+
+          return;
+        }
+
+        ioToRoomOnPlaying({
+          room,
+          status: "initial_turn",
+          payload: {
+            leader,
+            turn: ++access_playing.turn,
+          },
+        });
+        return;
+      }
+
+      ioToRoomOnPlaying({
+        room,
+        status: "default",
+        payload: {
+          card,
+          nextDirection,
+          prevDirection: direction,
+        },
+      });
+    }
+  );
+
   //Leave team
   //Join room
   //--Check user in a room
-  socket.on("get-username-room", async (roomName) => {
-    let userList = io.sockets.adapter.rooms.get(roomName);
+  socket.on("get-username-room", async (room) => {
+    let userList = io.sockets.adapter.rooms.get(room);
     console.log(userList);
     socket.emit("get-username-room");
   });
