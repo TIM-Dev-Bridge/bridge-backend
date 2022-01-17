@@ -73,17 +73,95 @@ const ioToRoomOnBiddingPhase = ({
   });
 };
 
+const matchmaking = (tour_name) => {
+  let unique_team = _.range(1, tours[tour_name].players.length / 2 + 1).sort();
+  let half = Math.ceil(unique_team.length / 2);
+
+  console.log(`unique_team`, unique_team);
+  //Slice
+  let first_pair = unique_team.slice(0, half);
+  let second_pair = unique_team.slice(-half);
+
+  //Mitchell full
+  let tables = [];
+  let rounds = [];
+
+  const bidding = {
+    round: 0,
+    declarer: 0,
+    passCount: 0,
+    isPassOut: true,
+    maxContract: -1,
+    prevBidDirection: 0,
+    firstDirectionSuites: [
+      [0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0],
+    ],
+    doubles: [
+      [false, false],
+      [false, false],
+    ],
+  };
+
+  const playing = {
+    turn: 0,
+    doubles: [],
+    bidSuite: 0,
+    communityCards: [],
+    initSuite: undefined,
+  };
+
+  //Change to function create tournament round
+  for (var round = 0; round < tours[tour_name].board_round; round++) {
+    for (var table = 0; table < unique_team.length / 2; table++) {
+      let temp_versus = _.sortBy(
+        tours[tour_name].players.filter(
+          (player) =>
+            player.pair_id === first_pair[table] ||
+            player.pair_id === second_pair[table]
+        ),
+        ["pair_id"]
+      );
+      // let temp_versus = tours[tour_name].players.filter(
+      //   (player) =>
+      //     player.pair_id === first_pair[table] ||
+      //     player.pair_id === second_pair[table]
+      // );
+      console.log("temp_versus", temp_versus);
+      tables.push({
+        table_id: `r${round + 1}b${table + 1}`, //mongodb id
+        versus: `${first_pair[table]},${second_pair[table]}`,
+        bidding: bidding,
+        playing: playing,
+        count_player: [],
+      });
+    }
+    rounds.push({
+      round_id: `${round + 1}`,
+      card: card.random_card(),
+      tables: tables,
+    });
+    tables = [];
+    let temp_second = second_pair.shift();
+    second_pair.push(temp_second);
+  }
+  return rounds;
+};
+
 const access_table = (tour_name, round_id, table_id) => {
-  console.log(tours[tour_name]);
-  let index_round = _.findIndex(tours[tour_name].rounds, [
-    "round_id",
-    round_id,
-  ]);
-  let index_table = _.findIndex(tours[tour_name].rounds[index_round].tables, [
-    "table_id",
-    table_id,
-  ]);
-  return tours[tour_name].rounds[index_round].tables[index_table];
+  //console.log(tours[tour_name]);
+  // let index_round = _.findIndex(tours[tour_name].rounds, [
+  //   "round_id",
+  //   round_id,
+  // ]);
+  // let index_table = _.findIndex(tours[tour_name].rounds[index_round].tables, [
+  //   "table_id",
+  //   table_id,
+  // ]);
+  // return tours[tour_name].rounds[index_round].tables[index_table];
+  let round = _.find(tours[tour_name].rounds, ["round_id", round_id]);
+  let table = _.find(round.tables, ["table_id", table_id]);
+  return table;
 };
 
 //Authentication user
@@ -421,7 +499,7 @@ io.on("connection", (socket) => {
           id: "",
           name: player_name,
           status: "in-pair",
-          pair_id: "team1",
+          pair_id: 1,
         });
         console.log("PUSH", tours[tour_name].players);
         // tours[tour_name].players.push(player_name)
@@ -435,43 +513,43 @@ io.on("connection", (socket) => {
             id: "",
             name: "peterpan",
             status: "in-pair",
-            pair_id: "team1",
+            pair_id: 1,
           });
           tours[tour_name].players.push({
             id: "",
             name: "mutizaki",
             status: "in-pair",
-            pair_id: "team3",
+            pair_id: 4,
           });
           tours[tour_name].players.push({
             id: "",
             name: "seperite",
             status: "in-pair",
-            pair_id: "team3",
+            pair_id: 3,
           });
           tours[tour_name].players.push({
             id: "",
             name: "pokemon",
             status: "in-pair",
-            pair_id: "team2",
+            pair_id: 2,
           });
           tours[tour_name].players.push({
             id: "",
             name: "carspian",
             status: "in-pair",
-            pair_id: "team4",
+            pair_id: 3,
           });
           tours[tour_name].players.push({
             id: "",
             name: "qwerty",
             status: "in-pair",
-            pair_id: "team4",
+            pair_id: 4,
           });
           tours[tour_name].players.push({
             id: "",
             name: "teseded",
             status: "in-pair",
-            pair_id: "team2",
+            pair_id: 2,
           });
         }
         io.in(tour_name).emit("update-player-pair", tours[tour_name].players);
@@ -721,71 +799,9 @@ io.on("connection", (socket) => {
       console.log(tours[tour_name].player_pair);
     }
   );
-
+  //#start
   socket.on("start", (tour_name) => {
-    console.log("start");
-    var teams = tours[tour_name].players.filter(
-      (player) => player.status == "in-pair"
-    );
-    console.log(`teams`, teams);
-    const unique = [...new Set(teams.map((player) => player.pair_id))];
-    let half = Math.ceil(unique.length / 2);
-
-    //Slice
-    let first_pair = unique.slice(0, half);
-    let second_pair = unique.slice(-half);
-
-    //Mitchell full
-    let tables = [];
-    let rounds = [];
-    /*
-     * Init function game is here #bf1
-     */
-    const bidding = {
-      round: 0,
-      declarer: 0,
-      passCount: 0,
-      isPassOut: true,
-      maxContract: -1,
-      prevBidDirection: 0,
-      firstDirectionSuites: [
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0],
-      ],
-      doubles: [
-        [false, false],
-        [false, false],
-      ],
-    };
-
-    const playing = {
-      turn: 0,
-      doubles: [],
-      bidSuite: 0,
-      communityCards: [],
-      initSuite: undefined,
-    };
-
-    //Change to function create tournament round
-    for (var round = 0; round < tours[tour_name].board_round; round++) {
-      for (var table = 0; table < unique.length / 2; table++) {
-        tables.push({
-          table_id: `r${round + 1}b${table + 1}`, //mongodb id
-          versus: `${first_pair[table]},${second_pair[table]}`,
-          bidding: bidding,
-          playing: playing,
-          count_player: [],
-        });
-      }
-      rounds.push({
-        round_id: `${round + 1}`,
-        card: card.random_card(),
-        tables: tables,
-      });
-      tables = [];
-      let temp_second = second_pair.shift();
-      second_pair.push(temp_second);
-    }
+    let rounds = matchmaking(tour_name);
     tours[tour_name][`rounds`] = rounds;
     io.in(tour_name).emit(
       "start-tour",

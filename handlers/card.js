@@ -92,7 +92,7 @@ exports.random_card = () => {
       })
     )
   );
-  console.log(value);
+  //console.log(value);
   return value;
 };
 
