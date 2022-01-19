@@ -11,6 +11,20 @@ app.use(
     origin: "*",
   })
 );
+// app.use(
+//   cors({
+//     origin: "http://localhost:3000",
+//     credentials: true, //access-control-allow-credentials:true
+//     optionSuccessStatus: 500,
+//   })
+// );
+// app.use(function (req, res, next) {
+//   res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000"); //หรือใส่แค่เฉพาะ domain ที่ต้องการได้
+//   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
+//   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+//   res.setHeader("Access-Control-Allow-Credentials", true);
+//   next();
+// });
 //Authen
 const jwt = require("jsonwebtoken");
 const config = process.env;
@@ -187,18 +201,19 @@ const access_table = (tour_name, round_id, table_id) => {
 // });
 
 io.on("connection", (socket) => {
-  if (users[socket.handshake.query.username] == undefined) {
-    const user = {
-      socket_id: socket.id,
-      username: socket.handshake.query.username,
-      tour: undefined,
-      session: undefined,
-    };
-    users[socket.handshake.query.username] = user;
-    console.log("User created", users[socket.handshake.query.username]);
-  } else {
-    users[socket.handshake.query.username].socket_id = socket.id;
-  }
+  console.log("can connected");
+  // if (users[socket.handshake.query.username] == undefined) {
+  //   const user = {
+  //     socket_id: socket.id,
+  //     username: socket.handshake.query.username,
+  //     tour: undefined,
+  //     session: undefined,
+  //   };
+  //   users[socket.handshake.query.username] = user;
+  //   console.log("User created", users[socket.handshake.query.username]);
+  // } else {
+  //   users[socket.handshake.query.username].socket_id = socket.id;
+  // }
 
   // console.log(socket.username);
 
@@ -381,7 +396,7 @@ io.on("connection", (socket) => {
         );
       }
       //Encrypt password tour
-      encryptedPassword = await bcrypt.hash(tour_data.password, 10);
+      let encryptedPassword = await bcrypt.hash(tour_data.password, 10);
       //Update tournament on database
       const tournament = await TourR.updateOne(
         { tour_name: tour_data.tour_name },

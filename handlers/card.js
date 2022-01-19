@@ -97,7 +97,7 @@ exports.random_card = () => {
 };
 
 exports.bid_contract = () => {
-  let bid_num = [2, 3, 4, 5, 6, 7];
+  let bid_num = [1, 2, 3, 4, 5, 6, 7];
   let bid_pic = ["C", "D", "H", "S", "NT"];
   let bidding = [];
 
@@ -105,5 +105,3 @@ exports.bid_contract = () => {
     bidding.push(...bid_pic.map((pic) => num + "_" + pic));
   });
 };
-
-

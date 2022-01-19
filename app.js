@@ -38,14 +38,17 @@ app.post("/updateTourData", updateTourData);
 app.post("/registerTourD", registerTourD);
 app.post("/loginTourD", loginTourD);
 
-app.get('/getAnnouncement', getAnnouncement);
-app.get('/getAnnouncements', getAnnouncementsByOffset);
-app.post('/addAnnouncement', addAnnouncement);
-app.post('/updateAnnouncement', updateAnnouncement);
+app.get("/getAnnouncement", getAnnouncement);
+app.get("/getAnnouncements", getAnnouncementsByOffset);
+app.post("/addAnnouncement", addAnnouncement);
+app.post("/updateAnnouncement", updateAnnouncement);
 
 //Delete
 app.get("/manageTour", manageTour);
 
 //Test function//
-var random_card = require('./handlers/card')
+var random_card = require("./handlers/card");
+var score = require("./handlers/score");
+//score.createBoard()
+//score.score();
 module.exports = app;
