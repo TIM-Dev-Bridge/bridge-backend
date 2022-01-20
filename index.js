@@ -73,15 +73,19 @@ const ioToRoomOnPlaying = ({ status = "", room = "", payload = {} }) => {
 const ioToRoomOnBiddingPhase = ({
   room = "",
   contract = -1,
-  nextDirection = access_table(tour_name, round_id, table_id).round % 4,
+  tour_name,
+  round_id,
+  table_id,
+  nextDirection = access_table(tour_name, round_id, table_id).bidding.round % 4,
 }) => {
+  console.log("next", nextDirection);
   ioToRoomOnPlaying({
     room,
     status: "waiting_for_bid",
     payload: {
       contract,
       nextDirection,
-      round: access_table(tour_name, round_id, table_id).round,
+      round: access_table(tour_name, round_id, table_id).bidding.round,
       turn: access_table(tour_name, round_id, table_id).playing.turn,
     },
   });
@@ -163,16 +167,6 @@ const matchmaking = (tour_name) => {
 };
 
 const access_table = (tour_name, round_id, table_id) => {
-  //console.log(tours[tour_name]);
-  // let index_round = _.findIndex(tours[tour_name].rounds, [
-  //   "round_id",
-  //   round_id,
-  // ]);
-  // let index_table = _.findIndex(tours[tour_name].rounds[index_round].tables, [
-  //   "table_id",
-  //   table_id,
-  // ]);
-  // return tours[tour_name].rounds[index_round].tables[index_table];
   let round = _.find(tours[tour_name].rounds, ["round_id", round_id]);
   let table = _.find(round.tables, ["table_id", table_id]);
   return table;
@@ -202,18 +196,18 @@ const access_table = (tour_name, round_id, table_id) => {
 
 io.on("connection", (socket) => {
   console.log("can connected");
-  // if (users[socket.handshake.query.username] == undefined) {
-  //   const user = {
-  //     socket_id: socket.id,
-  //     username: socket.handshake.query.username,
-  //     tour: undefined,
-  //     session: undefined,
-  //   };
-  //   users[socket.handshake.query.username] = user;
-  //   console.log("User created", users[socket.handshake.query.username]);
-  // } else {
-  //   users[socket.handshake.query.username].socket_id = socket.id;
-  // }
+  if (users[socket.handshake.query.username] == undefined) {
+    const user = {
+      socket_id: socket.id,
+      username: socket.handshake.query.username,
+      tour: undefined,
+      session: undefined,
+    };
+    users[socket.handshake.query.username] = user;
+    console.log("User created", users[socket.handshake.query.username]);
+  } else {
+    users[socket.handshake.query.username].socket_id = socket.id;
+  }
 
   // console.log(socket.username);
 
@@ -848,19 +842,29 @@ io.on("connection", (socket) => {
   /*
    * Join table #jt
    */
-  socket.on("join", ({ player_id, player_name, room = "room_1" }) => {
-    socket.join(room);
-    let clients = io.sockets.adapter.rooms.get(room);
+  socket.on(
+    "join",
+    ({
+      player_id,
+      player_name,
+      tour_name,
+      room = "room_1",
+      round_id,
+      table_id,
+    }) => {
+      console.log("tour_name", tour_name);
+      socket.join(room);
+      let clients = io.sockets.adapter.rooms.get(room);
+      /// return current players.
+      // io.to(room).emit("waiting_for_start", tours[tour_name].players);
 
-    /// return current players.
-    io.to(room).emit("waiting_for_start", tours[tour_name].players);
-
-    /// if fully player, change to 'bidding phase'.
-    if (clients === 4) {
-      ioToRoomOnBiddingPhase({ room });
-      console.log("can go bidding phase");
+      /// if fully player, change to 'bidding phase'.
+      if (clients.size === 4) {
+        ioToRoomOnBiddingPhase({ room, tour_name, round_id, table_id });
+        console.log("can go bidding phase");
+      }
     }
-  });
+  );
 
   /*
    * Bidding phase #bp
@@ -872,6 +876,10 @@ io.on("connection", (socket) => {
       room = "room_1",
       contract = CONTRACT.PASS,
       direction = DIRECTION.N,
+      //Chage
+      tour_name = "Mark1",
+      round_id = "1",
+      table_id = "r1b1",
     }) => {
       const nextDirection = direction < 3 ? parseInt(direction, 10) + 1 : 0;
 
@@ -880,7 +888,6 @@ io.on("connection", (socket) => {
       const team = direction % 2;
       const anotherTeam = nextDirection % 2;
       const isPass = suite === -1;
-
       let access_bidding = access_table(
         (tour_name = "Mark1"),
         (round_id = "1"),
@@ -893,7 +900,6 @@ io.on("connection", (socket) => {
         (table_id = "r1b1")
       ).playing;
 
-      console.log(`access_table`, access_bidding);
       if (isPass) {
         ++access_bidding.passCount;
         if (access_bidding.passCount === 3 && !access_bidding.isPassOut) {
@@ -917,7 +923,7 @@ io.on("connection", (socket) => {
             round_id,
             table_id
           ).doubles;
-
+          console.log("pass");
           /// clear access_table here ...
           access_bidding.passCount = 0;
           access_bidding.isPassOut = true;
@@ -986,8 +992,15 @@ io.on("connection", (socket) => {
           }
         }
       }
-
-      ioToRoomOnBiddingPhase({ room, contract, nextDirection });
+      //ioToRoomOnBiddingPhase({ room, contract, nextDirection });
+      ioToRoomOnBiddingPhase({
+        room,
+        contract,
+        nextDirection,
+        tour_name,
+        round_id,
+        table_id,
+      });
     }
   );
 
