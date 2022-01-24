@@ -1,41 +1,110 @@
-let play_data = {
-  declarer: "N",
-  contract: 30,
-  double: 0,
-  redouble: 0,
-  trick: [13, 0],
-};
-exports.score = (
-  play_data = {
-    declarer: "N",
-    contract: 32,
-    double: false,
-    redouble: true,
-    trick: [13, 0],
-  }
-) => {
-  let target = Math.ceil((play_data.contract + 1) / 5);
-  let suite = play_data.contract % 5;
-  let at_least = play_data.trick[0] - 6;
-  console.log("start");
-  if (at_least >= target) {
-    //if (suite)
-    let contract_point = calContractPoint(
-      suite,
-      target,
-      play_data.double,
-      play_data.redouble
-    );
-    let total_score = "";
-    console.log(`contract_point`, contract_point);
-  }
-};
-const calContractPoint = (suite, target, double, redouble) => {
+const calContractPoint = (suit, level, double, redouble) => {
   let points = 0;
-  suite < 2 ? (points += target * 20) : (points += target * 30);
-  if (suite == 4) points += 10;
-  if (double) points *= 2;
-  if (redouble) points *= 4;
-  console.log("points", points);
-  return points;
+  suit < 2 ? (points += level * 20) : (points += level * 30);
+  if (suit == 4) points += 10;
+  return points * ((double && 2) + (redouble && 4) || 1);
+};
+
+const calOvertrickPoint = (
+  trick,
+  target,
+  suit,
+  double,
+  redouble,
+  vulnerable
+) => {
+  const overtricks = Math.max(trick - target, 0);
+  return !double && !redouble
+    ? suit < 2
+      ? overtricks * 20
+      : overtricks * 30
+    : overtricks * 100 * ((redouble && 2) || 1) * ((vulnerable && 2) || 1);
+};
+
+const calBonusPoint = (
+  contractPoints,
+  vulnerable,
+  isDuplicate,
+  target,
+  double,
+  redouble
+) => {
+  const gameBonus = contractPoints < 100 ? 50 : vulnerable ? 500 : 300;
+  const slamBonus = Math.max(
+    (target - 11) * 500 * ((vulnerable && 1.5) || 1),
+    0
+  );
+  const insultBonus = ((double && 1) + (redouble && 2)) * 50;
+  // console.log('gameBonus',gameBonus)
+  // console.log('slamBonus',slamBonus)
+  // console.log('insultBonus',insultBonus)
+  return gameBonus + slamBonus + insultBonus;
+};
+
+const calPenaltyPoint = (target, trick, vulnerable, double, redouble) => {
+  const undertricks = Math.max(target - trick, 0);
+  if (double || redouble) {
+    const rawPoint = [100, 200, 200, 300, 300, 300, 300].reduce(
+      (total, cost, index) => {
+        return index < undertricks ? total + cost : total;
+      },
+      Math.min(undertricks * 100, vulnerable ? 300 : 0)
+    );
+    return rawPoint * ((redouble && 2) || 1);
+  }
+  return undertricks * 50 * ((vulnerable && 2) || 1);
+};
+
+const calScore = (
+  nsIsDeclarer,
+  level,
+  suit,
+  double,
+  redouble,
+  vulnerable,
+  tricks,
+  isDuplicate
+) => {
+  const target = level + 6;
+  const trick = nsIsDeclarer ? tricks[0] : tricks[1];
+  let declarerScore = 0;
+  let defenderScore = 0;
+  if (trick >= target) {
+    const contractPoint = calContractPoint(suit, level, double, redouble);
+    const overtrickPoint = calOvertrickPoint(
+      trick,
+      target,
+      suit,
+      double,
+      redouble,
+      vulnerable
+    );
+    const bonusPoint = calBonusPoint(
+      contractPoint,
+      vulnerable,
+      isDuplicate,
+      target,
+      double,
+      redouble
+    );
+    console.log("contractPoint", contractPoint);
+    console.log("overtrickPoint", overtrickPoint);
+    console.log("bonusPoint", bonusPoint);
+    declarerScore = contractPoint + overtrickPoint + bonusPoint;
+  } else {
+    penaltyPoint = calPenaltyPoint(target, trick, vulnerable, double, redouble);
+    console.log("penaltyPoint", penaltyPoint);
+    defenderScore = penaltyPoint;
+  }
+  return nsIsDeclarer
+    ? [declarerScore, defenderScore]
+    : [defenderScore, declarerScore];
+};
+
+export {
+  calContractPoint,
+  calOvertrickPoint,
+  calBonusPoint,
+  calPenaltyPoint,
+  calScore,
 };

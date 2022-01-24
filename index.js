@@ -140,11 +140,6 @@ const matchmaking = (tour_name) => {
         ),
         ["pair_id"]
       );
-      // let temp_versus = tours[tour_name].players.filter(
-      //   (player) =>
-      //     player.pair_id === first_pair[table] ||
-      //     player.pair_id === second_pair[table]
-      // );
       console.log("temp_versus", temp_versus);
       tables.push({
         table_id: `r${round + 1}b${table + 1}`, //mongodb id
@@ -172,7 +167,7 @@ const access_table = (tour_name, round_id, table_id) => {
   return table;
 };
 
-//Authentication user
+// // Authentication user
 // io.use(function (socket, next) {
 //   if (socket.handshake.query && socket.handshake.query.token) {
 //     console.log(socket.handshake.query.token);
@@ -917,19 +912,15 @@ io.on("connection", (socket) => {
             : access_bidding.declarer;
           const leader = declarer < 3 ? declarer + 1 : 0;
 
-          access_bidding.playing.bidSuite = winnerSuite;
-          access_bidding.playing.doubles = access_bidding(
-            tour_name,
-            round_id,
-            table_id
-          ).doubles;
+          access_playing.bidSuite = winnerSuite;
+          access_playing.doubles = access_bidding.doubles;
           console.log("pass");
           /// clear access_table here ...
           access_bidding.passCount = 0;
           access_bidding.isPassOut = true;
           access_bidding.doubles = INIT.doubles;
 
-          console.log(`playing.doubles`, access_bidding.playing.doubles);
+          console.log(`playing.doubles`, access_playing.doubles);
 
           ioToRoomOnPlaying({
             room,
@@ -938,7 +929,7 @@ io.on("connection", (socket) => {
               leader,
               round: access_bidding.round,
               bidSuite: winnerSuite,
-              turn: ++access_playing.playing.turn,
+              turn: ++access_playing.turn,
             },
           });
           return;
@@ -989,7 +980,10 @@ io.on("connection", (socket) => {
           if (access_bidding.maxContract < contract) {
             access_bidding.declarer = direction;
             access_bidding.maxContract = contract;
+            console.log("contract", contract);
+            console.log("maxContract", access_bidding.maxContract);
           }
+          //else send error
         }
       }
       //ioToRoomOnBiddingPhase({ room, contract, nextDirection });
@@ -1053,10 +1047,10 @@ io.on("connection", (socket) => {
                 bidSuite 4 is mean 'no trump'.
             */
         if (sameBidSuiteCards.length > 0 && bidSuite !== 4)
-          maxCard = maxBy(sameBidSuiteCards, "card");
-        else maxCard = maxBy(sameInitSuiteCards, "card");
+          maxCard = _.maxBy(sameBidSuiteCards, "card");
+        else maxCard = _.maxBy(sameInitSuiteCards, "card");
 
-        const { direction: leader } = find(
+        const { direction: leader } = _.find(
           access_playing.communityCards,
           maxCard
         );
@@ -1068,9 +1062,10 @@ io.on("connection", (socket) => {
         access_playing.communityCards = [];
 
         /// playing for 13 turn.
-        if (access_playing.turn >= tour.maxTurn) {
-          if (++access_bidding.round >= tour.maxRound) {
+        if (access_playing.turn >= 2) {
+          if (++access_bidding.round >= 2 /*tours["Mark1"].maxRound*/) {
             /// clear all temp var here ...
+            console.log("in-condition");
             ioToRoomOnPlaying({
               room,
               status: "ending",
