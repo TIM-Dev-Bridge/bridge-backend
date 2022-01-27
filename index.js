@@ -57,6 +57,10 @@ const INIT = {
     [false, false],
     [false, false],
   ],
+  firstDirectionSuites: [
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+],
 };
 
 const TYPE = {
@@ -67,6 +71,32 @@ const TYPE = {
 const CONTRACT = {
   PASS: -1,
   DBL: 99,
+};
+
+const bidding = {
+  round: 0,
+  declarer: 0,
+  passCount: 0,
+  isPassOut: true,
+  maxContract: -1,
+  prevBidDirection: 0,
+  doubles: [
+    [false, false],
+    [false, false],
+  ],
+  firstDirectionSuites: [
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+  ],
+};
+
+const playing = {
+  turn: 0,
+  doubles: [],
+  bidSuite: 0,
+  communityCards: [],
+  initSuite: undefined,
+  trick: [0, 0],
 };
 
 const BOARD = board.createBoard();
@@ -108,32 +138,6 @@ const matchmaking = (tour_name) => {
   //Mitchell full
   let tables = [];
   let rounds = [];
-
-  const bidding = {
-    round: 0,
-    declarer: 0,
-    passCount: 0,
-    isPassOut: true,
-    maxContract: -1,
-    prevBidDirection: 0,
-    firstDirectionSuites: [
-      [0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0],
-    ],
-    doubles: [
-      [false, false],
-      [false, false],
-    ],
-  };
-
-  const playing = {
-    turn: 0,
-    doubles: [],
-    bidSuite: 0,
-    communityCards: [],
-    initSuite: undefined,
-    trick: [],
-  };
 
   //Change to function create tournament round
   for (var round = 0; round < tours[tour_name].board_round; round++) {
@@ -884,6 +888,7 @@ io.on("connection", (socket) => {
       table_id = "r1b1",
     }) => {
       const nextDirection = direction < 3 ? parseInt(direction, 10) + 1 : 0;
+      // const nextDirection = direction < 3 ? parseInt(direction, 10) + 1 : 0;
 
       /// convert contract to suite.
       const suite = contract % 5;
@@ -921,13 +926,18 @@ io.on("connection", (socket) => {
 
           access_playing.bidSuite = winnerSuite;
           access_playing.doubles = access_bidding.doubles;
-          console.log("pass");
+          console.log("leader", leader);
+          console.log("declarer", declarer);
           /// clear access_table here ...
+          // access_bidding.passCount = 0;
+          // access_bidding.isPassOut = true;
+          // access_bidding.doubles = INIT.doubles;
+          access_bidding.declarer = 0;
           access_bidding.passCount = 0;
           access_bidding.isPassOut = true;
+          access_bidding.maxContract = -1;
           access_bidding.doubles = INIT.doubles;
-
-          console.log(`playing.doubles`, access_playing.doubles);
+          access_bidding.firstDirectionSuites = INIT.firstDirectionSuites;
 
           ioToRoomOnPlaying({
             room,
@@ -1014,21 +1024,26 @@ io.on("connection", (socket) => {
 
   socket.on(
     "play_card",
-    ({ player_id, room = "room_1", card, direction, turn }) => {
+    ({
+      player_id,
+      room = "room_1",
+      card,
+      direction,
+      turn,
+      tour_name,
+      round_id,
+      table_id,
+    }) => {
       /* 
             TODO: check client and server property are according together. 
         */
-      let access_bidding = access_table(
+      let table_data = access_table(
         (tour_name = "Mark1"),
         (round_id = "1"),
         (table_id = "r1b1")
-      ).bidding;
-
-      let access_playing = access_table(
-        (tour_name = "Mark1"),
-        (round_id = "1"),
-        (table_id = "r1b1")
-      ).playing;
+      );
+      let access_bidding = table_data.bidding;
+      let access_playing = table_data.playing;
       if (turn !== access_playing.turn) return;
 
       const nextDirection = direction < 3 ? parseInt(direction, 10) + 1 : 0;
@@ -1077,10 +1092,12 @@ io.on("connection", (socket) => {
         console.log(`leader`, leader);
         access_playing.initSuite = undefined;
         access_playing.communityCards = [];
-
         /// playing for 13 turn.
-        if (access_playing.turn >= 2) {
-          if (++access_bidding.round >= 2 /*tours["Mark1"].maxRound*/) {
+        if (
+          access_playing.turn >= 1
+          //access_table.board_num >= tours[tour_name].board_per_round
+        ) {
+          if (++access_bidding.round >= tours[tour_name].board_round) {
             /// clear all temp var here ...
             ioToRoomOnPlaying({
               room,
@@ -1091,6 +1108,9 @@ io.on("connection", (socket) => {
           }
           //Calulate score for 13 turn
           //access_playing.score = score.calScore()
+          //Chage board
+          table_data.board_num++;
+
           ioToRoomOnBiddingPhase({
             room,
             // contract,
