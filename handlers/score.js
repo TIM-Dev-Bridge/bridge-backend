@@ -101,7 +101,7 @@ const calScore = (
     : [defenderScore, declarerScore];
 };
 
-export {
+exports = {
   calContractPoint,
   calOvertrickPoint,
   calBonusPoint,

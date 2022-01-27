@@ -105,3 +105,9 @@ exports.bid_contract = () => {
     bidding.push(...bid_pic.map((pic) => num + "_" + pic));
   });
 };
+
+exports.convert_num_2_card = (num) => {};
+exports.convert_card_2_num = (card) => {};
+
+exports.convert_num_2_direction = (num) => {};
+exports.convert_direction_2_num = (direction) => {};

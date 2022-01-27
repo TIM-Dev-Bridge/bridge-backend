@@ -38,6 +38,9 @@ const { log } = require("console");
 
 const _ = require("lodash");
 let card = require("./handlers/card");
+let score = require("./handlers/score");
+let board = require("./handlers/board");
+const { access } = require("fs");
 
 let users = {};
 let tours = {};
@@ -65,6 +68,8 @@ const CONTRACT = {
   PASS: -1,
   DBL: 99,
 };
+
+const BOARD = board.createBoard();
 
 const ioToRoomOnPlaying = ({ status = "", room = "", payload = {} }) => {
   io.to(room).emit("playing", { status, payload });
@@ -127,6 +132,7 @@ const matchmaking = (tour_name) => {
     bidSuite: 0,
     communityCards: [],
     initSuite: undefined,
+    trick: [],
   };
 
   //Change to function create tournament round
@@ -143,6 +149,7 @@ const matchmaking = (tour_name) => {
       console.log("temp_versus", temp_versus);
       tables.push({
         table_id: `r${round + 1}b${table + 1}`, //mongodb id
+        board_num: `${round + 1}`,
         versus: `${first_pair[table]},${second_pair[table]}`,
         bidding: bidding,
         playing: playing,
@@ -947,7 +954,14 @@ io.on("connection", (socket) => {
             return;
           }
 
-          ioToRoomOnBiddingPhase({ room });
+          ioToRoomOnBiddingPhase({
+            room,
+            contract,
+            nextDirection,
+            tour_name,
+            round_id,
+            table_id,
+          });
 
           return;
         }
@@ -1048,16 +1062,19 @@ io.on("connection", (socket) => {
             */
         if (sameBidSuiteCards.length > 0 && bidSuite !== 4)
           maxCard = _.maxBy(sameBidSuiteCards, "card");
+        //#AP
+        // access_playing.trick;
         else maxCard = _.maxBy(sameInitSuiteCards, "card");
 
         const { direction: leader } = _.find(
           access_playing.communityCards,
           maxCard
         );
+        //Calculate trick if leader = NS then + 1
+        leader % 2 == 0 ? access_playing.trick[0]++ : access_playing.trick[1]++;
 
         console.log(`access_playing`, access_playing);
         console.log(`leader`, leader);
-
         access_playing.initSuite = undefined;
         access_playing.communityCards = [];
 
@@ -1065,7 +1082,6 @@ io.on("connection", (socket) => {
         if (access_playing.turn >= 2) {
           if (++access_bidding.round >= 2 /*tours["Mark1"].maxRound*/) {
             /// clear all temp var here ...
-            console.log("in-condition");
             ioToRoomOnPlaying({
               room,
               status: "ending",
@@ -1073,11 +1089,18 @@ io.on("connection", (socket) => {
             });
             return;
           }
-
-          ioToRoomOnBiddingPhase({ room });
+          //Calulate score for 13 turn
+          //access_playing.score = score.calScore()
+          ioToRoomOnBiddingPhase({
+            room,
+            // contract,
+            nextDirection,
+            tour_name,
+            round_id,
+            table_id,
+          });
 
           access_playing.turn = 0;
-
           return;
         }
 
