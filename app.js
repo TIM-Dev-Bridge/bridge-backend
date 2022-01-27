@@ -49,6 +49,8 @@ app.get("/manageTour", manageTour);
 //Test function//
 var random_card = require("./handlers/card");
 var score = require("./handlers/score");
+
+random_card.random_card(3);
 //score.createBoard()
 //score.score();
 module.exports = app;

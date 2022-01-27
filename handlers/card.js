@@ -80,20 +80,39 @@ exports.value_to_card = (value) => {
     return `${num_card[value % 13]}_${pic_card[parseInt(value / 13)]}`;
   }
 };
-exports.random_card = () => {
-  let value = [];
-  value = _.chunk(_.shuffle(_.range(52)), 13).map((hand) => _.sortBy(hand));
-  //Send to front
+exports.random_card = (board_per_round) => {
+  let boards = [];
+  for (i = 0; i < board_per_round; i++) {
+    //value = _.chunk(_.shuffle(_.range(52)), 13).map((hand) => _.sortBy(hand));
+    boards.push(
+      _.chunk(_.shuffle(_.range(52)), 13).map((hand) => _.sortBy(hand))
+    );
+  }
+  ///Send to front
+  // let convert_front = [];
+  // value.map((hand) =>
+  //   convert_front.push(
+  //     hand.map((value) => {
+  //       return this.value_to_card(value);
+  //     })
+  //   )
+  // );
+  ///Send to front
   let convert_front = [];
-  value.map((hand) =>
-    convert_front.push(
-      hand.map((value) => {
-        return this.value_to_card(value);
-      })
+  boards.map((board) =>
+    board.map((hand) =>
+      convert_front.push(
+        hand.map((value) => {
+          return this.value_to_card(value);
+        })
+      )
     )
   );
+
   //console.log(value);
-  return value;
+  console.log(convert_front);
+  console.log("boards", boards);
+  return boards;
 };
 
 exports.bid_contract = () => {

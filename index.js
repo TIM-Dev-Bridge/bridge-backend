@@ -60,7 +60,7 @@ const INIT = {
   firstDirectionSuites: [
     [0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0],
-],
+  ],
 };
 
 const TYPE = {
@@ -887,6 +887,7 @@ io.on("connection", (socket) => {
       round_id = "1",
       table_id = "r1b1",
     }) => {
+      console.log('direction now', direction);
       const nextDirection = direction < 3 ? parseInt(direction, 10) + 1 : 0;
       // const nextDirection = direction < 3 ? parseInt(direction, 10) + 1 : 0;
 
@@ -895,17 +896,14 @@ io.on("connection", (socket) => {
       const team = direction % 2;
       const anotherTeam = nextDirection % 2;
       const isPass = suite === -1;
-      let access_bidding = access_table(
-        (tour_name = "Mark1"),
-        (round_id = "1"),
-        (table_id = "r1b1")
-      ).bidding;
 
-      let access_playing = access_table(
+      let table_data = access_table(
         (tour_name = "Mark1"),
         (round_id = "1"),
         (table_id = "r1b1")
-      ).playing;
+      );
+      let access_bidding = table_data.bidding;
+      let access_playing = table_data.playing;
 
       if (isPass) {
         ++access_bidding.passCount;
@@ -929,9 +927,6 @@ io.on("connection", (socket) => {
           console.log("leader", leader);
           console.log("declarer", declarer);
           /// clear access_table here ...
-          // access_bidding.passCount = 0;
-          // access_bidding.isPassOut = true;
-          // access_bidding.doubles = INIT.doubles;
           access_bidding.declarer = 0;
           access_bidding.passCount = 0;
           access_bidding.isPassOut = true;
