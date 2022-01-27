@@ -153,7 +153,10 @@ const matchmaking = (tour_name) => {
       console.log("temp_versus", temp_versus);
       tables.push({
         table_id: `r${round + 1}b${table + 1}`, //mongodb id
-        board_num: `${round + 1}`,
+        board_num: board.createBoardPerRound(
+          tours[tour_name].board_per_round,
+          round
+        ),
         versus: `${first_pair[table]},${second_pair[table]}`,
         bidding: bidding,
         playing: playing,
@@ -162,7 +165,7 @@ const matchmaking = (tour_name) => {
     }
     rounds.push({
       round_id: `${round + 1}`,
-      card: card.random_card(),
+      card: card.random_card(tours[tour_name].board_per_round),
       tables: tables,
     });
     tables = [];
@@ -821,9 +824,10 @@ io.on("connection", (socket) => {
     io.in(tour_name).emit(
       "start-tour",
       rounds.map(({ round_id, tables }) => {
-        let new_table = tables.map(({ table_id, versus }) => ({
+        let new_table = tables.map(({ table_id, versus, board_num }) => ({
           table_id,
           versus,
+          board_num,
         }));
         return { round_id, tables: new_table };
       })
@@ -887,7 +891,7 @@ io.on("connection", (socket) => {
       round_id = "1",
       table_id = "r1b1",
     }) => {
-      console.log('direction now', direction);
+      console.log("direction now", direction);
       const nextDirection = direction < 3 ? parseInt(direction, 10) + 1 : 0;
       // const nextDirection = direction < 3 ? parseInt(direction, 10) + 1 : 0;
 

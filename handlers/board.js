@@ -1,3 +1,4 @@
+const _ = require("lodash");
 let board = [];
 let direction = ["N", "E", "S", "W"];
 let vul = ["None", "N-S", "E-W", "All"];
@@ -17,4 +18,11 @@ exports.createBoard = () => {
   }
   console.log(`board`, board);
   return board;
+};
+
+exports.createBoardPerRound = (board_per_round, round) => {
+  return _.range(
+    round * board_per_round + 1,
+    (round + 1) * board_per_round + 1
+  );
 };

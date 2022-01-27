@@ -108,10 +108,7 @@ exports.random_card = (board_per_round) => {
       )
     )
   );
-
-  //console.log(value);
-  console.log(convert_front);
-  console.log("boards", boards);
+  console.log(_.range(1,4));
   return boards;
 };
 
