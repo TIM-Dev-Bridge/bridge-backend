@@ -41,6 +41,7 @@ let card = require("./handlers/card");
 let score = require("./handlers/score");
 let board = require("./handlers/board");
 const { access } = require("fs");
+const { random } = require("lodash");
 
 let users = {};
 let tours = {};
@@ -1113,9 +1114,11 @@ io.on("connection", (socket) => {
           access_playing.turn >= 1
           //access_table.board_num >= tours[tour_name].board_per_round
         ) {
+          let {level, suit} = random_card.convert_value_bid(access_bidding.maxContract)
+          let {double, redouble} = random_card.check_db_rdb(access_bidding.maxContract)
           ///Calulate score for 13 turn
           // access_playing.score = score.calScore(
-          //   nsIsDeclarer,
+          //   access_bidding.declarer % 2 == 0 ? true : false,
           //   level,
           //   suit,
           //   double,

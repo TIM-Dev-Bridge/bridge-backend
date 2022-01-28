@@ -51,6 +51,7 @@ var random_card = require("./handlers/card");
 var score = require("./handlers/score");
 
 random_card.random_card(3);
+random_card.convert_value_bid(5)
 //score.createBoard()
 //score.score();
 module.exports = app;
