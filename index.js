@@ -99,7 +99,7 @@ const playing = {
   trick: [0, 0],
 };
 
-const BOARD = board.createBoard();
+const BOARD = board.createSettingBoard();
 
 const ioToRoomOnPlaying = ({ status = "", room = "", payload = {} }) => {
   io.to(room).emit("playing", { status, payload });
@@ -120,7 +120,7 @@ const ioToRoomOnBiddingPhase = ({
     payload: {
       contract,
       nextDirection,
-      round: access_table(tour_name, round_id, table_id).bidding.round,
+      board: access_table(tour_name, round_id, table_id).cur_board,
       turn: access_table(tour_name, round_id, table_id).playing.turn,
     },
   });
@@ -159,6 +159,7 @@ const matchmaking = (tour_name) => {
         ),
         versus: `${first_pair[table]},${second_pair[table]}`,
         cur_board: round * tours[tour_name].board_per_round + 1,
+        //cur_board: boards[0],
         bidding,
         playing,
       });
@@ -176,9 +177,13 @@ const matchmaking = (tour_name) => {
 };
 
 const access_table = (tour_name, round_id, table_id) => {
-  let round = _.find(tours[tour_name].rounds, ["round_id", round_id]);
-  let table = _.find(round.tables, ["table_id", table_id]);
-  return table;
+  try {
+    let round = _.find(tours[tour_name].rounds, ["round_id", round_id]);
+    let table = _.find(round.tables, ["table_id", table_id]);
+    return table;
+  } catch (error) {
+    console.log("error", error);
+  }
 };
 
 // // Authentication user
@@ -824,11 +829,14 @@ io.on("connection", (socket) => {
     io.in(tour_name).emit(
       "start-tour",
       rounds.map(({ round_id, tables }) => {
-        let new_table = tables.map(({ table_id, versus, boards }) => ({
-          table_id,
-          versus,
-          boards,
-        }));
+        let new_table = tables.map(
+          ({ table_id, versus, boards, cur_board }) => ({
+            table_id,
+            versus,
+            boards,
+            cur_board,
+          })
+        );
         return { round_id, tables: new_table };
       })
 
@@ -931,19 +939,19 @@ io.on("connection", (socket) => {
           console.log("leader", leader);
           console.log("declarer", declarer);
           /// clear access_table here ...
-          access_bidding.declarer = 0;
-          access_bidding.passCount = 0;
-          access_bidding.isPassOut = true;
-          access_bidding.maxContract = -1;
-          access_bidding.doubles = INIT.doubles;
-          access_bidding.firstDirectionSuites = INIT.firstDirectionSuites;
+          // access_bidding.declarer = 0;
+          // access_bidding.passCount = 0;
+          // access_bidding.isPassOut = true;
+          // access_bidding.maxContract = -1;
+          // access_bidding.doubles = INIT.doubles;
+          // access_bidding.firstDirectionSuites = INIT.firstDirectionSuites;
 
           ioToRoomOnPlaying({
             room,
             status: "initial_playing",
             payload: {
               leader,
-              round: access_bidding.round,
+              board: table_data.cur_board,
               bidSuite: winnerSuite,
               turn: ++access_playing.turn,
             },
@@ -953,7 +961,7 @@ io.on("connection", (socket) => {
         if (access_bidding.passCount === 4) {
           access_bidding.passCount = 0;
 
-          if (++access_bidding.round >= tour.maxRound) {
+          if (++table_data.cur_board >= tour.maxRound) {
             /// clear all temp var here ...
             ioToRoomOnPlaying({
               room,
@@ -1086,9 +1094,18 @@ io.on("connection", (socket) => {
         );
         //Calculate trick if leader = NS then + 1
         leader % 2 == 0 ? access_playing.trick[0]++ : access_playing.trick[1]++;
-
+        console.log("access_bidding", access_bidding);
         console.log(`access_playing`, access_playing);
         console.log(`leader`, leader);
+        console.log("cur_board", table_data.cur_board);
+
+        access_bidding.declarer = 0;
+        access_bidding.passCount = 0;
+        access_bidding.isPassOut = true;
+        access_bidding.maxContract = -1;
+        access_bidding.doubles = INIT.doubles;
+        access_bidding.firstDirectionSuites = INIT.firstDirectionSuites;
+
         access_playing.initSuite = undefined;
         access_playing.communityCards = [];
         /// playing for 13 turn.
@@ -1096,7 +1113,18 @@ io.on("connection", (socket) => {
           access_playing.turn >= 1
           //access_table.board_num >= tours[tour_name].board_per_round
         ) {
-          if (++access_bidding.round >= tours[tour_name].board_round) {
+          ///Calulate score for 13 turn
+          // access_playing.score = score.calScore(
+          //   nsIsDeclarer,
+          //   level,
+          //   suit,
+          //   double,
+          //   redouble,
+          //   vulnerable,
+          //   tricks,
+          //   isDuplicate
+          // );
+          if (++table_data.cur_board > tours[tour_name].board_per_round) {
             /// clear all temp var here ...
             ioToRoomOnPlaying({
               room,
@@ -1105,10 +1133,9 @@ io.on("connection", (socket) => {
             });
             return;
           }
-          //Calulate score for 13 turn
-          //access_playing.score = score.calScore()
+
           //Chage board
-          table_data.board_num++;
+          //table_data.board_num++;
 
           ioToRoomOnBiddingPhase({
             room,
@@ -1148,7 +1175,7 @@ io.on("connection", (socket) => {
 
   //Leave team
   //Join room
-  //--Check user in a room
+  ///Check user in a room
   socket.on("get-username-room", async (room) => {
     let userList = io.sockets.adapter.rooms.get(room);
     console.log(userList);
