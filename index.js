@@ -153,14 +153,14 @@ const matchmaking = (tour_name) => {
       console.log("temp_versus", temp_versus);
       tables.push({
         table_id: `r${round + 1}b${table + 1}`, //mongodb id
-        board_num: board.createBoardPerRound(
+        boards: board.createBoardPerRound(
           tours[tour_name].board_per_round,
           round
         ),
         versus: `${first_pair[table]},${second_pair[table]}`,
-        bidding: bidding,
-        playing: playing,
-        count_player: [],
+        cur_board: round * tours[tour_name].board_per_round + 1,
+        bidding,
+        playing,
       });
     }
     rounds.push({
@@ -824,10 +824,10 @@ io.on("connection", (socket) => {
     io.in(tour_name).emit(
       "start-tour",
       rounds.map(({ round_id, tables }) => {
-        let new_table = tables.map(({ table_id, versus, board_num }) => ({
+        let new_table = tables.map(({ table_id, versus, boards }) => ({
           table_id,
           versus,
-          board_num,
+          boards,
         }));
         return { round_id, tables: new_table };
       })
