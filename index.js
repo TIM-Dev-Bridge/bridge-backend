@@ -37,7 +37,7 @@ const Board = require("./model/board");
 const { log } = require("console");
 
 const _ = require("lodash");
-let card = require("./handlers/card");
+let card_handle = require("./handlers/card");
 let score = require("./handlers/score");
 let board = require("./handlers/board");
 const { access } = require("fs");
@@ -167,7 +167,7 @@ const matchmaking = (tour_name) => {
     }
     rounds.push({
       round_id: `${round + 1}`,
-      card: card.random_card(tours[tour_name].board_per_round),
+      card: card_handle.random_card(tours[tour_name].board_per_round),
       tables: tables,
     });
     tables = [];
@@ -1100,12 +1100,12 @@ io.on("connection", (socket) => {
         console.log(`leader`, leader);
         console.log("cur_board", table_data.cur_board);
 
-        access_bidding.declarer = 0;
-        access_bidding.passCount = 0;
-        access_bidding.isPassOut = true;
-        access_bidding.maxContract = -1;
-        access_bidding.doubles = INIT.doubles;
-        access_bidding.firstDirectionSuites = INIT.firstDirectionSuites;
+        // access_bidding.declarer = 0;
+        // access_bidding.passCount = 0;
+        // access_bidding.isPassOut = true;
+        // access_bidding.maxContract = -1;
+        // access_bidding.doubles = INIT.doubles;
+        // access_bidding.firstDirectionSuites = INIT.firstDirectionSuites;
 
         access_playing.initSuite = undefined;
         access_playing.communityCards = [];
@@ -1114,19 +1114,32 @@ io.on("connection", (socket) => {
           access_playing.turn >= 1
           //access_table.board_num >= tours[tour_name].board_per_round
         ) {
-          let {level, suit} = random_card.convert_value_bid(access_bidding.maxContract)
-          let {double, redouble} = random_card.check_db_rdb(access_bidding.maxContract)
+          let { level, suit } = card_handle.convert_value_bid(
+            access_bidding.maxContract
+          );
+          let { double, redouble } = card_handle.check_db_rdb(
+            access_bidding.declarer,
+            access_bidding.doubles
+          );
           ///Calulate score for 13 turn
-          // access_playing.score = score.calScore(
-          //   access_bidding.declarer % 2 == 0 ? true : false,
-          //   level,
-          //   suit,
-          //   double,
-          //   redouble,
-          //   vulnerable,
-          //   tricks,
-          //   isDuplicate
-          // );
+          table_data.score = score.calScore(
+            access_bidding.declarer % 2 == 0 ? true : false,
+            level,
+            suit,
+            double,
+            redouble,
+            table_data.cur_board % 2 == 0 ? true : false,
+            access_playing.trick,
+            true
+          );
+          //reset bidding
+          access_bidding.declarer = 0;
+          access_bidding.passCount = 0;
+          access_bidding.isPassOut = true;
+          access_bidding.maxContract = -1;
+          access_bidding.doubles = INIT.doubles;
+          access_bidding.firstDirectionSuites = INIT.firstDirectionSuites;
+          console.log("score", table_data.score);
           if (++table_data.cur_board > tours[tour_name].board_per_round) {
             /// clear all temp var here ...
             ioToRoomOnPlaying({

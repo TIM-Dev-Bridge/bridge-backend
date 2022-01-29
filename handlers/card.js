@@ -130,15 +130,20 @@ exports.convert_value_bid = (bid_value) => {
   let find_bid = this.bid_contract()[bid_value].split("_");
   console.log(find_bid);
   return {
-    bid_level: find_bid[0],
-    bid_suite: find_bid[1],
+    level: find_bid[0],
+    suit: find_bid[1],
   };
 };
 
 exports.check_db_rdb = (direction, double) => {
+  console.log("dob", double);
   return direction % 2 == 0
     ? { double: double[0][0], redouble: double[1][0] }
     : { double: double[0][1], redouble: double[1][1] };
+};
+
+exports.check_vul_ns = (board_num) => {
+  return board_num % 2 == 0 ? true : false;
 };
 
 exports.convert_num_2_card = (num) => {};
