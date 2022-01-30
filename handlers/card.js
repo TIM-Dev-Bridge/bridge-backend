@@ -24,51 +24,6 @@ const _ = require("lodash");
 //   25: "A_D",
 //   26: "1_H",
 // };
-var tours = {
-  t1: {
-    t_id: "t1",
-    tour_name: String,
-    // player_pair: [[player1, player2]], // player_pair -> team
-    // player_waiting: [],
-    player: [
-      {
-        player_name: "",
-        player_id: "",
-        status: "pair,waiting",
-        pair_id: "team1",
-      },
-    ],
-    rounds: [
-      {
-        round_id: "r1",
-        card: [[13], [13], [13], [13]], //Create when use barometer
-        board_minuite: 8, //Change board
-        tables: [
-          //table is same a roomname of socketIO {tour_id + match + table}
-          {
-            table_id: "b1",
-            bidTemp: {
-              round: 1,
-              declarer: 0,
-              passCount: 0,
-              isPassOut: true,
-              maxContract: -1,
-              prevBidDirection: 0,
-              firstDirectionSuites: [
-                [0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0],
-              ],
-              doubles: [
-                [false, false],
-                [false, false],
-              ],
-            },
-          },
-        ],
-      },
-    ],
-  },
-};
 
 //------------------------------------------------------Bridge------------------------------------------------------//
 exports.value_to_card = (value) => {
@@ -108,7 +63,6 @@ exports.random_card = (board_per_round) => {
       )
     )
   );
-  console.log(_.range(1, 4));
   return boards;
 };
 
@@ -123,45 +77,59 @@ exports.bid_contract = () => {
   return bidding;
 };
 
-exports.nsIsDeclarer = (direction) => {
-  return direction % 2 == 0 ? true : false;
+exports.nsIsDeclarer = (declarer) => {
+  return declarer % 2 == 0 ? true : false;
 };
-exports.convert_value_bid = (bid_value) => {
-  let find_bid = this.bid_contract()[bid_value].split("_");
-  console.log(find_bid);
+exports.convert_value_bid = (max_bid_value) => {
+  let find_bid = this.bid_contract()[max_bid_value].split("_");
   return {
     level: find_bid[0],
     suit: find_bid[1],
   };
 };
 
-exports.check_db_rdb = (direction, double) => {
-  console.log("dob", double);
-  return direction % 2 == 0
-    ? { double: double[0][0], redouble: double[1][0] }
-    : { double: double[0][1], redouble: double[1][1] };
+exports.check_ns_db_rdb = (declarer, double) => {
+  return declarer % 2 == 0
+    ? { nsIsDeclarer: true, double: double[0][0], redouble: double[1][0] }
+    : { nsIsDeclarer: false, double: double[0][1], redouble: double[1][1] };
 };
 
-exports.check_vul_ns = (board_num) => {
-  return board_num % 2 == 0 ? true : false;
-};
-
-exports.check_vulnerable = (decalrer, vulnerabel) => {
+exports.check_vulnerable = (declarer, vulnerable_value) => {
   let direction = ["N", "E", "S", "W"];
-  let convert_declarer = direction[decalrer];
-  console.log("convert_declarer", convert_declarer);
-  console.log("vulnerabel", vulnerabel);
+  let convert_declarer = direction[declarer];
   if (
-    (vulnerabel.includes(convert_declarer) || vulnerabel == "All") &&
-    vulnerabel !== "None"
+    (vulnerable_value.includes(convert_declarer) ||
+      vulnerable_value == "All") &&
+    vulnerable_value !== "None"
   ) {
     return true;
   } else {
     return false;
   }
 };
-exports.convert_num_2_card = (num) => {};
-exports.convert_card_2_num = (card) => {};
 
-exports.convert_num_2_direction = (num) => {};
-exports.convert_direction_2_num = (direction) => {};
+exports.score_table = (
+  declarer,
+  max_bid_value,
+  doubles,
+  vulnerable_value,
+  tricks
+) => {
+  let { level, suit } = this.convert_value_bid(max_bid_value);
+  let { nsIsDeclarer, double, redouble } = this.check_ns_db_rdb(
+    declarer,
+    doubles
+  );
+  let vulnerable = this.check_vulnerable(declarer, vulnerable_value);
+  let isDuplicate = true;
+  return {
+    nsIsDeclarer,
+    level,
+    suit,
+    double,
+    redouble,
+    vulnerable,
+    tricks,
+    isDuplicate,
+  };
+};

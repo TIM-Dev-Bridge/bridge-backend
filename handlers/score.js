@@ -166,7 +166,7 @@ exports.calPenaltyPoint = (target, trick, vulnerable, double, redouble) => {
   return undertricks * 50 * ((vulnerable && 2) || 1);
 };
 
-exports.calScore = (
+exports.calScore = ({
   nsIsDeclarer,
   level,
   suit,
@@ -174,8 +174,8 @@ exports.calScore = (
   redouble,
   vulnerable,
   tricks,
-  isDuplicate
-) => {
+  isDuplicate,
+}) => {
   const target = level + 6;
   const trick = nsIsDeclarer ? tricks[0] : tricks[1];
   let declarerScore = 0;
@@ -203,7 +203,13 @@ exports.calScore = (
     console.log("bonusPoint", bonusPoint);
     declarerScore = contractPoint + overtrickPoint + bonusPoint;
   } else {
-    penaltyPoint = this.calPenaltyPoint(target, trick, vulnerable, double, redouble);
+    penaltyPoint = this.calPenaltyPoint(
+      target,
+      trick,
+      vulnerable,
+      double,
+      redouble
+    );
     console.log("penaltyPoint", penaltyPoint);
     defenderScore = penaltyPoint;
   }

@@ -97,7 +97,7 @@ const playing = {
   bidSuite: 0,
   communityCards: [],
   initSuite: undefined,
-  trick: [0, 0],
+  tricks: [0, 0],
 };
 
 const BOARD = board.createSettingBoard();
@@ -1086,15 +1086,15 @@ io.on("connection", (socket) => {
         if (sameBidSuiteCards.length > 0 && bidSuite !== 4)
           maxCard = _.maxBy(sameBidSuiteCards, "card");
         //#AP
-        // access_playing.trick;
+        // access_playing.tricks;
         else maxCard = _.maxBy(sameInitSuiteCards, "card");
 
         const { direction: leader } = _.find(
           access_playing.communityCards,
           maxCard
         );
-        //Calculate trick if leader = NS then + 1
-        leader % 2 == 0 ? access_playing.trick[0]++ : access_playing.trick[1]++;
+        //Calculate tricks if leader = NS then + 1
+        leader % 2 == 0 ? access_playing.tricks[0]++ : access_playing.tricks[1]++;
         console.log("access_bidding", access_bidding);
         console.log(`access_playing`, access_playing);
         console.log(`leader`, leader);
@@ -1114,27 +1114,15 @@ io.on("connection", (socket) => {
           access_playing.turn >= 1
           //access_table.board_num >= tours[tour_name].board_per_round
         ) {
-          let { level, suit } = card_handle.convert_value_bid(
-            access_bidding.maxContract
-          );
-          let { double, redouble } = card_handle.check_db_rdb(
-            access_bidding.declarer,
-            access_bidding.doubles
-          );
-          let vulnerabel = card_handle.check_vulnerable(
-            access_bidding.declarer,
-            BOARD[table_data.cur_board - 1].vulnerable
-          );
-          ///Calulate score for 13 turn
+          ///Calculate score per tables
           table_data.score = score.calScore(
-            access_bidding.declarer % 2 == 0 ? true : false,
-            level,
-            suit,
-            double,
-            redouble,
-            vulnerabel,
-            access_playing.trick,
-            true
+            card_handle.score_table(
+              access_bidding.declarer,
+              access_bidding.maxContract,
+              access_bidding.doubles,
+              BOARD[table_data.cur_board - 1].vulnerable,
+              access_playing.tricks
+            )
           );
           //reset bidding
           access_bidding.declarer = 0;
