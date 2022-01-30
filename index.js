@@ -1121,6 +1121,10 @@ io.on("connection", (socket) => {
             access_bidding.declarer,
             access_bidding.doubles
           );
+          let vulnerabel = card_handle.check_vulnerable(
+            access_bidding.declarer,
+            BOARD[table_data.cur_board - 1].vulnerable
+          );
           ///Calulate score for 13 turn
           table_data.score = score.calScore(
             access_bidding.declarer % 2 == 0 ? true : false,
@@ -1128,7 +1132,7 @@ io.on("connection", (socket) => {
             suit,
             double,
             redouble,
-            table_data.cur_board % 2 == 0 ? true : false,
+            vulnerabel,
             access_playing.trick,
             true
           );

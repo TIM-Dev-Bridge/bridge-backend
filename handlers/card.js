@@ -146,6 +146,20 @@ exports.check_vul_ns = (board_num) => {
   return board_num % 2 == 0 ? true : false;
 };
 
+exports.check_vulnerable = (decalrer, vulnerabel) => {
+  let direction = ["N", "E", "S", "W"];
+  let convert_declarer = direction[decalrer];
+  console.log("convert_declarer", convert_declarer);
+  console.log("vulnerabel", vulnerabel);
+  if (
+    (vulnerabel.includes(convert_declarer) || vulnerabel == "All") &&
+    vulnerabel !== "None"
+  ) {
+    return true;
+  } else {
+    return false;
+  }
+};
 exports.convert_num_2_card = (num) => {};
 exports.convert_card_2_num = (card) => {};
 
