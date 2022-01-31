@@ -1094,7 +1094,9 @@ io.on("connection", (socket) => {
           maxCard
         );
         //Calculate tricks if leader = NS then + 1
-        leader % 2 == 0 ? access_playing.tricks[0]++ : access_playing.tricks[1]++;
+        leader % 2 == 0
+          ? access_playing.tricks[0]++
+          : access_playing.tricks[1]++;
         console.log("access_bidding", access_bidding);
         console.log(`access_playing`, access_playing);
         console.log(`leader`, leader);
@@ -1124,6 +1126,9 @@ io.on("connection", (socket) => {
               access_playing.tricks
             )
           );
+
+          console.log("score", table_data.score);
+
           //reset bidding
           access_bidding.declarer = 0;
           access_bidding.passCount = 0;
@@ -1131,7 +1136,8 @@ io.on("connection", (socket) => {
           access_bidding.maxContract = -1;
           access_bidding.doubles = INIT.doubles;
           access_bidding.firstDirectionSuites = INIT.firstDirectionSuites;
-          console.log("score", table_data.score);
+
+          //Chage board
           if (++table_data.cur_board > tours[tour_name].board_per_round) {
             /// clear all temp var here ...
             ioToRoomOnPlaying({
@@ -1141,9 +1147,6 @@ io.on("connection", (socket) => {
             });
             return;
           }
-
-          //Chage board
-          //table_data.board_num++;
 
           ioToRoomOnBiddingPhase({
             room,
