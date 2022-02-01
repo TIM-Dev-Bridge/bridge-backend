@@ -98,6 +98,7 @@ const playing = {
   communityCards: [],
   initSuite: undefined,
   tricks: [0, 0],
+  playedCards: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}],
 };
 
 const BOARD = board.createSettingBoard();
@@ -110,9 +111,10 @@ const ioToRoomOnBiddingPhase = ({
   room = "",
   contract = -1,
   tour_name,
-  round_id,
+  round_num,
   table_id,
-  nextDirection = access_table(tour_name, round_id, table_id).bidding.round % 4,
+  nextDirection = access_table(tour_name, round_num, table_id).bidding.round %
+    4,
 }) => {
   console.log("next", nextDirection);
   ioToRoomOnPlaying({
@@ -121,8 +123,8 @@ const ioToRoomOnBiddingPhase = ({
     payload: {
       contract,
       nextDirection,
-      board: access_table(tour_name, round_id, table_id).cur_board,
-      turn: access_table(tour_name, round_id, table_id).playing.turn,
+      board: access_table(tour_name, round_num, table_id).cur_board,
+      turn: access_table(tour_name, round_num, table_id).playing.turn,
     },
   });
 };
@@ -166,7 +168,7 @@ const matchmaking = (tour_name) => {
       });
     }
     rounds.push({
-      round_id: `${round + 1}`,
+      round_num: `${round + 1}`,
       card: card_handle.random_card(tours[tour_name].board_per_round),
       tables: tables,
     });
@@ -177,9 +179,9 @@ const matchmaking = (tour_name) => {
   return rounds;
 };
 
-const access_table = (tour_name, round_id, table_id) => {
+const access_table = (tour_name, round_num, table_id) => {
   try {
-    let round = _.find(tours[tour_name].rounds, ["round_id", round_id]);
+    let round = _.find(tours[tour_name].rounds, ["round_num", round_num]);
     let table = _.find(round.tables, ["table_id", table_id]);
     return table;
   } catch (error) {
@@ -829,7 +831,7 @@ io.on("connection", (socket) => {
     tours[tour_name][`rounds`] = rounds;
     io.in(tour_name).emit(
       "start-tour",
-      rounds.map(({ round_id, tables }) => {
+      rounds.map(({ round_num, tables }) => {
         let new_table = tables.map(
           ({ table_id, versus, boards, cur_board }) => ({
             table_id,
@@ -838,7 +840,7 @@ io.on("connection", (socket) => {
             cur_board,
           })
         );
-        return { round_id, tables: new_table };
+        return { round_num, tables: new_table };
       })
 
       // rounds.map(({ card, ...round }) => {
@@ -868,7 +870,7 @@ io.on("connection", (socket) => {
       player_name,
       tour_name,
       room = "room_1",
-      round_id,
+      round_num,
       table_id,
     }) => {
       console.log("tour_name", tour_name);
@@ -879,7 +881,7 @@ io.on("connection", (socket) => {
 
       /// if fully player, change to 'bidding phase'.
       if (clients.size === 4) {
-        ioToRoomOnBiddingPhase({ room, tour_name, round_id, table_id });
+        ioToRoomOnBiddingPhase({ room, tour_name, round_num, table_id });
         console.log("can go bidding phase");
       }
     }
@@ -897,7 +899,7 @@ io.on("connection", (socket) => {
       direction = DIRECTION.N,
       //Chage
       tour_name = "Mark1",
-      round_id = "1",
+      round_num = "1",
       table_id = "r1b1",
     }) => {
       console.log("direction now", direction);
@@ -912,7 +914,7 @@ io.on("connection", (socket) => {
 
       let table_data = access_table(
         (tour_name = "Mark1"),
-        (round_id = "1"),
+        (round_num = "1"),
         (table_id = "r1b1")
       );
       let access_bidding = table_data.bidding;
@@ -977,7 +979,7 @@ io.on("connection", (socket) => {
             contract,
             nextDirection,
             tour_name,
-            round_id,
+            round_num,
             table_id,
           });
 
@@ -1024,7 +1026,7 @@ io.on("connection", (socket) => {
         contract,
         nextDirection,
         tour_name,
-        round_id,
+        round_num,
         table_id,
       });
     }
@@ -1039,7 +1041,7 @@ io.on("connection", (socket) => {
       direction,
       turn,
       tour_name,
-      round_id,
+      round_num,
       table_id,
     }) => {
       /* 
@@ -1047,7 +1049,7 @@ io.on("connection", (socket) => {
         */
       let table_data = access_table(
         (tour_name = "Mark1"),
-        (round_id = "1"),
+        (round_num = "1"),
         (table_id = "r1b1")
       );
       let access_bidding = table_data.bidding;
@@ -1061,6 +1063,17 @@ io.on("connection", (socket) => {
         card,
         direction,
       });
+      console.log("communityCards", access_playing.communityCards);
+
+      //Save played carc
+      access_playing.playedCards[access_playing.turn - 1] = {
+        ...access_playing.playedCards[access_playing.turn - 1],
+        ...{
+          [`${direction}`]: card,
+        },
+      };
+
+      console.log("playedCards", access_playing.playedCards);
 
       /// if initSuite is 'undefined', it mean you are leader.
       access_playing.initSuite =
@@ -1153,7 +1166,7 @@ io.on("connection", (socket) => {
             // contract,
             nextDirection,
             tour_name,
-            round_id,
+            round_num,
             table_id,
           });
 
