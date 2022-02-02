@@ -103,6 +103,21 @@ const playing = {
 
 const BOARD = board.createSettingBoard();
 
+const ioToPlayerCardPhase = ({
+  socket_id,
+  direction,
+  tour_name,
+  round_num,
+  table_id,
+}) => {
+  let round_data = tours[tour_name].rounds[round_num];
+  let table_data = round_data.tables[table_id];
+  io.to(socket_id).emit(
+    "get_cards",
+    round_data.cards[table_data.cur_board - 1][direction]
+  );
+};
+
 const ioToRoomOnPlaying = ({ status = "", room = "", payload = {} }) => {
   io.to(room).emit("playing", { status, payload });
 };
@@ -113,9 +128,10 @@ const ioToRoomOnBiddingPhase = ({
   tour_name,
   round_num,
   table_id,
-  nextDirection = access_table(tour_name, round_num, table_id).bidding.round %
-    4,
+  nextDirection = 0,
 }) => {
+  let table_data = access_table(tour_name, round_num, table_id);
+  let round_data = access_round(tour_name, round_num);
   console.log("next", nextDirection);
   ioToRoomOnPlaying({
     room,
@@ -123,8 +139,10 @@ const ioToRoomOnBiddingPhase = ({
     payload: {
       contract,
       nextDirection,
-      board: access_table(tour_name, round_num, table_id).cur_board,
-      turn: access_table(tour_name, round_num, table_id).playing.turn,
+      board: table_data.cur_board,
+      turn: table_data.playing.turn,
+      ///Front-end must filter
+      cards: round_data.cards,
     },
   });
 };
@@ -156,20 +174,20 @@ const matchmaking = (tour_name) => {
       console.log("temp_versus", temp_versus);
       tables.push({
         table_id: `r${round + 1}b${table + 1}`, //mongodb id
+        status: "waiting",
         boards: board.createBoardPerRound(
           tours[tour_name].board_per_round,
           round
         ),
         versus: `${first_pair[table]},${second_pair[table]}`,
         cur_board: round * tours[tour_name].board_per_round + 1,
-        //cur_board: boards[0],
         bidding,
         playing,
       });
     }
     rounds.push({
       round_num: `${round + 1}`,
-      card: card_handle.random_card(tours[tour_name].board_per_round),
+      cards: card_handle.random_card(tours[tour_name].board_per_round),
       tables: tables,
     });
     tables = [];
@@ -179,6 +197,14 @@ const matchmaking = (tour_name) => {
   return rounds;
 };
 
+const access_round = (tour_name, round_num) => {
+  try {
+    let round = _.find(tours[tour_name].rounds, ["round_num", round_num]);
+    return round;
+  } catch (error) {
+    console.log("error", error);
+  }
+};
 const access_table = (tour_name, round_num, table_id) => {
   try {
     let round = _.find(tours[tour_name].rounds, ["round_num", round_num]);
@@ -187,6 +213,41 @@ const access_table = (tour_name, round_num, table_id) => {
   } catch (error) {
     console.log("error", error);
   }
+};
+
+const sendCardOneHand = ({
+  room,
+  socket_id,
+  direction,
+  tour_name,
+  round_num,
+  table_id,
+  sendAll = false,
+}) => {
+  let round_data = access_table(tour_name, round_num);
+  let table_data = access_table(tour_name, round_num, table_id);
+  if (sendAll === true)
+    io.to(room).emit(
+      "opposite",
+      round_data.card[table_data.cur_board][direction]
+    );
+  else
+    socket
+      .to(socket_id)
+      .emit("card", round_data.card[table_data.cur_board][direction]);
+};
+
+const specWhilePlaying = ({ socket_id, tour_name, room = "room_1" }) => {
+  let rounds = tours[tour_name][`rounds`];
+  rounds.map(({ round_num, tables }) => {
+    let new_table = tables.map(({ table_id, versus, boards, cur_board }) => ({
+      table_id,
+      versus,
+      boards,
+      cur_board,
+    }));
+    return { round_num, tables: new_table };
+  });
 };
 
 // // Authentication user
@@ -873,16 +934,27 @@ io.on("connection", (socket) => {
       round_num,
       table_id,
     }) => {
-      console.log("tour_name", tour_name);
       socket.join(room);
       let clients = io.sockets.adapter.rooms.get(room);
       /// return current players.
       // io.to(room).emit("waiting_for_start", tours[tour_name].players);
 
+      let table_data = access_table(
+        (tour_name = "Mark1"),
+        (round_num = "1"),
+        (table_id = "r1b1")
+      );
+      ///Player get cards
+      let socket_id = "";
+      sendCardOneHand({ socket_id, direction, tour_name, round_num, table_id });
+
       /// if fully player, change to 'bidding phase'.
-      if (clients.size === 4) {
+      if (clients.size === 4 && table_data.status == "waiting") {
+        table_data.status = "playing";
+
         ioToRoomOnBiddingPhase({ room, tour_name, round_num, table_id });
         console.log("can go bidding phase");
+      } else if (table_data.status == "playing" && player_id in spec) {
       }
     }
   );
@@ -941,6 +1013,19 @@ io.on("connection", (socket) => {
           access_playing.doubles = access_bidding.doubles;
           console.log("leader", leader);
           console.log("declarer", declarer);
+          console.log("before_direct", direction);
+
+          ///Send card the opposite declarer to everyone
+          let opposite = declarer < 2 ? declarer + 2 : declarer - 2;
+          sendCardOneHand({
+            room,
+            direction: opposite,
+            tour_name,
+            round_num,
+            table_id,
+            sendAll: true,
+          });
+          console.log("after_direct", direction);
           /// clear access_table here ...
           // access_bidding.declarer = 0;
           // access_bidding.passCount = 0;
@@ -1197,6 +1282,30 @@ io.on("connection", (socket) => {
     }
   );
 
+  socket.on(
+    "spec-join-room",
+    ({
+      spec_id,
+      spec_name,
+      tour_name,
+      room = "room_1",
+      round_num,
+      table_id,
+    }) => {
+      socket.join(room);
+      let clients = io.sockets.adapter.rooms.get(room);
+      let round_data = access_round((tour_name = "Mark1"), (round_num = "1"));
+      let table_data = access_table(
+        (tour_name = "Mark1"),
+        (round_num = "1"),
+        (table_id = "r1b1")
+      );
+
+      if (table_data.status == "playing") {
+        socket.emit("spec-join-room", round_data);
+      }
+    }
+  );
   //Leave team
   //Join room
   ///Check user in a room
