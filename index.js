@@ -411,6 +411,7 @@ io.on("connection", (socket) => {
           title: tours[tour_name].tour_name,
           type: String(tours[tour_name].type),
           players: String(tours[tour_name].players.length),
+          team_runnum: 1,
         };
         tourList.push(tourData);
       }
@@ -843,6 +844,7 @@ io.on("connection", (socket) => {
     "invite-player",
     (tour_name, invite_player_name, player_name, callback) => {
       console.log(
+        "invite-player",
         invite_player_name,
         socket.id,
         " invite ",
@@ -854,7 +856,6 @@ io.on("connection", (socket) => {
       const sockets = {
         id: users[player_name].socket_id,
       };
-      callback();
       io.in(sockets.id).emit("invite-by", invite_player_name);
     }
   );
@@ -862,27 +863,20 @@ io.on("connection", (socket) => {
   socket.on(
     "accept-invite",
     (tour_name, invite_player_name, player_name, callback) => {
-      const pair = {
-        user_a: invite_player_name,
-        user_b: player_name,
-      };
-      tours[tour_name].players.find(
-        (player) => player.name == invite_player_name
-      ).status = "in-pair";
-      tours[tour_name].players.find(
-        (player) => player.name == player_name
-      ).status = "in-pair";
-      // const filterPlayer = tours[tour_name].player_waiting.filter((user)=> { return user != invite_player_name})
-      // const finalPlayer = filterPlayer.filter((user)=> { return user != player_name})
-      // tours[tour_name].player_waiting = finalPlayer
-      tours[tour_name].player_pair.push(pair);
-      console.log(tours[tour_name]);
-      const waitingPlayer = tours[tour_name].players
-        .filter((player) => player.status == "waiting")
-        .map((player) => player.name);
-
-      io.in(tour_name).emit("update-player-waiting", waitingPlayer);
-      io.in(tour_name).emit("update-player-pair", tours[tour_name].player_pair);
+      const pair = tours[tour_name].players
+        .filter(
+          ({ player_name, status }) =>
+            (player_name == invite_player_name || player_name == player_name) &&
+            status === "waiting"
+        )
+        .map((player) => ({
+          ...player,
+          status: "in-pair",
+          player_id: tours[tour_name].team_runnum,
+        }));
+      ///Check when cannot paired
+      if (pair.length === 0) return "Cannot pair this player";
+      io.in(tour_name).emit("update-player-pair", pair);
       console.log(tours[tour_name].player_pair);
     }
   );
