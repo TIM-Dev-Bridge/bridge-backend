@@ -189,7 +189,7 @@ const matchmaking = (tour_name) => {
           round
         ),
         versus: `${versus[0].pair_id},${versus[2].pair_id}`,
-        direction: versus.map(({ id, direction }) => {
+        directions: versus.map(({ id, direction }) => {
           return { id, direction };
         }),
         cur_board: round * tours[tour_name].board_per_round + 1,
@@ -904,11 +904,12 @@ io.on("connection", (socket) => {
       "start-tour",
       rounds.map(({ round_num, tables }) => {
         let new_table = tables.map(
-          ({ table_id, versus, boards, cur_board }) => ({
+          ({ table_id, versus, boards, cur_board, directions }) => ({
             table_id,
             versus,
             boards,
             cur_board,
+            directions,
           })
         );
         return { round_num, tables: new_table };
