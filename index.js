@@ -172,6 +172,15 @@ const matchmaking = (tour_name) => {
         ["pair_id"]
       );
       console.log("temp_versus", temp_versus);
+      let versus = temp_versus.map((team, index) => {
+        if (index == 2) {
+          return { ...team, direction: 1 };
+        } else if (index == 1) {
+          return { ...team, direction: 2 };
+        }
+        return { ...team, direction: index };
+      });
+      console.log("versus", versus);
       tables.push({
         table_id: `r${round + 1}b${table + 1}`, //mongodb id
         status: "waiting",
@@ -179,7 +188,10 @@ const matchmaking = (tour_name) => {
           tours[tour_name].board_per_round,
           round
         ),
-        versus: `${first_pair[table]},${second_pair[table]}`,
+        versus: `${versus[0].pair_id},${versus[2].pair_id}`,
+        direction: versus.map(({ id, direction }) => {
+          return { id, direction };
+        }),
         cur_board: round * tours[tour_name].board_per_round + 1,
         bidding,
         playing,
@@ -935,7 +947,7 @@ io.on("connection", (socket) => {
     }) => {
       socket.join(room);
       let clients = io.sockets.adapter.rooms.get(room);
-      console.log('direction', direction);
+      console.log("direction", direction);
       /// return current players.
       // io.to(room).emit("waiting_for_start", tours[tour_name].players);
 
