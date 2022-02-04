@@ -217,24 +217,28 @@ const access_table = (tour_name, round_num, table_id) => {
 
 const sendCardOneHand = ({
   room,
-  socket_id,
+  socket_id = "123",
   direction,
   tour_name,
   round_num,
   table_id,
   sendAll = false,
 }) => {
-  let round_data = access_table(tour_name, round_num);
+  let round_data = access_round(tour_name, round_num);
   let table_data = access_table(tour_name, round_num, table_id);
   if (sendAll === true)
     io.to(room).emit(
       "opposite",
-      round_data.card[table_data.cur_board][direction]
+      round_data.cards[table_data.cur_board - 1][direction]
     );
   else
-    socket
-      .to(socket_id)
-      .emit("card", round_data.card[table_data.cur_board][direction]);
+    io.to(socket_id).emit(
+      "card",
+      round_data.cards[table_data.cur_board - 1][direction]
+    );
+
+  console.log("card", round_data.cards[table_data.cur_board - 1][direction]);
+  console.log("direction", direction);
 };
 
 const specWhilePlaying = ({ socket_id, tour_name, room = "room_1" }) => {
@@ -924,12 +928,14 @@ io.on("connection", (socket) => {
       player_id,
       player_name,
       tour_name,
+      direction,
       room = "room_1",
       round_num,
       table_id,
     }) => {
       socket.join(room);
       let clients = io.sockets.adapter.rooms.get(room);
+      console.log('direction', direction);
       /// return current players.
       // io.to(room).emit("waiting_for_start", tours[tour_name].players);
 
@@ -939,7 +945,7 @@ io.on("connection", (socket) => {
         (table_id = "r1b1")
       );
       ///Player get cards
-      let socket_id = "";
+      let socket_id = "123";
       sendCardOneHand({ socket_id, direction, tour_name, round_num, table_id });
 
       /// if fully player, change to 'bidding phase'.
