@@ -131,7 +131,6 @@ const ioToRoomOnBiddingPhase = ({
   nextDirection = 0,
 }) => {
   let table_data = access_table(tour_name, round_num, table_id);
-  let round_data = access_round(tour_name, round_num);
   console.log("next", nextDirection);
   ioToRoomOnPlaying({
     room,
@@ -141,8 +140,6 @@ const ioToRoomOnBiddingPhase = ({
       nextDirection,
       board: table_data.cur_board,
       turn: table_data.playing.turn,
-      ///Front-end must filter
-      cards: round_data.cards,
     },
   });
 };
@@ -856,46 +853,41 @@ io.on("connection", (socket) => {
     io.in(tour_name).emit("update-tour-chat", newMessage);
   });
 
-  socket.on(
-    "invite-player",
-    (tour_name, invite_player_name, player_name, callback) => {
-      console.log(
-        "invite-player",
-        invite_player_name,
-        socket.id,
-        " invite ",
-        player_name,
-        users[player_name].socket_id,
-        "in ",
-        tour_name
-      );
-      const sockets = {
-        id: users[player_name].socket_id,
-      };
-      io.in(sockets.id).emit("invite-by", invite_player_name);
-    }
-  );
+  socket.on("invite-player", (tour_name, invite_by, invite_to, callback) => {
+    console.log(
+      "invite-player",
+      invite_by,
+      socket.id,
+      " invite ",
+      invite_to,
+      users[invite_to].socket_id,
+      "in ",
+      tour_name
+    );
+    const sockets = {
+      id: users[invite_to].socket_id,
+    };
+    io.in(sockets.id).emit("invite-by", invite_by);
+  });
 
-  socket.on(
-    "accept-invite",
-    (tour_name, invite_player_name, player_name, callback) => {
-      const pair = tours[tour_name].players
-        .filter(
-          ({ player_name, status }) =>
-            (player_name == invite_player_name || player_name == player_name) &&
-            status === "waiting"
-        )
-        .map((player) => ({
-          ...player,
-          status: "in-pair",
-          player_id: tours[tour_name].team_runnum,
-        }));
-      ///Check when cannot paired
-      if (pair.length === 0) return "Cannot pair this player";
-      io.in(tour_name).emit("update-player-pair", pair);
-      console.log(tours[tour_name].player_pair);
-    }
-  );
+  socket.on("accept-invite", (tour_name, invite_by, accept_by, callback) => {
+    const pair = tours[tour_name].players
+      .filter(
+        ({ player_name, status }) =>
+          (player_name == invite_by || player_name == accept_by) &&
+          status === "waiting"
+      )
+      .map((player) => ({
+        ...player,
+        status: "in-pair",
+        pair_id: tours[tour_name].team_runnum,
+        //player_id: tours[tour_name].team_runnum,
+      }));
+    ///Check when cannot paired
+    if (pair.length === 0) return "Cannot pair this player";
+    io.in(tour_name).emit("update-player-pair", pair);
+    console.log(tours[tour_name].player_pair);
+  });
   //#start
   socket.on("start", (tour_name) => {
     let rounds = matchmaking(tour_name);
@@ -934,6 +926,19 @@ io.on("connection", (socket) => {
 
   /*
    * Join table #jt
+  ! Emit "card" to socket_id
+   * output : [arrayOfCard]
+
+  ! Emit "play" to room
+   * output : 
+   * {
+      * status: "waiting_for_bid",
+      * payload: {
+        * contract,
+        * nextDirection,
+        * board: table_data.cur_board,
+        * turn: table_data.playing.turn
+   * }
    */
   socket.on(
     "join",
@@ -982,7 +987,6 @@ io.on("connection", (socket) => {
       room = "room_1",
       contract = CONTRACT.PASS,
       direction = DIRECTION.N,
-      //Chage
       tour_name = "Mark1",
       round_num = "1",
       table_id = "r1b1",
@@ -1328,6 +1332,9 @@ io.on("connection", (socket) => {
     socket.emit("get-username-room");
   });
 
+  socket.on("get-my-score", (user_id) => {});
+  socket.on("get-all-score", (tour_id) => {});
+  socket.on("chage-score", td_id, (team_id) => {});
   //create board
   socket.on("create-board", async (admin_name, title, data) => {
     const board = await TourR.create({
