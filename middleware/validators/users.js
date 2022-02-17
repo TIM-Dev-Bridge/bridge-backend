@@ -5,7 +5,7 @@ const isEmail = (email) => {
 };
 
 const validatePassword = (password) => {
-  const passwordErrors = {}
+  let passwordErrors = {}
   if (
     !data.password.match(/^(?=.*\d)(?=.*[A-Z])(?=.*[a-z])(?=.*[ !"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~]).*$/)) {
       passwordErrors.format_password = "Password should include capital letter, small Letter, number and special character";
