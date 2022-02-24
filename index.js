@@ -101,6 +101,8 @@ const playing = {
   playedCards: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}],
 };
 
+//const score = 0;
+
 const BOARD = board.createSettingBoard();
 
 const ioToPlayerCardPhase = ({
@@ -387,14 +389,18 @@ io.on("connection", (socket) => {
     console.log("NEW TOUR ", tours[tour_data.tour_name]);
     try {
       //fist time not have
-      const sameTour = await TourR.findOne({ tour_name: tour_data.tour_name });
-      if (sameTour) {
-        //callback(false, "This tour already create");
-        return socket.emit("create-tour", "This tour already create");
-      }
+      // const sameTour = await TourR.findOne({ tour_name: tour_data.tour_name });
+      // if (sameTour) {
+      //   //callback(false, "This tour already create");
+      //   return socket.emit("create-tour", "This tour already create");
+      // }
       //Encrypt password tour
       //encryptedPassword = await bcrypt.hash(tour_data.password, 10);
       //Create tournament on database
+      console.log("td", tour_data);
+      const tournament = await TourR.create({
+        ...tour_data,
+      });
       // const tournament = await TourR.create({
       //   tour_name: tour_data.tour_name,
       //   max_player: tour_data.max_player,
@@ -411,9 +417,7 @@ io.on("connection", (socket) => {
       //   barometer: tour_data.barometer,
       //   createBy: tour_data.createBy,
       // });
-      // console.log("created tournament successful");
-      //tour_data["player_pair"] = [];
-      tour_data["player_waiting"] = [];
+      console.log("created tournament successful");
       tours[tour_data.tour_name] = tour_data;
       console.log(tours[tour_data.tour_name]);
 
@@ -888,25 +892,29 @@ io.on("connection", (socket) => {
     io.in(tour_name).emit("update-player-pair", pair);
     console.log(tours[tour_name].player_pair);
   });
+
   //#start
-  socket.on("start", (tour_name) => {
+  socket.on("start", async (tour_name) => {
+    ///Get player in tours
+    const players = tours[tour_name].players;
+    ///Compute matchmaking
     let rounds = matchmaking(tour_name);
     tours[tour_name][`rounds`] = rounds;
+    let matchRound = rounds.map(({ round_num, tables }) => {
+      let new_table = tables.map(
+        ({ table_id, versus, boards, cur_board, directions }) => ({
+          table_id,
+          versus,
+          boards,
+          cur_board,
+          directions,
+        })
+      );
+      return { round_num, tables: new_table };
+    });
     io.in(tour_name).emit(
       "start-tour",
-      rounds.map(({ round_num, tables }) => {
-        let new_table = tables.map(
-          ({ table_id, versus, boards, cur_board, directions }) => ({
-            table_id,
-            versus,
-            boards,
-            cur_board,
-            directions,
-          })
-        );
-        return { round_num, tables: new_table };
-      })
-
+      matchRound
       // rounds.map(({ card, ...round }) => {
       //   let new_table = round.tables.map(({ bidding, playing, ...table }) => ({
       //     ...table,
@@ -921,6 +929,17 @@ io.on("connection", (socket) => {
       //   console.log(`newTable`, newTable)
       //   return { round: _.omit(round, ["card","tables"]), tables: newTable };
       // }),
+    );
+    await TourR.updateOne(
+      {
+        tour_name: tour_name,
+      },
+      {
+        $set: {
+          player_team: players,
+          rounds: { ...matchRound },
+        },
+      }
     );
   });
 
@@ -1244,6 +1263,14 @@ io.on("connection", (socket) => {
 
           console.log("score", table_data.score);
 
+          ioToRoomOnPlaying({
+            room,
+            status: "ending-board",
+            payload: {
+              score: table_data.score,
+            },
+          });
+
           //reset bidding
           access_bidding.declarer = 0;
           access_bidding.passCount = 0;
@@ -1261,6 +1288,7 @@ io.on("connection", (socket) => {
               payload: {},
             });
             return;
+            ///go check all room is finish competition
           }
 
           ioToRoomOnBiddingPhase({
@@ -1334,7 +1362,7 @@ io.on("connection", (socket) => {
 
   socket.on("get-my-score", (user_id) => {});
   socket.on("get-all-score", (tour_id) => {});
-  socket.on("chage-score", td_id, (team_id) => {});
+  socket.on("change-score", (td_id, team_id) => {});
   //create board
   socket.on("create-board", async (admin_name, title, data) => {
     const board = await TourR.create({

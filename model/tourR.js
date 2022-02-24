@@ -1,14 +1,15 @@
 const mongoose = require("mongoose");
 var myId = mongoose.Types.ObjectId();
 const userSchema = new mongoose.Schema({
-  _id: false,
-  tour_id: { type: Object, default: myId, unique: true },
+  // _id: false,
+  // tour_id: { type: Object, default: myId, unique: true },
+  tour_id: { type: Object, unique: true },
   tour_name: { type: String, unique: true },
   max_player: { type: Number, default: 20 },
   type: { type: String, default: "Pairs" },
   password: { type: String },
-  player_name: { type: Array, default: [] },
   player_team: { type: Array, default: [] },
+  rounds: { type: Array, default: [] },
   time_start: { type: String, default: null },
   status: { type: String, default: "Pending" },
   board_to_play: { type: Number, default: 0 },
