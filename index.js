@@ -396,11 +396,11 @@ io.on("connection", (socket) => {
       // }
       //Encrypt password tour
       //encryptedPassword = await bcrypt.hash(tour_data.password, 10);
-      //Create tournament on database
-      console.log("td", tour_data);
-      const tournament = await TourR.create({
-        ...tour_data,
-      });
+      ///Create tournament on database
+      // const tournament = await TourR.create({
+      //   ...tour_data,
+      // });
+
       // const tournament = await TourR.create({
       //   tour_name: tour_data.tour_name,
       //   max_player: tour_data.max_player,
@@ -930,17 +930,18 @@ io.on("connection", (socket) => {
       //   return { round: _.omit(round, ["card","tables"]), tables: newTable };
       // }),
     );
-    await TourR.updateOne(
-      {
-        tour_name: tour_name,
-      },
-      {
-        $set: {
-          player_team: players,
-          rounds: { ...matchRound },
-        },
-      }
-    );
+    ///Update data to database
+    // await TourR.updateOne(
+    //   {
+    //     tour_name: tour_name,
+    //   },
+    //   {
+    //     $set: {
+    //       player_team: players,
+    //       rounds: { ...matchRound },
+    //     },
+    //   }
+    // );
   });
 
   /*
@@ -1262,6 +1263,7 @@ io.on("connection", (socket) => {
           );
 
           console.log("score", table_data.score);
+          io.emit("current-tour-data", tours[tour_name]);
 
           ioToRoomOnPlaying({
             room,
@@ -1359,9 +1361,37 @@ io.on("connection", (socket) => {
     console.log(userList);
     socket.emit("get-username-room");
   });
+  //User
+  socket.on("get-account", (user_id) => {
+    let user_data = users[user_id];
+    socket.emit("get-account", user_data);
+  });
 
-  socket.on("get-my-score", (user_id) => {});
-  socket.on("get-all-score", (tour_id) => {});
+  socket.on("get-score-table", (tour_name, team_id, round_num, table_id) => {
+    let table_data = access_table(
+      (tour_name = "Mark1"),
+      (round_num = "1"),
+      (table_id = "r1b1")
+    );
+    //find data from player
+    let my_score = table_data.score;
+    socket.emit("score", my_score);
+  });
+
+  socket.on("get-all-score", (tour_id) => {
+    try {
+      let rounds = tours[tour_id][`rounds`];
+      let scores = rounds.map(({ round_num, tables }) => {
+        let score = tables.map(({ score }) => ({
+          score,
+        }));
+        return { round_num, score: score };
+      });
+      socket.emit("score", scores);
+    } catch (error) {
+      console.log("error", error);
+    }
+  });
   socket.on("change-score", (td_id, team_id) => {});
   //create board
   socket.on("create-board", async (admin_name, title, data) => {
