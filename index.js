@@ -1385,7 +1385,7 @@ io.on("connection", (socket) => {
         let score = tables.map(({ score }) => ({
           score,
         }));
-        return { round_num, score: score };
+        return { round_num, tables: score };
       });
       socket.emit("score", scores);
     } catch (error) {
@@ -1401,6 +1401,63 @@ io.on("connection", (socket) => {
       data,
     });
     socket.emit("create-board", board);
+  });
+  ///Test
+  socket.on("test", (tour_id = "Mark1", round_num = "1", table_id = "r1b1") => {
+    try {
+      socket.join("table_id");
+      socket.join("test");
+      let clients = io.sockets.adapter.rooms.get("test");
+      let allRoom = io.sockets.rooms;
+      let allRooms = io.sockets.adapter.rooms;
+      console.log("clients", clients);
+      console.log("allRoom", allRoom);
+      console.log("allRooms", allRooms);
+    } catch (error) {
+      console.log("error", error);
+    }
+  });
+
+  socket.on("bypass", (tour_id) => {
+    tours[tour_id] = {
+      tour_name: "Mark1",
+      rounds: [
+        {
+          round_num: "1",
+          tables: [
+            {
+              score: [0, 800],
+            },
+            {
+              score: [200, 0],
+            },
+          ],
+        },
+        {
+          round_num: "2",
+          tables: [
+            {
+              score: [110, 0],
+            },
+            {
+              score: [200, 0],
+            },
+          ],
+        },
+        {
+          round_num: "3",
+          tables: [
+            {
+              score: [0, 200],
+            },
+            {
+              score: [400, 0],
+            },
+          ],
+        },
+      ],
+    };
+    console.log("tours", tours);
   });
   socket.on("disconnect", () => {
     console.log("User was disconnect");
