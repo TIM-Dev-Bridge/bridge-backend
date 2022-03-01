@@ -18,8 +18,13 @@
     <input type="button" onclick="player1invite2()" value="player1invite2()">
     <input type="button" onclick="player2recieve1()" value="player2recieve1()">
     <input type="button" onclick="GetTour()" value="GetTour()">
+    <input type="button" onclick="GetUser()" value="GetUser()">
     <input type="button" onclick="deleteTour()" value="deleteTour()">
     <input type="button" onclick="updateTour()" value="updateTour()">
+    <input type="button" onclick="join('id_1','mark1')" value="join1()">
+    <input type="button" onclick="join('id_2','mark2')" value="join2()">
+    <input type="button" onclick="join('id_3','mark3')" value="join3()">
+    <input type="button" onclick="join('id_4','mark4')" value="join4()">
 
 </body>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.1/socket.io.js"></script>
@@ -120,6 +125,15 @@
         socket.on("get-tour-client", (tour_name) => {
             console.log(tour_name);
         });
+    }
+    function GetUser() {
+        var socket = io()
+        socket.emit("get-user-data")
+        console.log('test');
+    }
+    function join(player_id, username) {
+        var socket = io.connect({ query: { username } })
+        socket.on("join", player_id, username)
     }
 </script>
 

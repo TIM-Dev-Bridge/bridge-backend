@@ -19,6 +19,10 @@ const {
   getUserData,
   updateUserData,
   updateTourData,
+  getAnnouncement,
+  getAnnouncementsByOffset,
+  addAnnouncement,
+  updateAnnouncement,
 } = require("./handlers/users");
 const { registerTourD, loginTourD } = require("./handlers/tourDs");
 app.get("/", home);
@@ -34,8 +38,21 @@ app.post("/updateTourData", updateTourData);
 app.post("/registerTourD", registerTourD);
 app.post("/loginTourD", loginTourD);
 
+app.get("/getAnnouncement", getAnnouncement);
+app.get("/getAnnouncements", getAnnouncementsByOffset);
+app.post("/addAnnouncement", addAnnouncement);
+app.post("/updateAnnouncement", updateAnnouncement);
 
 //Delete
 app.get("/manageTour", manageTour);
 
+//Test function//
+var random_card = require("./handlers/card");
+var score = require("./handlers/score");
+
+random_card.random_card(3);
+random_card.convert_value_bid(5)
+
+//score.createBoard()
+//score.score();
 module.exports = app;

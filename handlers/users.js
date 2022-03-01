@@ -328,3 +328,48 @@ exports.manageTour = async (req, res) => {
     console.log(error);
   }
 };
+
+
+exports.getAnnouncement = async (req, res)=> {
+  try {
+    const { id } = req.query
+    const board_data = await Board.findOne({_id: id})
+    res.status(200).send(board_data)
+  } catch (error) {
+    console.log(err);
+    res.status(409).send("This tour is not found");
+  }
+}
+
+exports.getAnnouncementsByOffset = async (req, res)=> {
+  try {
+    const { offset, limit } = req.query
+    const boards = await Board.find().sort({"data.time": -1}).skip(offset).limit(limit)
+    console.log(boards)
+    res.status(200).send(boards)
+  } catch (error) {
+    console.log(err);
+    res.status(409).send("This tour is not found");
+  }
+}
+
+exports.addAnnouncement = async (req, res)=> {
+  try {
+    await Board.create(req.body);
+    res.status(200).send('OK')
+  } catch (error) {
+    console.log(err);
+    res.status(409).send("This tour is not found");
+  }
+}
+
+exports.updateAnnouncement = async (req, res)=> {
+  try {
+    console.log('UPDATE',req.body)
+    await Board.findOneAndUpdate({_id: req.body.id}, req.body)
+    res.status(200).send('OK')
+  } catch (error) {
+    console.log(err);
+    res.status(409).send("This tour is not found");
+  }
+}
