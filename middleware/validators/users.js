@@ -7,17 +7,17 @@ const isEmail = (email) => {
 const validatePassword = (password) => {
   let passwordErrors = {}
   if (
-    !data.password.match(/^(?=.*\d)(?=.*[A-Z])(?=.*[a-z])(?=.*[ !"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~]).*$/)) {
+    !password.match(/^(?=.*\d)(?=.*[A-Z])(?=.*[a-z])(?=.*[ !"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~]).*$/)) {
       passwordErrors.format_password = "Password should include capital letter, small Letter, number and special character";
   }
   if (
-    !data.password.match(/^(?!.*[^a-zA-Z0-9 !"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~]).*$/)) {
+    !password.match(/^(?!.*[^a-zA-Z0-9 !"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~]).*$/)) {
       passwordErrors.invalid_charactor_password = "Password should not contain invalid character";
   }
-  if (data.password.match(/^.{8,}$/)) {
+  if (!password.match(/^.{8,}$/)) {
     passwordErrors.password_short = "Password should contain at least 8 characters";
   }
-  if (data.password.match(/^.{,32}$/)) {
+  if (!password.match(/^.{1,32}$/)) {
     passwordErrors.password_long = "Password should contain less than 32 character";
   }
   return {
@@ -59,8 +59,17 @@ exports.validateSignupData = (data) => {
     errors.display_name = "Display Name should contain at least 5 characters";
   }
   //TC_SU_17
-  if (!data.display_name.match(/^.{,16}$/)) {
+  if (!data.display_name.match(/^.{1,16}$/)) {
     errors.display_name = "Display Name should contain less than 16 characters";
+  }
+
+  
+  if ((Date.now() - Date.parse(data.birth_date.split('-').reverse().join('-'))) / (1000*3600*24*365.25) > 100) {
+    errors.birth_date = "Age should be under 100 years old"
+  }
+
+  if ((Date.now() - Date.parse(data.birth_date.split('-').reverse().join('-'))) / (1000*3600*24*365.25) < 12) {
+    errors.birth_date = "Age should be above 12 years old"
   }
 
   //TC_SU_22

@@ -1,6 +1,6 @@
 const request = require("supertest");
 const app = require("../app.js");
-const mongoose = require("mongoose");
+// const mongoose = require("mongoose");
 
 describe("Login Testing",() => {
 
@@ -9,7 +9,7 @@ describe("Login Testing",() => {
       })
     
     afterAll(done => {
-        mongoose.connection.close()
+        // mongoose.connection.close()
         done()
     })
 
@@ -48,7 +48,7 @@ describe("Login Testing",() => {
         test("wrong password : return error Invalid Credentials", async () => {
             const response = await request(app).post("/login").send({
                 email: "user10@gmail.com",
-                password: "Qq123456"
+                password: "Qq123456!!"
             })
             expect(response.text).toBe("Invalid Credentials")
         })

@@ -1,6 +1,6 @@
 const request = require("supertest");
 const app = require("../app.js");
-const mongoose = require("mongoose");
+// const mongoose = require("mongoose");
 
 describe("Register Testing", () => {
 
@@ -9,7 +9,7 @@ describe("Register Testing", () => {
       })
     
     afterAll(done => {
-        mongoose.connection.close()
+        // mongoose.connection.close()
         done()
     })
 
@@ -423,7 +423,7 @@ describe("Register Testing", () => {
                         password : "Qq123456!",
                         confirm_password : "Qq123456!"
                     })
-                    expect(response.body.display_name).toBe("Length of displayname should between 5 and 16")
+                    expect(response.body.display_name).toBe("Display Name should contain at least 5 characters")
                 })
             })
     
@@ -453,7 +453,7 @@ describe("Register Testing", () => {
                         password : "Qq123456!",
                         confirm_password : "Qq123456!"
                     })
-                    expect(response.body.display_name).toBe("Length of displayname should between 5 and 16")
+                    expect(response.body.display_name).toBe("Display Name should contain less than 16 characters")
                 })
             })
         })
@@ -489,7 +489,7 @@ describe("Register Testing", () => {
                 })
             })
 
-            describe("Age should not over 100 years old", () => {
+            describe("Age should not exeed 100 years old", () => {
                 test("Respond with 400", async () => {
                     const response = await request(app).post("/register").send({                                                                               //Age should not over 100 years old
                         first_name : "Firstname",
@@ -504,7 +504,7 @@ describe("Register Testing", () => {
                     expect(response.statusCode).toBe(400)
                 })
                 
-                test("return error cause : Age should not over 100 years old", async () => {
+                test("return error cause : Age should not exeed 100 years old", async () => {
                     const response = await request(app).post("/register").send({                                                                               //Age should not over 100 years old
                         first_name : "Firstname",
                         last_name : "Lastname",
@@ -534,7 +534,7 @@ describe("Register Testing", () => {
                     expect(response.statusCode).toBe(400)
                 })
                 
-                test("return error cause : Age should not over 100 years", async () => {
+                test("return error cause : Age should be above 12 years old", async () => {
                     const response = await request(app).post("/register").send({                                                                               //Age should be above 12 years old
                         first_name : "Firstname",
                         last_name : "Lastname",
@@ -597,7 +597,7 @@ describe("Register Testing", () => {
                         expect(response.statusCode).toBe(400)
                     })
                     
-                    test("return error cause : Password should include Capital Letter, small Letter, number and special character", async () => {
+                    test("return error cause : Password should include capital letter, small Letter, number and special character", async () => {
                         const response = await request(app).post("/register").send({                                                                               //Password too easy to guest
                             first_name : "Firstname",
                             last_name : "Lastname",
@@ -608,7 +608,7 @@ describe("Register Testing", () => {
                             password : "aaaaaaaaaaa",
                             confirm_password : "aaaaaaaaaaa"
                         })
-                        expect(response.body.format_password).toBe("Password should include Capital Letter, small Letter, number and special character")
+                        expect(response.body.format_password).toBe("Password should include capital letter, small Letter, number and special character")
                     })
                 })
                 
@@ -638,7 +638,7 @@ describe("Register Testing", () => {
                             password : "Qq123!",
                             confirm_password : "Qq123!"
                         })
-                        expect(response.body.short_password).toBe("Password should contain at least 8 characters")
+                        expect(response.body.password_short).toBe("Password should contain at least 8 characters")
                     })
                 })
 
@@ -657,7 +657,7 @@ describe("Register Testing", () => {
                         expect(response.statusCode).toBe(400)
                     })
                     
-                    test("return error cause : Password should contain at least 8 characters", async () => {
+                    test("return error cause : Password should contain less than 32 character", async () => {
                         const response = await request(app).post("/register").send({                                                                               //Password too long
                             first_name : "Firstname",
                             last_name : "Lastname",
@@ -668,7 +668,7 @@ describe("Register Testing", () => {
                             password : "Qq123AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA!",
                             confirm_password : "Qq123AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA!"
                         })
-                        expect(response.body.short_password).toBe("Password should contain less than 32 character")
+                        expect(response.body.password_long).toBe("Password should contain less than 32 character")
                     })
                 })
                 
