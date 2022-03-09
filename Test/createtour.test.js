@@ -4,9 +4,9 @@ const { io } = require("socket.io-client");
 // Setup
 
 const token =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjFiNGI4MWNlYWVhNGQ1YjdjYzBlZTU0IiwiZW1haWwiOiJ0ZEBnbWFpbC5jb20iLCJ1c2VybmFtZSI6InRkMDAwMSIsImFjY2VzcyI6InRkIiwiaWF0IjoxNjM5Mzg5MjcyLCJleHAiOjE2MzkzOTY0NzJ9.sHQbK-apFuy7awpj9BzQdmtLtEyWT47c26YJ1IB2vEw";
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjIxZGYxODkyYTNmYmM2ZmYwZGIzYWFhIiwiZW1haWwiOiJ0ZEBnbWFpbC5jb20iLCJ1c2VybmFtZSI6InRkMDAwMSIsImFjY2VzcyI6InRkIiwiaWF0IjoxNjQ2MTI5NjMwLCJleHAiOjE2NDYxMzY4MzB9.PRrJfC-b9whjfPlRRXKzM62DEG3hoQl95JqAk0a-1FA";
 const username = "td0001";
-var socket = io("http://localhost:3000", { query: { token, username } });
+var socket = io("http://localhost:4000", { query: { token, username } });
 jest.setTimeout(10000);
 
 beforeAll(async () => {
@@ -58,30 +58,35 @@ beforeAll(async () => {
 //   });
 // });
 
-test("Create tournament with valid infomation", () => {
-  return new Promise((resolve) => {
-    console.log("Start");
-    socket.on("create-tour", (arg) => {
-      console.log(arg);
-      resolve(arg);
+describe("Create tournament with valid information", () => {
+  test("not already exist : respond with message : Tournament created successfully", () => {
+    return new Promise((resolve) => {
+      console.log("Start");
+      socket.on("create-tour", (arg) => {
+        console.log(arg);
+        resolve(arg);
+      });
+      socket.emit("create-tour", {
+        tour_name: "testtournament",
+        max_player: 20,
+        type: "Pairs",
+        password: "11501112",
+        player_name: [],
+        player_team: [],
+        time_start: "13/12/2021, 5:08:00 PM",
+        status: "Pending",
+        board_to_play: 8,
+        minute_board: 15,
+        board_round: 6,
+        movement: "Pairs",
+        scoring: "MP",
+        barometer: true,
+        createBy: "td0001",
+      })
+    }).then((msg) =>{
+      expect(msg.tourId).toBeDefined();
+      expect(msg.status).toBe("Tournament created successfully");
     });
-    socket.emit("create-tour", {
-      tour_name: "testtournament",
-      max_player: 20,
-      type: "Pairs",
-      password: "11501112",
-      player_name: [],
-      time_start: "13/12/2021, 5:08:00 PM",
-      status: "Pending",
-      board_to_play: 8,
-      minute_board: 15,
-      board_round: 6,
-      movement: "Pairs",
-      scoring: "MP",
-      barometer: true,
-      createBy: "td0001",
-    })
-  }).then((msg) =>{
-    expect(msg).toBe("Tournament created successfully");
   });
 });
+

@@ -392,7 +392,7 @@ io.on("connection", (socket) => {
       // const sameTour = await TourR.findOne({ tour_name: tour_data.tour_name });
       // if (sameTour) {
       //   //callback(false, "This tour already create");
-      //   return socket.emit("create-tour", "This tour already create");
+        // return socket.emit("create-tour", "This tour already create");
       // }
       //Encrypt password tour
       //encryptedPassword = await bcrypt.hash(tour_data.password, 10);
@@ -427,7 +427,7 @@ io.on("connection", (socket) => {
           host: "",
           title: tours[tour_name].tour_name,
           type: String(tours[tour_name].type),
-          players: String(tours[tour_name].players.length),
+          players: String(tours[tour_name].player_name.length),
           team_runnum: 1,
         };
         tourList.push(tourData);

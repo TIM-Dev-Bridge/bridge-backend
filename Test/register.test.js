@@ -28,6 +28,21 @@ describe("Register Testing", () => {
             expect(response.statusCode).toBe(201)
         })
 
+        // test("not already exist : return 201", async () => {
+        //     const response = await request(app).post("/register").send({
+        //         first_name : "TDDD",
+        //         last_name : "Lastname",
+        //         display_name : "TD0001",
+        //         birth_date : "07-10-1999",
+        //         email : "td@gmail.com",
+        //         username : "td0001",
+        //         password : "Qq123456!",
+        //         confirm_password : "Qq123456!"
+        //     })
+        //     expect(response.statusCode).toBe(201)
+        // })
+
+
         test("already exist : return 409", async () => {
             const response = await request(app).post("/register").send({
                 first_name : "User",
