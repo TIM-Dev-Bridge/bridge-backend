@@ -34,14 +34,17 @@ const bcrypt = require("bcryptjs");
 const TourR = require("./model/tourR");
 const User = require("./model/user");
 const Board = require("./model/board");
+const Match = require("./model/match");
 const { log } = require("console");
 
 const _ = require("lodash");
 let card_handle = require("./handlers/card");
 let score = require("./handlers/score");
 let board = require("./handlers/board");
+let bypass = require("./handlers/bypass");
 const { access } = require("fs");
-const { random } = require("lodash");
+const { random, assignWith } = require("lodash");
+const { emit } = require("process");
 
 let users = {};
 let tours = {};
@@ -197,7 +200,7 @@ const matchmaking = (tour_name) => {
       });
     }
     rounds.push({
-      round_num: `${round + 1}`,
+      round_num: round + 1,
       cards: card_handle.random_card(tours[tour_name].board_per_round),
       tables: tables,
     });
@@ -219,6 +222,7 @@ const access_round = (tour_name, round_num) => {
 const access_table = (tour_name, round_num, table_id) => {
   try {
     let round = _.find(tours[tour_name].rounds, ["round_num", round_num]);
+    console.log(round);
     let table = _.find(round.tables, ["table_id", table_id]);
     return table;
   } catch (error) {
@@ -912,7 +916,7 @@ io.on("connection", (socket) => {
       );
       return { round_num, tables: new_table };
     });
-    io.in(tour_name).emit(
+    await io.in(tour_name).emit(
       "start-tour",
       matchRound
       // rounds.map(({ card, ...round }) => {
@@ -930,7 +934,7 @@ io.on("connection", (socket) => {
       //   return { round: _.omit(round, ["card","tables"]), tables: newTable };
       // }),
     );
-    ///Update data to database
+    ///!Update tour database
     // await TourR.updateOne(
     //   {
     //     tour_name: tour_name,
@@ -942,6 +946,15 @@ io.on("connection", (socket) => {
     //     },
     //   }
     // );
+    socket.emit(
+      "test",
+      access_table(tour_name, (round_num = 1), (table_id = "r1b1"))
+    );
+    socket.emit("test", tours[tour_name]);
+    ///!Update match database
+    // console.log("tid :>> ", tour_name);
+    // console.log("matchRound", matchRound);
+    // await Match.create({ tid: tour_name, matchs: matchRound });
   });
 
   /*
@@ -965,11 +978,11 @@ io.on("connection", (socket) => {
     ({
       player_id,
       player_name,
-      tour_name,
+      tour_name = "Mark1",
       direction,
       room = "room_1",
-      round_num,
-      table_id,
+      round_num = 1,
+      table_id = "r1b1",
     }) => {
       socket.join(room);
       let clients = io.sockets.adapter.rooms.get(room);
@@ -977,11 +990,7 @@ io.on("connection", (socket) => {
       /// return current players.
       // io.to(room).emit("waiting_for_start", tours[tour_name].players);
 
-      let table_data = access_table(
-        (tour_name = "Mark1"),
-        (round_num = "1"),
-        (table_id = "r1b1")
-      );
+      let table_data = access_table(tour_name, round_num, table_id);
       ///Player get cards
       let socket_id = "123";
       sendCardOneHand({ socket_id, direction, tour_name, round_num, table_id });
@@ -1008,7 +1017,7 @@ io.on("connection", (socket) => {
       contract = CONTRACT.PASS,
       direction = DIRECTION.N,
       tour_name = "Mark1",
-      round_num = "1",
+      round_num = 1,
       table_id = "r1b1",
     }) => {
       console.log("direction now", direction);
@@ -1023,7 +1032,7 @@ io.on("connection", (socket) => {
 
       let table_data = access_table(
         (tour_name = "Mark1"),
-        (round_num = "1"),
+        (round_num = 1),
         (table_id = "r1b1")
       );
       let access_bidding = table_data.bidding;
@@ -1171,7 +1180,7 @@ io.on("connection", (socket) => {
         */
       let table_data = access_table(
         (tour_name = "Mark1"),
-        (round_num = "1"),
+        (round_num = 1),
         (table_id = "r1b1")
       );
       let access_bidding = table_data.bidding;
@@ -1341,10 +1350,10 @@ io.on("connection", (socket) => {
     }) => {
       socket.join(room);
       let clients = io.sockets.adapter.rooms.get(room);
-      let round_data = access_round((tour_name = "Mark1"), (round_num = "1"));
+      let round_data = access_round((tour_name = "Mark1"), (round_num = 1));
       let table_data = access_table(
         (tour_name = "Mark1"),
-        (round_num = "1"),
+        (round_num = 1),
         (table_id = "r1b1")
       );
 
@@ -1370,7 +1379,7 @@ io.on("connection", (socket) => {
   socket.on("get-score-table", (tour_name, team_id, round_num, table_id) => {
     let table_data = access_table(
       (tour_name = "Mark1"),
-      (round_num = "1"),
+      (round_num = 1),
       (table_id = "r1b1")
     );
     //find data from player
@@ -1403,62 +1412,40 @@ io.on("connection", (socket) => {
     socket.emit("create-board", board);
   });
   ///Test
-  socket.on("test", (tour_id = "Mark1", round_num = "1", table_id = "r1b1") => {
+  socket.on("test", (tour_id = "Mark1", round_num = 1, table_id = "r1b1") => {
     try {
-      socket.join("table_id");
-      socket.join("test");
-      let clients = io.sockets.adapter.rooms.get("test");
-      let allRoom = io.sockets.rooms;
-      let allRooms = io.sockets.adapter.rooms;
-      console.log("clients", clients);
-      console.log("allRoom", allRoom);
-      console.log("allRooms", allRooms);
+      socket.emit("test", tours[tour_id]);
     } catch (error) {
       console.log("error", error);
     }
   });
 
-  socket.on("bypass", (tour_id) => {
-    tours[tour_id] = {
-      tour_name: "Mark1",
-      rounds: [
-        {
-          round_num: "1",
-          tables: [
-            {
-              score: [0, 800],
-            },
-            {
-              score: [200, 0],
-            },
-          ],
-        },
-        {
-          round_num: "2",
-          tables: [
-            {
-              score: [110, 0],
-            },
-            {
-              score: [200, 0],
-            },
-          ],
-        },
-        {
-          round_num: "3",
-          tables: [
-            {
-              score: [0, 200],
-            },
-            {
-              score: [400, 0],
-            },
-          ],
-        },
-      ],
-    };
+  socket.on("bypass", (tour_id = "Mark1") => {
+    //let db_score = Match.find((tour_id = tour_id));
+    //console.log("db_score", db_score);
+    tours[tour_id] = bypass.generateFullGameData();
     console.log("tours", tours);
   });
+
+  socket.on(
+    "getCurrentMatchInfo",
+    (tour_id = "Mark1", round_num = 1, table_id = "r1b1") => {
+      try {
+        let rounds = tours[tour_id][`rounds`];
+        let scores = rounds.map(({ round_num, tables }) => {
+          let data = tables.map(({ score }) => ({
+            bidding,playing,score
+          }));
+          return { round_num, tables: score };
+        });
+
+        socket.emit("score", scores);
+      } catch (error) {
+        console.log("error", error);
+      }
+    }
+  );
+
   socket.on("disconnect", () => {
     console.log("User was disconnect");
   });
