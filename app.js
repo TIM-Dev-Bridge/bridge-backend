@@ -6,8 +6,13 @@ const { restart } = require("nodemon");
 const auth = require("./middleware/auth");
 
 const app = express();
-
+const cors = require("cors");
 app.use(express.json());
+app.use(
+  cors({
+    origin: "*",
+  })
+);
 
 const {
   home,
