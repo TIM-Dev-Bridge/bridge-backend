@@ -1513,7 +1513,7 @@ io.on("connection", (socket) => {
   );
 
   socket.on("getBoardType", (boardNumber) => {
-    socket.emit("getBoardType", BOARD[boardNumber + 1]);
+    socket.emit("getBoardType", BOARD[boardNumber - 1]);
   });
 
   socket.on("getSelfScore", (player_id) => {});
