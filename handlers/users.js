@@ -138,6 +138,7 @@ exports.login = async (req, res) => {
   } catch (err) {}
 };
 
+
 //Test
 exports.home2 = (req, res) => {
   let errors = {};
@@ -328,7 +329,6 @@ exports.manageTour = async (req, res) => {
     console.log(error);
   }
 };
-
 
 exports.getAnnouncement = async (req, res)=> {
   try {

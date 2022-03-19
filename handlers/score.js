@@ -109,6 +109,10 @@
 //   calScore,
 // };
 
+/*
+!Calculate each table point 
+*/
+
 exports.calContractPoint = (suit, level, double, redouble) => {
   let points = 0;
   suit < 2 ? (points += level * 20) : (points += level * 30);
@@ -216,4 +220,63 @@ exports.calScore = ({
   return nsIsDeclarer
     ? [declarerScore, defenderScore]
     : [defenderScore, declarerScore];
+};
+
+/*
+!Calculate MP point 
+*/
+const roundTo = (n, digits) => {
+  var negative = false;
+  if (digits === undefined) {
+    digits = 0;
+  }
+  if (n < 0) {
+    negative = true;
+    n = n * -1;
+  }
+  var multiplicator = Math.pow(10, digits);
+  n = parseFloat((n * multiplicator).toFixed(11));
+  n = (Math.round(n) / multiplicator).toFixed(digits);
+  if (negative) {
+    n = (n * -1).toFixed(digits);
+  }
+  return parseFloat(n);
+};
+
+exports.calBoardMps = (scores) => {
+  const mps = [];
+  let count = 0;
+  let previousScore = 0;
+  let accScore = 0;
+  scores.forEach((score, index, array) => {
+    count++;
+    mps.push(array.length - index - 1);
+    if (score == previousScore) {
+      Array.from({ length: count + 1 }, (x, i) => {
+        accScore += mps.pop();
+      });
+      Array.from({ length: count + 1 }, (x, i) => {
+        mps.push(accScore / (count + 1));
+      });
+      accScore = 0;
+      return;
+    }
+    previousScore = score;
+    count = 0;
+  });
+  return [mps, mps.map((mp) => roundTo((mp * 100) / mps.length, 2))];
+};
+
+exports.calRankingScore = (mps, percentages) => {
+  return [
+    roundTo(
+      mps.reduce((total, mp) => total + mp, 0),
+      2
+    ),
+    roundTo(
+      percentages.reduce((total, percentage) => total + percentage, 0) /
+        percentage.length,
+      2
+    ),
+  ];
 };
