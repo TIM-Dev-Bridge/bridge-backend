@@ -242,7 +242,7 @@ const roundTo = (n, digits) => {
   }
   return parseFloat(n);
 };
-
+// End round first
 exports.calBoardMps = (scores) => {
   const mps = [];
   let count = 0;
@@ -266,7 +266,7 @@ exports.calBoardMps = (scores) => {
   });
   return [mps, mps.map((mp) => roundTo((mp * 100) / mps.length, 2))];
 };
-
+// End round second
 exports.calRankingScore = (mps, percentages) => {
   return [
     roundTo(

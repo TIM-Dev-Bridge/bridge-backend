@@ -412,25 +412,11 @@ io.on("connection", (socket) => {
       //Encrypt password tour
       //encryptedPassword = await bcrypt.hash(tour_data.password, 10);
       //Create tournament on database
-      // const tournament = await TourR.create({
-      //   tour_name: tour_data.tour_name,
-      //   max_player: tour_data.max_player,
-      //   type: tour_data.type,
-      //   password: encryptedPassword,
-      //   players: tour_data.players,
-      //   time_start: tour_data.time_start,
-      //   status: tour_data.status,
-      //   board_to_play: tour_data.board_to_play,
-      //   minute_board: tour_data.minute_board,
-      //   board_round: tour_data.board_round,
-      //   movement: tour_data.movement,
-      //   scoring: tour_data.scoring,
-      //   barometer: tour_data.barometer,
-      //   createBy: tour_data.createBy,
+      // let tournament = await TourR.create({
+      // ...tour_data
       // });
       // console.log("created tournament successful");
-      //tour_data["player_pair"] = [];
-      tour_data["player_waiting"] = [];
+
       tours[tour_data.tour_name] = tour_data;
       console.log(tours[tour_data.tour_name]);
 
@@ -1502,7 +1488,7 @@ io.on("connection", (socket) => {
           maxContract,
           doubles,
         }))(table_data.bidding);
-        let temp_play = (({ tricks }) => ({ tricks }))(table_data.playing);
+        let temp_play = ({ tricks }) => ({ tricks });
         console.log("data", { ...temp_bid, ...temp_play });
 
         socket.emit("test", temp_play);
@@ -1516,12 +1502,29 @@ io.on("connection", (socket) => {
     socket.emit("getBoardType", BOARD[boardNumber - 1]);
   });
 
-  socket.on("getSelfScore", (player_id) => {});
+  socket.on("getSelfScore", (player_id = "peterpan", tour_id = "Mark1") => {
+    try {
+      let getPlayer = _.find(tours[tour_id].players, ["name", player_id]);
+      let getPairId = getPlayer.pair_id;
+
+      let rounds = tours[tour_id][`rounds`];
+      let teams = rounds.map(({ round_num, tables }) => {
+        let team = tables.find(({ versus }) => versus.includes(getPairId));
+        //team = (({ tricks }) => ({ tricks }))(table_data.playing);
+        return { round_num, tables: team };
+      });
+      socket.emit("test", getPlayer);
+      socket.emit("test", getPairId);
+      socket.emit("test", teams);
+    } catch (error) {
+      console.log("error", error);
+    }
+  });
 
   socket.on("getNsRankings", () => {});
   socket.on("getEwRankings", () => {});
 
-  socket.on("getCurrentMatchStatus");
+  // socket.on("getCurrentMatchStatus");
 
   socket.on("disconnect", () => {
     console.log("User was disconnect");
