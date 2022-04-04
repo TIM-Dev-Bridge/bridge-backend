@@ -16,7 +16,7 @@ const userSchema = new mongoose.Schema({
   minute_board: { type: Number, default: 0 },
   board_round: { type: Number, default: 0 },
   movement: { type: String, default: "Clocked" },
-  scoring: { type: String, default: "MP" },
+  score_type: { type: String, default: "MP" },
   barometer: { type: Boolean, default: true },
   createBy: { type: String },
 });
