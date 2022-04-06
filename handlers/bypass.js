@@ -68,7 +68,7 @@ exports.generateFullGameData = () => {
         tables: [
           {
             table_id: "r1b1",
-            status: "playing",
+            status: "temp",
             boards: [1],
             versus: "1,3",
             directions: [
@@ -139,7 +139,7 @@ exports.generateFullGameData = () => {
           },
           {
             table_id: "r1b2",
-            status: "waiting",
+            status: "temp",
             boards: [1],
             versus: "2,4",
             directions: [

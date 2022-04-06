@@ -203,7 +203,7 @@ const matchmaking = (tour_name) => {
       round_num: `${round + 1}`,
       cards: card_handle.random_card(tours[tour_name].board_per_round),
       tables: tables,
-      endTableCount: 0,
+      mp_rounds: [],
     });
     tables = [];
     let temp_second = second_pair.shift();
@@ -1350,12 +1350,27 @@ io.on("connection", (socket) => {
           access_bidding.doubles = INIT.doubles;
           access_bidding.firstDirectionSuites = INIT.firstDirectionSuites;
 
-          ///Increment fisnish table in rounds
-          round_data.endTableCount++;
+          ///Change status table to finish
+          table_data.status = "Finish";
+
+          ///Count finish
+          let finish_table = round_data.tables.filter(
+            ({ status }) => status == "Finish"
+          );
+          let count_finish_table = finish_table.length;
+          ///Send finsh all table
+          socket.emit("finsh-all-table", finish_table, count_finish_table);
 
           ///Calculate score per rounds
-          if (round_data.endTableCount >= round_data.tables.length()) {
-            console.log("5071");
+          if (count_finish_table >= round_data.tables.length) {
+            ///Get score all ns & ew
+            let score_all = round_data.tables.map(({ score }) => ({ score }));
+            let score_all_ns = round_data.tables.map(({ score }) => score[0]);
+            let score_all_ew = round_data.tables.map(({ score }) => score[1]);
+            table_data.mp_rounds = [
+              score.calBoardMps(score_all_ns),
+              score.calBoardMps(score_all_ew),
+            ];
           }
           //Chage board
           if (++table_data.cur_board > tours[tour_name].board_per_round) {
@@ -1460,17 +1475,19 @@ io.on("connection", (socket) => {
   ///Test
   socket.on("test", (tour_id = "Mark1", round_num = 1, table_id = "r1b1") => {
     try {
-      // socket.emit("test", tours[tour_id]);
       let round_data = access_round((tour_id = "Mark1"), (round_num = 1));
-      let score_all = round_data.tables.map(({ score }) => ({score}))
-      let score_all_ns = round_data.tables.map(({ score }) => score[0])
-      let score_all_ew = round_data.tables.map(({ score }) => score[1])
-      socket.emit(
-        "test",
-        score_all,
-        score_all_ns,
-        score_all_ew,
-      );
+      let score_all_ns = round_data.tables.map(({ score }) => score[0]);
+      let score_all_ew = round_data.tables.map(({ score }) => score[1]);
+      // let mp_rounds = [
+      //   score.calBoardMps(score_all_ns),
+      //   score.calBoardMps(score_all_ew),
+      // ]
+      let scores = [40, 30, 30, 30, 23, 23, 10]
+      console.log("score_all_ns : ", score_all_ns);
+      let [mps, percentage] = score.calBoardMps(scores);
+      //socket.emit("test",score_all_ns,score_all_ew)
+      socket.emit("test", mps);
+      //socket.emit("test",mp_rounds)
     } catch (error) {
       console.log("error", error);
     }
