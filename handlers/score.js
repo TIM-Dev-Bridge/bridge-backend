@@ -225,7 +225,7 @@ exports.calScore = ({
 /*
 !Calculate MP point 
 */
-const roundTo = (n, digits) => {
+function roundTo(n, digits) {
   var negative = false;
   if (digits === undefined) {
     digits = 0;
@@ -241,32 +241,50 @@ const roundTo = (n, digits) => {
     n = (n * -1).toFixed(digits);
   }
   return parseFloat(n);
-};
-// End round first
+}
+
 exports.calBoardMps = (scores) => {
+  const mappedScores = scores.map((e, i) => {
+    return { value: e, originalIndex: i };
+  });
+  mappedScores.sort((a, b) => b.value - a.value);
   const mps = [];
+  const tempIndex = [];
   let count = 0;
   let previousScore = 0;
   let accScore = 0;
-  scores.forEach((score, index, array) => {
+  mappedScores.forEach((score, index, array) => {
     count++;
-    mps.push(array.length - index - 1);
-    if (score == previousScore) {
-      Array.from({ length: count + 1 }, (x, i) => {
-        accScore += mps.pop();
+    mps.push({
+      value: array.length - index - 1,
+      originalIndex: score.originalIndex,
+    });
+    if (score.value == previousScore) {
+      Array.from({ length: count + 1 }, () => {
+        let { value, originalIndex } = mps.pop();
+        accScore += value;
+        tempIndex.push(originalIndex);
       });
-      Array.from({ length: count + 1 }, (x, i) => {
-        mps.push(accScore / (count + 1));
+      Array.from({ length: count + 1 }, () => {
+        mps.push({
+          value: accScore / (count + 1),
+          originalIndex: tempIndex.pop(),
+        });
       });
       accScore = 0;
       return;
     }
-    previousScore = score;
+    previousScore = score.value;
     count = 0;
   });
-  return [mps, mps.map((mp) => roundTo((mp * 100) / mps.length, 2))];
+  mps.sort((a, b) => a.originalIndex - b.originalIndex);
+  unsortedMps = mps.map((e) => e.value);
+  return [
+    unsortedMps,
+    unsortedMps.map((mp) => roundTo((mp * 100) / mps.length, 2)),
+  ];
 };
-// End round second
+
 exports.calRankingScore = (mps, percentages) => {
   return [
     roundTo(

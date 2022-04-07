@@ -204,7 +204,7 @@ const matchmaking = (tour_name) => {
       });
     }
     rounds.push({
-      round_num: `${round + 1}`,
+      round_num: round + 1,
       cards: card_handle.random_card(tours[tour_name].board_per_round),
       tables: tables,
       mp_round: [],
@@ -233,6 +233,7 @@ const access_table = (tour_name, round_num, table_id) => {
       "round_num",
       parseInt(round_num),
     ]);
+    console.log('round', round)
     let table = _.find(round.tables, ["table_id", table_id]);
     return table;
   } catch (error) {
@@ -1047,7 +1048,9 @@ io.on("connection", (socket) => {
         (table_id = table_id)
       );
       ///Player get cards
-      let socket_id = users[player_id].socket_id;
+      //let socket_id = users[player_id].socket_id;
+      ///fake id
+      let socket_id = "123";
       sendCardOneHand({
         room,
         socket_id,
@@ -1489,48 +1492,46 @@ io.on("connection", (socket) => {
     "test",
     (tour_id = "Mark1", round_num = 1, table_id = "r1b1", cur_board = 0) => {
       try {
-        ///Get all card in round
-        let round_data = access_round(tour_id, round_num);
-        let get_all_cards = round_data.cards[cur_board];
-
-        ///Get played card and convert to array
-        let table_data = access_table(tour_id, round_num, table_id);
-        let played_card_object = table_data.playing.playedCards;
-        let played_card_array = [[], [], [], []];
-        played_card_object.map((turn) => {
-          Object.keys(turn).map((key) => {
-            played_card_array[parseInt(key)].push(turn[key]);
-          });
-        });
-
-        ///Select left card
-        let left_card_array = [[], [], [], []];
-        get_all_cards.map((all, index_all) => {
-          played_card_array.map((played, index_played) => {
-            if (index_all == index_played) {
-              let left = all.filter((x) => !played.includes(x));
-              left_card_array[index_all].push(...left);
-              return left;
-            }
-          });
-        });
-
-        socket.emit("test", get_all_cards, played_card_array, left_card_array);
-
+        // ///Get all card in round
         // let round_data = access_round(tour_id, round_num);
-        // socket.emit("test",round_data)
-        //let round_data = access_round((tour_id = "Mark1"), (round_num = 1));
-        // let score_all_ns = round_data.tables.map(({ score }) => score[0]);
-        // let score_all_ew = round_data.tables.map(({ score }) => score[1]);
-        // let mp_rounds = [
-        //   score.calBoardMps(score_all_ns),
-        //   score.calBoardMps(score_all_ew),
-        // ]
-        // let scores = [40, 30, 30, 30, 23, 23, 10]
-        // console.log("score_all_ns : ", score_all_ns);
-        // let [mps, percentage] = score.calBoardMps(scores);
-        // socket.emit("test", mps);
-        // socket.emit("test",mp_rounds)
+        // let get_all_cards = round_data.cards[cur_board];
+
+        // ///Get played card and convert to array
+        // let table_data = access_table(tour_id, round_num, table_id);
+        // let played_card_object = table_data.playing.playedCards;
+        // let played_card_array = [[], [], [], []];
+        // played_card_object.map((turn) => {
+        //   Object.keys(turn).map((key) => {
+        //     played_card_array[parseInt(key)].push(turn[key]);
+        //   });
+        // });
+
+        // ///Select left card
+        // let left_card_array = [[], [], [], []];
+        // get_all_cards.map((all, index_all) => {
+        //   played_card_array.map((played, index_played) => {
+        //     if (index_all == index_played) {
+        //       let left = all.filter((x) => !played.includes(x));
+        //       left_card_array[index_all].push(...left);
+        //       return left;
+        //     }
+        //   });
+        // });
+
+        // socket.emit("test", get_all_cards, played_card_array, left_card_array);
+
+        let round_data = access_round(tour_id, round_num);
+        let score_all_ns = round_data.tables.map(({ score }) => score[0]);
+        let score_all_ew = round_data.tables.map(({ score }) => score[1]);
+        let mp_rounds = [
+          score.calBoardMps(score_all_ns),
+          score.calBoardMps(score_all_ew),
+        ];
+        let scores = [40, 30, 30, 30, 23, 23, 10];
+        console.log("score_all_ns : ", score_all_ns);
+        let [mps, percentage] = score.calBoardMps(scores);
+        socket.emit("test", mps);
+        socket.emit("test", mp_rounds);
       } catch (error) {
         console.log("error", error);
       }
