@@ -197,13 +197,17 @@ const matchmaking = (tour_name) => {
         bidding,
         playing,
         score: [],
+        ///Should create room variable
+        count_player: 0,
+        count_spec: 0,
+        count_td: 0,
       });
     }
     rounds.push({
       round_num: `${round + 1}`,
       cards: card_handle.random_card(tours[tour_name].board_per_round),
       tables: tables,
-      mp_rounds: [],
+      mp_round: [],
     });
     tables = [];
     let temp_second = second_pair.shift();
@@ -214,7 +218,10 @@ const matchmaking = (tour_name) => {
 
 const access_round = (tour_name, round_num) => {
   try {
-    let round = _.find(tours[tour_name].rounds, ["round_num", round_num]);
+    let round = _.find(tours[tour_name].rounds, [
+      "round_num",
+      parseInt(round_num),
+    ]);
     return round;
   } catch (error) {
     console.log("error", error);
@@ -222,8 +229,10 @@ const access_round = (tour_name, round_num) => {
 };
 const access_table = (tour_name, round_num, table_id) => {
   try {
-    let round = _.find(tours[tour_name].rounds, ["round_num", round_num]);
-    console.log(round);
+    let round = _.find(tours[tour_name].rounds, [
+      "round_num",
+      parseInt(round_num),
+    ]);
     let table = _.find(round.tables, ["table_id", table_id]);
     return table;
   } catch (error) {
@@ -1358,8 +1367,11 @@ io.on("connection", (socket) => {
             ({ status }) => status == "Finish"
           );
           let count_finish_table = finish_table.length;
+
           ///Send finsh all table
-          socket.emit("finsh-all-table", finish_table, count_finish_table);
+          if (count_finish_table == round_data.tables.length) {
+            socket.emit("finsh-all-table", finish_table, count_finish_table);
+          }
 
           ///Calculate score per rounds
           if (count_finish_table >= round_data.tables.length) {
@@ -1473,25 +1485,57 @@ io.on("connection", (socket) => {
   });
 
   ///Test
-  socket.on("test", (tour_id = "Mark1", round_num = 1, table_id = "r1b1") => {
-    try {
-      let round_data = access_round((tour_id = "Mark1"), (round_num = 1));
-      let score_all_ns = round_data.tables.map(({ score }) => score[0]);
-      let score_all_ew = round_data.tables.map(({ score }) => score[1]);
-      // let mp_rounds = [
-      //   score.calBoardMps(score_all_ns),
-      //   score.calBoardMps(score_all_ew),
-      // ]
-      let scores = [40, 30, 30, 30, 23, 23, 10]
-      console.log("score_all_ns : ", score_all_ns);
-      let [mps, percentage] = score.calBoardMps(scores);
-      //socket.emit("test",score_all_ns,score_all_ew)
-      socket.emit("test", mps);
-      //socket.emit("test",mp_rounds)
-    } catch (error) {
-      console.log("error", error);
+  socket.on(
+    "test",
+    (tour_id = "Mark1", round_num = 1, table_id = "r1b1", cur_board = 0) => {
+      try {
+        ///Get all card in round
+        let round_data = access_round(tour_id, round_num);
+        let get_all_cards = round_data.cards[cur_board];
+
+        ///Get played card and convert to array
+        let table_data = access_table(tour_id, round_num, table_id);
+        let played_card_object = table_data.playing.playedCards;
+        let played_card_array = [[], [], [], []];
+        played_card_object.map((turn) => {
+          Object.keys(turn).map((key) => {
+            played_card_array[parseInt(key)].push(turn[key]);
+          });
+        });
+
+        ///Select left card
+        let left_card_array = [[], [], [], []];
+        get_all_cards.map((all, index_all) => {
+          played_card_array.map((played, index_played) => {
+            if (index_all == index_played) {
+              let left = all.filter((x) => !played.includes(x));
+              left_card_array[index_all].push(...left);
+              return left;
+            }
+          });
+        });
+
+        socket.emit("test", get_all_cards, played_card_array, left_card_array);
+
+        // let round_data = access_round(tour_id, round_num);
+        // socket.emit("test",round_data)
+        //let round_data = access_round((tour_id = "Mark1"), (round_num = 1));
+        // let score_all_ns = round_data.tables.map(({ score }) => score[0]);
+        // let score_all_ew = round_data.tables.map(({ score }) => score[1]);
+        // let mp_rounds = [
+        //   score.calBoardMps(score_all_ns),
+        //   score.calBoardMps(score_all_ew),
+        // ]
+        // let scores = [40, 30, 30, 30, 23, 23, 10]
+        // console.log("score_all_ns : ", score_all_ns);
+        // let [mps, percentage] = score.calBoardMps(scores);
+        // socket.emit("test", mps);
+        // socket.emit("test",mp_rounds)
+      } catch (error) {
+        console.log("error", error);
+      }
     }
-  });
+  );
 
   socket.on("bypass", (tour_id = "Mark1") => {
     //let db_score = Match.find((tour_id = tour_id));
@@ -1557,7 +1601,9 @@ io.on("connection", (socket) => {
   socket.on("getNsRankings", () => {});
   socket.on("getEwRankings", () => {});
 
-  // socket.on("getCurrentMatchStatus");
+  socket.on("getCurrentMatchStatus", () => {});
+
+  socket.on("grant_user_to_td", (admin) => {});
 
   socket.on("disconnect", () => {
     console.log("User was disconnect");
