@@ -41,11 +41,14 @@ let card_handle = require("./handlers/card");
 let score = require("./handlers/score");
 let board = require("./handlers/board");
 let bypass = require("./handlers/bypass");
+let game = require("./handlers/game");
+let handler_room = require("./handlers/room");
 const { access } = require("fs");
 const { random } = require("lodash");
 
 let users = {};
 let tours = {};
+let rooms = [];
 
 const DIRECTION = {
   N: 0,
@@ -233,7 +236,7 @@ const access_table = (tour_name, round_num, table_id) => {
       "round_num",
       parseInt(round_num),
     ]);
-    console.log('round', round)
+    console.log("round", round);
     let table = _.find(round.tables, ["table_id", table_id]);
     return table;
   } catch (error) {
@@ -303,13 +306,17 @@ const specWhilePlaying = ({ socket_id, tour_name, room = "room_1" }) => {
 //   }
 // });
 
-io.on("connection", (socket) => {
+io.on("connection", async (socket) => {
   console.log("can connected");
 
   if (users[socket.handshake.query.username] == undefined) {
+    let user_db = await User.findOne({
+      username: socket.handshake.query.username,
+    });
     const user = {
       socket_id: socket.id,
       username: socket.handshake.query.username,
+      access: user_db.access,
       tour: undefined,
       session: undefined,
     };
@@ -1037,7 +1044,7 @@ io.on("connection", (socket) => {
       table_id,
     }) => {
       socket.join(room);
-      let clients = io.sockets.adapter.rooms.get(room);
+      users[spec_name].game_status = "player";
       console.log("direction", direction);
       /// return current players.
       // io.to(room).emit("waiting_for_start", tours[tour_name].players);
@@ -1059,12 +1066,18 @@ io.on("connection", (socket) => {
         round_num,
         table_id,
       });
-
+      let [...idInRoom] = io.sockets.adapter.rooms.get(table_id);
+      let userScreen = Object.keys(users).map((key) => {
+        return users[key];
+      });
+      let playerInRoom = handler_room.accessInRoom(idInRoom, userScreen);
       /// if fully player, change to 'bidding phase'.
-      if (clients.size === 4 && table_data.status == "waiting") {
+      if (playerInRoom.length === 4 && table_data.status == "waiting") {
         table_data.status = "playing";
 
         ioToRoomOnBiddingPhase({ room, tour_name, round_num, table_id });
+        ///!send table status
+        io.to(tours[tour_name]).emit("update-room-status", table_data.status);
         console.log("can go bidding phase");
       }
       // else if (table_data.status == "playing" && player_id in spec) {
@@ -1387,7 +1400,7 @@ io.on("connection", (socket) => {
               score.calBoardMps(score_all_ew),
             ];
           }
-          //Chage board
+          //Change board
           if (++table_data.cur_board > tours[tour_name].board_per_round) {
             /// clear all temp var here ...
             ioToRoomOnPlaying({
@@ -1445,7 +1458,7 @@ io.on("connection", (socket) => {
   );
 
   socket.on(
-    "spec-join-room",
+    "join-room-spec",
     ({
       spec_id,
       spec_name,
@@ -1455,7 +1468,8 @@ io.on("connection", (socket) => {
       table_id,
     }) => {
       socket.join(room);
-      let clients = io.sockets.adapter.rooms.get(room);
+      users[spec_name].game_status = "spec";
+
       let round_data = access_round((tour_name = "Mark1"), (round_num = "1"));
       let table_data = access_table(
         (tour_name = "Mark1"),
@@ -1464,7 +1478,7 @@ io.on("connection", (socket) => {
       );
 
       if (table_data.status == "playing") {
-        socket.emit("spec-join-room", round_data);
+        socket.emit("join-spec", table_data);
       }
     }
   );
@@ -1495,9 +1509,9 @@ io.on("connection", (socket) => {
         // ///Get all card in round
         // let round_data = access_round(tour_id, round_num);
         // let get_all_cards = round_data.cards[cur_board];
+        // let table_data = access_table(tour_id, round_num, table_id);
 
         // ///Get played card and convert to array
-        // let table_data = access_table(tour_id, round_num, table_id);
         // let played_card_object = table_data.playing.playedCards;
         // let played_card_array = [[], [], [], []];
         // played_card_object.map((turn) => {
@@ -1519,19 +1533,37 @@ io.on("connection", (socket) => {
         // });
 
         // socket.emit("test", get_all_cards, played_card_array, left_card_array);
-
-        let round_data = access_round(tour_id, round_num);
-        let score_all_ns = round_data.tables.map(({ score }) => score[0]);
-        let score_all_ew = round_data.tables.map(({ score }) => score[1]);
-        let mp_rounds = [
-          score.calBoardMps(score_all_ns),
-          score.calBoardMps(score_all_ew),
-        ];
-        let scores = [40, 30, 30, 30, 23, 23, 10];
-        console.log("score_all_ns : ", score_all_ns);
-        let [mps, percentage] = score.calBoardMps(scores);
-        socket.emit("test", mps);
-        socket.emit("test", mp_rounds);
+        //!------------------------------------------------------------------------
+        // let round_data = access_round(tour_id, round_num);
+        // let score_all_ns = round_data.tables.map(({ score }) => score[0]);
+        // let score_all_ew = round_data.tables.map(({ score }) => score[1]);
+        // let mp_rounds = [
+        //   score.calBoardMps(score_all_ns),
+        //   score.calBoardMps(score_all_ew),
+        // ];
+        // let scores = [40, 30, 30, 30, 23, 23, 10];
+        // console.log("score_all_ns : ", score_all_ns);
+        // let [mps, percentage] = score.calBoardMps(scores);
+        // socket.emit("test", mps, percentage);
+        // socket.emit("test", mp_rounds);
+      } catch (error) {
+        console.log("error", error);
+      }
+    }
+  );
+  socket.on(
+    "test2",
+    (tour_id = "Mark1", round_num = 1, table_id = "r1b1", cur_board = 0) => {
+      try {
+        let room = "r1b1";
+        socket.join(room);
+        let clients = io.sockets.adapter.rooms.get(room);
+        console.log("clients", clients);
+        console.log("room", socket.rooms);
+        let getRoom = io.sockets.adapter.rooms;
+        console.log("getRoom", getRoom);
+        let room1 = io.sockets.adapter.rooms.get(room);
+        console.log("room1", room1);
       } catch (error) {
         console.log("error", error);
       }
@@ -1575,25 +1607,10 @@ io.on("connection", (socket) => {
 
   socket.on("getSelfScore", (player_id = "peterpan", tour_id = "Mark1") => {
     try {
-      //?Function get pairId
-      let getPlayer = _.find(tours[tour_id].players, ["name", player_id]);
-      let getPairId = getPlayer.pair_id;
-
+      let getPairId = game.getPairId(tours[tour_id], player_id);
       let rounds = tours[tour_id][`rounds`];
-      let teams = rounds.map(({ round_num, tables }) => {
-        let myTeam = tables
-          .filter(({ versus }) => versus.includes(getPairId))
-          .map(({ table_id, cur_board, directions, score }) => ({
-            table_id,
-            cur_board,
-            directions,
-            score,
-          }));
-        return { round_num, tables: myTeam };
-      });
-
-      socket.emit("test", teams);
-      socket.emit("getSelfScore", teams);
+      let selfScore = game.getSelfScore(getPairId, rounds);
+      socket.emit("getSelfScore", selfScore);
     } catch (error) {
       console.log("error", error);
     }
