@@ -351,7 +351,7 @@ exports.getAnnouncementsByOffset = async (req, res) => {
     console.log(news);
     res.status(200).send(news);
   } catch (error) {
-    console.log(err);
+    console.log(error);
     res.status(409).send("This tour is not found");
   }
 };
