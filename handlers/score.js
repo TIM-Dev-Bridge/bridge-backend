@@ -298,3 +298,11 @@ exports.calRankingScore = (mps, percentages) => {
     ),
   ];
 };
+
+exports.findIndexScoreBoard = (boardScores, cur_board) => {
+  let boardIndex = boardScores.findIndex(
+    (board) => board.board_num == cur_board
+  );
+  return boardIndex;
+};
+

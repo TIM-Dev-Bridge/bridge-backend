@@ -123,7 +123,7 @@ exports.generateFullGameData = () => {
                   3: 9,
                 },
                 { 1: 3, 2: 5, 3: 11, 0: 7 },
-                {2: 19, 3: 12, 0:50},
+                { 2: 19, 3: 12, 0: 50 },
                 {},
                 {},
                 {},
@@ -520,6 +520,17 @@ exports.generateFullGameData = () => {
           },
         ],
       },
+    ],
+    boardScores: [
+      { board_num: 1, pairs_score: [] },
+      { board_num: 2, pairs_score: [] },
+      { board_num: 3, pairs_score: [] },
+      { board_num: 4, pairs_score: [] },
+      { board_num: 5, pairs_score: [] },
+      { board_num: 6, pairs_score: [] },
+      { board_num: 7, pairs_score: [] },
+      { board_num: 8, pairs_score: [] },
+      { board_num: 9, pairs_score: [] },
     ],
   };
   return fullgame;

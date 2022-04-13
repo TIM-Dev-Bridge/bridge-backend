@@ -18,6 +18,7 @@ const userSchema = new mongoose.Schema({
   movement: { type: String, default: "Clocked" },
   score_type: { type: String, default: "MP" },
   barometer: { type: Boolean, default: true },
+  boardScores: { type: Array },
   createBy: { type: String },
 });
 
