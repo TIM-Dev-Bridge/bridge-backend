@@ -61,6 +61,18 @@ exports.getSelfIMP = (id, boardScores) => {
   });
   return selfIMP;
 };
+exports.getSelfIPercent = (id, boardScores) => {
+  let selfPercent = boardScores.map(({ board_num, pairs_score }) => {
+    let myTeam = pairs_score
+      .filter(({ pair_id }) => pair_id == id)
+      .map(({ pair_id, percent }) => ({
+        pair_id,
+        percent,
+      }));
+    return { board_num, score: myTeam };
+  });
+  return selfPercent;
+};
 
 exports.getSelfScoreArray = (id, boardScores) => {
   let selfScore = boardScores.map(({ pairs_score }) =>
@@ -74,6 +86,14 @@ exports.getSelfIMPArray = (id, boardScores) => {
   );
   return _.flatMap(selfIMP).filter((imp) => imp != null);
 };
+exports.getSelfIPercentArray = (id, boardScores) => {
+  let selfPercent = boardScores.map(({ pairs_score }) =>
+    pairs_score
+      .filter(({ pair_id }) => pair_id == id)
+      .map((pair) => pair.percent)
+  );
+  return _.flatMap(selfPercent).filter((percent) => percent != null);
+};
 
 exports.sumSelfScoreArray = (id, boardScore) => {
   let sum = _.sum(this.getSelfScoreArray(id, boardScore));
@@ -82,4 +102,9 @@ exports.sumSelfScoreArray = (id, boardScore) => {
 exports.sumSelfIMPArray = (id, boardScore) => {
   let sum = _.sum(this.getSelfIMPArray(id, boardScore));
   return sum;
+};
+
+exports.getUniqePairId = (players) => {
+  let uniqe = players.map((player) => player.pair_id);
+  return _.uniq(uniqe).sort();
 };

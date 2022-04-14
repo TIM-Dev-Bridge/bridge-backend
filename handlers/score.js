@@ -293,7 +293,7 @@ exports.calRankingScore = (mps, percentages) => {
     ),
     roundTo(
       percentages.reduce((total, percentage) => total + percentage, 0) /
-        percentage.length,
+        percentages.length,
       2
     ),
   ];
@@ -305,4 +305,7 @@ exports.findIndexScoreBoard = (boardScores, cur_board) => {
   );
   return boardIndex;
 };
-
+exports.findIndexRankPairId = (rankPair, id) => {
+  let rankIndex = rankPair.findIndex((pair) => pair.pair_id == id);
+  return rankIndex;
+};

@@ -702,6 +702,23 @@ exports.generateFullGameData = () => {
         ],
       },
     ],
+    rankPair: [
+      {
+        pair_id: 1,
+      },
+      {
+        pair_id: 2,
+      },
+      {
+        pair_id: 3,
+      },
+      {
+        pair_id: 4,
+      },
+      {
+        pair_id: 5,
+      },
+    ],
   };
   return fullgame;
 };

@@ -222,6 +222,9 @@ const matchmaking = (tour_name) => {
     board_num: count,
     pairs_score: [],
   }));
+  tours[tour_name].rankPairs = unique_team.map((pair) => ({
+    pair_id: pair,
+  }));
   return rounds;
 };
 
@@ -1687,53 +1690,114 @@ io.on("connection", async (socket) => {
           tours[tour_id].boardScores,
           table_data.cur_board
         );
+        let arrBoardIndex = [0, 1, 2, 3, 4, 5];
 
-        //?NS
-        let selectIndexNS = [];
-        ///Select pair from all ns
-        let selectNS = tours[tour_id].boardScores[
-          boardIndex
-        ].pairs_score.filter((pair) => pair.direction == 0);
-        ///Convert to score array
-        let getScoreNS = selectNS.map((score) => score.score);
-        let [mpNS, percentNS] = score.calBoardMps(getScoreNS);
+        arrBoardIndex.map((boardIndex) => {
+          //?NS
+          let selectIndexNS = [];
+          ///Select pair from all ns
+          let selectNS = tours[tour_id].boardScores[
+            boardIndex
+          ].pairs_score.filter((pair) => pair.direction == 0);
+          ///Convert to score array
+          let getScoreNS = selectNS.map((score) => score.score);
+          socket.emit("test", getScoreNS);
+          let [mpNS, percentNS] = score.calBoardMps(getScoreNS);
+          socket.emit("test", mpNS);
 
-        ///Select index
-        tours[tour_id].boardScores[boardIndex].pairs_score.map(
-          (pair, index) => {
-            if (pair.direction == 0) {
-              selectIndexNS.push(index);
+          ///Select index
+          tours[tour_id].boardScores[boardIndex].pairs_score.map(
+            (pair, index) => {
+              if (pair.direction == 0) {
+                selectIndexNS.push(index);
+              }
             }
-          }
-        );
-        ///Fill mp,percent to boardScore
-        selectIndexNS.map((pair_index, index) => {
-          tours[tour_id].boardScores[boardIndex].pairs_score[pair_index][
-            "imp"
-          ] = mpNS[index];
-          tours[tour_id].boardScores[boardIndex].pairs_score[pair_index][
-            "percent"
-          ] = percentNS[index];
+          );
+          ///Fill mp,percent to boardScore
+          selectIndexNS.map((pair_index, index) => {
+            tours[tour_id].boardScores[boardIndex].pairs_score[pair_index][
+              "imp"
+            ] = mpNS[index];
+            tours[tour_id].boardScores[boardIndex].pairs_score[pair_index][
+              "percent"
+            ] = percentNS[index];
+          });
+          //?EW
+          let selectIndexEW = [];
+          ///Select pair from all ns
+          let selectEW = tours[tour_id].boardScores[
+            boardIndex
+          ].pairs_score.filter((pair) => pair.direction == 1);
+          ///Convert to score array
+          let getScoreEW = selectEW.map((score) => score.score);
+          let [mpEW, percentEW] = score.calBoardMps(getScoreEW);
+
+          ///Select index
+          tours[tour_id].boardScores[boardIndex].pairs_score.map(
+            (pair, index) => {
+              if (pair.direction == 1) {
+                selectIndexEW.push(index);
+              }
+            }
+          );
+
+          ///Fill mp,percent to boardScore
+          selectIndexEW.map((pair_index, index) => {
+            tours[tour_id].boardScores[boardIndex].pairs_score[pair_index][
+              "imp"
+            ] = mpEW[index];
+            tours[tour_id].boardScores[boardIndex].pairs_score[pair_index][
+              "percent"
+            ] = percentEW[index];
+          });
         });
-        let my_id = 2;
+
+        //?Rank
         let getPairId = game.getPairId(tours[tour_id], player_id);
-        socket.emit("test", tours[tour_id].boardScores);
-        socket.emit(
-          "test",
-          game.getSelfScoreArray(getPairId, tours[tour_id].boardScores)
-        );
-        socket.emit(
-          "test",
-          game.getSelfIMPArray(getPairId, tours[tour_id].boardScores)
-        );
-        socket.emit(
-          "test",
-          game.sumSelfScoreArray(getPairId, tours[tour_id].boardScores)
-        );
-        socket.emit(
-          "test",
-          game.sumSelfIMPArray(getPairId, tours[tour_id].boardScores)
-        );
+        tours[tour_id].rankPair.map(({ pair_id }) => {
+          let rankIndex = score.findIndexRankPairId(
+            tours[tour_id].rankPair,
+            pair_id
+          );
+          let selfIMP = game.getSelfIMPArray(
+            pair_id,
+            tours[tour_id].boardScores
+          );
+          let selfPercent = game.getSelfIPercentArray(
+            pair_id,
+            tours[tour_id].boardScores
+          );
+          console.log("selfIMP", selfIMP);
+          console.log("selfPercent", selfPercent);
+          let [totalMps, rankingPercentage] = score.calRankingScore(
+            selfIMP,
+            selfPercent
+          );
+          console.log("totalMps", totalMps);
+          console.log("rankingPercentage", rankingPercentage);
+          tours[tour_id].rankPair[rankIndex]["totalMP"] = totalMps;
+          tours[tour_id].rankPair[rankIndex]["rankPercent"] = rankingPercentage;
+        });
+
+        socket.emit("test", tours[tour_id].rankPair);
+        // socket.emit("test", tours[tour_id].boardScores);
+        // socket.emit("test", game.getUniqePairId(tours[tour_id].players));
+        // socket.emit(
+        //   "test",
+        //   game.getSelfScoreArray(getPairId, tours[tour_id].boardScores)
+        // );
+        // socket.emit(
+        //   "test",
+        //   game.getSelfIMPArray(getPairId, tours[tour_id].boardScores)
+        // );
+        // socket.emit(
+        //   "test",
+        //   game.sumSelfScoreArray(getPairId, tours[tour_id].boardScores)
+        // );
+        // socket.emit(
+        //   "test",
+        //   game.sumSelfIMPArray(getPairId, tours[tour_id].boardScores)
+        // );
         //!------------------------------------------------------------------------
         // let fake_data = [
         //   {
@@ -1873,7 +1937,114 @@ io.on("connection", async (socket) => {
     }
   );
 
-  socket.on("grant_user_to_td", (admin) => {});
+  socket.on("grant_user_to_td", async (admin, username = "plantA") => {
+    users[username].access = "td";
+    let update_user = await User.updateOne(
+      {
+        username,
+      },
+      {
+        $set: {
+          access: "td",
+        },
+      }
+    );
+    socket.emit("test", update_user);
+  });
+  socket.on("grant_user_to_td", async (admin, username = "plantA") => {
+    let db_user = await User.findOne({ username });
+    users[username].access = "td";
+    console.log("data", users[username]);
+    let update_user = await User.updateOne(
+      {
+        username,
+      },
+      {
+        $set: {
+          access: "td",
+        },
+      }
+    );
+    socket.emit("test", update_user);
+  });
+  socket.on("refuse_user_to_td", async (admin, username = "plantA") => {
+    let db_user = await User.findOne({ username });
+    users[username].access = "user";
+    console.log("data", users[username]);
+    let update_user = await User.updateOne(
+      {
+        username,
+      },
+      {
+        $set: {
+          access: "user",
+        },
+      }
+    );
+    socket.emit("test", update_user);
+  });
+  socket.on("ban_user", async (admin, username = "plantA") => {
+    let db_user = await User.findOne({ username });
+    users[username].access = "ban";
+    console.log("data", users[username]);
+    let update_user = await User.updateOne(
+      {
+        username,
+      },
+      {
+        $set: {
+          access: "ban",
+        },
+      }
+    );
+    socket.emit("test", update_user);
+  });
+  socket.on("refuse_ban_user", async (admin, username = "plantA") => {
+    let db_user = await User.findOne({ username });
+    users[username].access = "user";
+    console.log("data", users[username]);
+    let update_user = await User.updateOne(
+      {
+        username,
+      },
+      {
+        $set: {
+          access: "user",
+        },
+      }
+    );
+    socket.emit("test", update_user);
+  });
+  socket.on("get-time", () => {
+    let currentTime = new Date();
+    let currentHours = currentTime.getHours();
+    let currentMinutes = currentTime.getMinutes();
+    let currentSeconds = currentTime.getSeconds();
+
+    // Pad the minutes and seconds with leading zeros, if required
+    currentMinutes = (currentMinutes < 10 ? "0" : "") + currentMinutes;
+    currentSeconds = (currentSeconds < 10 ? "0" : "") + currentSeconds;
+
+    // Choose either "AM" or "PM" as appropriate
+    let timeOfDay = currentHours < 12 ? "AM" : "PM";
+
+    // Convert the hours component to 12-hour format if needed
+    currentHours = currentHours > 12 ? currentHours - 12 : currentHours;
+
+    // Convert an hours component of "0" to "12"
+    currentHours = currentHours == 0 ? 12 : currentHours;
+
+    // Compose the string for display
+    let currentTimeString =
+      currentHours +
+      ":" +
+      currentMinutes +
+      ":" +
+      currentSeconds +
+      " " +
+      timeOfDay;
+    socket.emit("test", currentTimeString);
+  });
 
   socket.on("disconnect", () => {
     console.log("User was disconnect");
