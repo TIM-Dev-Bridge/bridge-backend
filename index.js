@@ -2095,10 +2095,10 @@ io.on("connection", async (socket) => {
   });
   socket.on("getAllUserList", async () => {
     let all_user = await User.find();
-    socket.emit("test", all_user);
+    socket.emit("getAllUserList", all_user);
   });
   socket.on("getAllScore", async (tour_id) => {
-    socket.emit("test", tours[tour_id].boardScores);
+    socket.emit("getAllScore", tours[tour_id].boardScores);
   });
   socket.on("disconnect", () => {
     console.log("User was disconnect");
