@@ -1420,26 +1420,45 @@ io.on("connection", async (socket) => {
           ].pairs_score.filter((pair) => pair.direction == 0);
           ///Convert to score array
           let getScoreNS = selectNS.map((score) => score.score);
-          if (getScoreNS.length > 1) {
-            let [mpNS, percentNS] = score.calBoardMps(getScoreNS);
-            ///Select index
-            tours[tour_name].boardScores[boardIndex].pairs_score.map(
-              (pair, index) => {
-                if (pair.direction == 0) {
-                  selectIndexNS.push(index);
-                }
+          console.log("getScoreNS", getScoreNS);
+          let [mpNS, percentNS] = score.calBoardMps(getScoreNS);
+          ///Select index
+          tours[tour_name].boardScores[boardIndex].pairs_score.map(
+            (pair, index) => {
+              if (pair.direction == 0) {
+                selectIndexNS.push(index);
               }
-            );
-            ///Fill mp,percent to boardScore
-            selectIndexNS.map((pair_index, index) => {
-              tours[tour_name].boardScores[boardIndex].pairs_score[pair_index][
-                "imp"
-              ] = mpNS[index];
-              tours[tour_name].boardScores[boardIndex].pairs_score[pair_index][
-                "percent"
-              ] = percentNS[index];
-            });
-          }
+            }
+          );
+          ///Fill mp,percent to boardScore
+          selectIndexNS.map((pair_index, index) => {
+            tours[tour_name].boardScores[boardIndex].pairs_score[pair_index][
+              "imp"
+            ] = mpNS[index];
+            tours[tour_name].boardScores[boardIndex].pairs_score[pair_index][
+              "percent"
+            ] = percentNS[index];
+          });
+          // if (getScoreNS.length > 1) {
+          //   let [mpNS, percentNS] = score.calBoardMps(getScoreNS);
+          //   ///Select index
+          //   tours[tour_name].boardScores[boardIndex].pairs_score.map(
+          //     (pair, index) => {
+          //       if (pair.direction == 0) {
+          //         selectIndexNS.push(index);
+          //       }
+          //     }
+          //   );
+          //   ///Fill mp,percent to boardScore
+          //   selectIndexNS.map((pair_index, index) => {
+          //     tours[tour_name].boardScores[boardIndex].pairs_score[pair_index][
+          //       "imp"
+          //     ] = mpNS[index];
+          //     tours[tour_name].boardScores[boardIndex].pairs_score[pair_index][
+          //       "percent"
+          //     ] = percentNS[index];
+          //   });
+          // }
 
           //Save board score EW
           let selectIndexEW = [];
@@ -1449,26 +1468,45 @@ io.on("connection", async (socket) => {
           ].pairs_score.filter((pair) => pair.direction == 1);
           ///Convert to score array
           let getScoreEW = selectEW.map((score) => score.score);
-          if (getScoreNS.length > 1) {
-            let [mpEW, percentEW] = score.calBoardMps(getScoreEW);
-            ///Select index
-            tours[tour_name].boardScores[boardIndex].pairs_score.map(
-              (pair, index) => {
-                if (pair.direction == 1) {
-                  selectIndexEW.push(index);
-                }
+          console.log("getScoreEW", getScoreEW);
+          let [mpEW, percentEW] = score.calBoardMps(getScoreEW);
+          ///Select index
+          tours[tour_name].boardScores[boardIndex].pairs_score.map(
+            (pair, index) => {
+              if (pair.direction == 1) {
+                selectIndexEW.push(index);
               }
-            );
-            ///Fill mp,percent to boardScore
-            selectIndexEW.map((pair_index, index) => {
-              tours[tour_name].boardScores[boardIndex].pairs_score[pair_index][
-                "imp"
-              ] = mpEW[index];
-              tours[tour_name].boardScores[boardIndex].pairs_score[pair_index][
-                "percent"
-              ] = percentEW[index];
-            });
-          }
+            }
+          );
+          ///Fill mp,percent to boardScore
+          selectIndexEW.map((pair_index, index) => {
+            tours[tour_name].boardScores[boardIndex].pairs_score[pair_index][
+              "imp"
+            ] = mpEW[index];
+            tours[tour_name].boardScores[boardIndex].pairs_score[pair_index][
+              "percent"
+            ] = percentEW[index];
+          });
+          // if (getScoreNS.length > 1) {
+          //   let [mpEW, percentEW] = score.calBoardMps(getScoreEW);
+          //   ///Select index
+          //   tours[tour_name].boardScores[boardIndex].pairs_score.map(
+          //     (pair, index) => {
+          //       if (pair.direction == 1) {
+          //         selectIndexEW.push(index);
+          //       }
+          //     }
+          //   );
+          //   ///Fill mp,percent to boardScore
+          //   selectIndexEW.map((pair_index, index) => {
+          //     tours[tour_name].boardScores[boardIndex].pairs_score[pair_index][
+          //       "imp"
+          //     ] = mpEW[index];
+          //     tours[tour_name].boardScores[boardIndex].pairs_score[pair_index][
+          //       "percent"
+          //     ] = percentEW[index];
+          //   });
+          // }
 
           socket.to(room).emit("score", tours[tour_name].boardScores);
           socket.to("start-room").emit("score", tours[tour_name].boardScores);
@@ -1691,6 +1729,7 @@ io.on("connection", async (socket) => {
           tours[tour_id].boardScores,
           table_data.cur_board
         );
+        ///get board id #6
         let arrBoardIndex = [0, 1, 2, 3, 4, 5];
 
         arrBoardIndex.map((boardIndex) => {
@@ -1706,9 +1745,9 @@ io.on("connection", async (socket) => {
           // );
           ///Convert to score array
           let getScoreNS = selectNS.map((score) => score.score);
-          socket.emit("test", getScoreNS);
+          //socket.emit("test", getScoreNS);
           let [mpNS, percentNS] = score.calBoardMps(getScoreNS);
-          socket.emit("test", mpNS);
+          //socket.emit("test", mpNS);
 
           ///Select index
           tours[tour_id].boardScores[boardIndex].pairs_score.map(
@@ -1727,6 +1766,7 @@ io.on("connection", async (socket) => {
               "percent"
             ] = percentNS[index];
           });
+
           //?EW
           let selectIndexEW = [];
           ///Select pair from all ns
@@ -1756,6 +1796,8 @@ io.on("connection", async (socket) => {
             ] = percentEW[index];
           });
         });
+
+        socket.emit("test", tours[tour_id].boardScores);
 
         //?Rank
         let getPairId = game.getPairId(tours[tour_id], player_id);
@@ -1919,6 +1961,7 @@ io.on("connection", async (socket) => {
       socket.emit("test", selectNS);
     } catch (error) {}
   });
+
   socket.on("getEwRankings", (tour_id) => {
     try {
       let selectEW = tours[tour_id].boardScores.map((board) => {
@@ -2054,7 +2097,9 @@ io.on("connection", async (socket) => {
     let all_user = await User.find();
     socket.emit("test", all_user);
   });
-
+  socket.on("getAllScore", async (tour_id) => {
+    socket.emit("test", tours[tour_id].boardScores);
+  });
   socket.on("disconnect", () => {
     console.log("User was disconnect");
   });
