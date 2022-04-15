@@ -2050,6 +2050,9 @@ io.on("connection", async (socket) => {
       timeOfDay;
     socket.emit("test", currentTimeString);
   });
+  socket.on("getAllUserList", () => {
+    socket.emit("getAllUserList", User.find());
+  });
 
   socket.on("disconnect", () => {
     console.log("User was disconnect");
