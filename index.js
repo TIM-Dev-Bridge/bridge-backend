@@ -1919,7 +1919,7 @@ io.on("connection", async (socket) => {
       socket.emit("test", selectNS);
     } catch (error) {}
   });
-  socket.on("getEwRankings", () => {
+  socket.on("getEwRankings", (tour_id) => {
     try {
       let selectEW = tours[tour_id].boardScores.map((board) => {
         let pair = board.pairs_score.filter((pair) => pair.direction == 1);
