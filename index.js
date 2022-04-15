@@ -34,6 +34,7 @@ const bcrypt = require("bcryptjs");
 const TourR = require("./model/tourR");
 const User = require("./model/user");
 const News = require("./model/news");
+const History = require("./model/history");
 const { log } = require("console");
 
 const _ = require("lodash");
@@ -165,7 +166,7 @@ const matchmaking = (tour_name) => {
   let rounds = [];
 
   //Change to function create tournament round
-  for (var round = 0; round < tours[tour_name].board_per_round; round++) {
+  for (var round = 0; round < tours[tour_name].board_round; round++) {
     for (var table = 0; table < unique_team.length / 2; table++) {
       let temp_versus = _.sortBy(
         tours[tour_name].players.filter(
@@ -1003,7 +1004,7 @@ io.on("connection", async (socket) => {
     }
   );
   //#start
-  socket.on("start", (tour_name) => {
+  socket.on("start", async (tour_name) => {
     let rounds = matchmaking(tour_name);
     tours[tour_name][`rounds`] = rounds;
     io.in(tour_name).emit(
@@ -1037,7 +1038,14 @@ io.on("connection", async (socket) => {
       //   return { round: _.omit(round, ["card","tables"]), tables: newTable };
       // }),
     );
-    socket.join("start-room");
+    ///Save in database history
+    let round_num = _.range(1, tours[tour_name].board_round + 1);
+    await History.create({
+      tid: tour_name,
+      rounds: round_num.map((round) => {
+        return { round_num: round, boards: [] };
+      }),
+    });
   });
 
   /*
@@ -1117,7 +1125,7 @@ io.on("connection", async (socket) => {
    */
   socket.on(
     "bid",
-    ({
+    async ({
       player_id,
       room,
       contract,
@@ -1272,7 +1280,7 @@ io.on("connection", async (socket) => {
 
   socket.on(
     "play_card",
-    ({
+    async ({
       player_id,
       room = "room_1",
       card,
@@ -1409,7 +1417,31 @@ io.on("connection", async (socket) => {
             score: table_data.score[1],
             direction: 1,
           });
-
+          ///Save history of board
+          // await History.updateOne(
+          //   { tid: tour_name },
+          //   { $push: { round_num, boards: table_data } }
+          // );
+          socket.emit("test", table_data.table_id.substring(1).split("b")[0]);
+          await History.updateOne(
+            {
+              tid: tour_name,
+              rounds: {
+                $elemMatch: {
+                  round_num: parseInt(
+                    table_data.table_id.substring(1).split("b")[0]
+                  ),
+                },
+              },
+            },
+            {
+              $push: {
+                "rounds.$.boards": {
+                  table_data,
+                },
+              },
+            }
+          );
           ///!Save MP variable
 
           //Save board score NS
@@ -1531,7 +1563,6 @@ io.on("connection", async (socket) => {
           ///Calculate score per rounds
           if (count_finish_table >= round_data.tables.length) {
             ///Get score all ns & ew
-            let score_all = round_data.tables.map(({ score }) => ({ score }));
             let score_all_ns = round_data.tables.map(({ score }) => score[0]);
             let score_all_ew = round_data.tables.map(({ score }) => score[1]);
             table_data.mp_rounds = [
@@ -1646,7 +1677,7 @@ io.on("connection", async (socket) => {
   ///Test
   socket.on(
     "test",
-    (
+    async (
       tour_id = "Mark1",
       round_num = 1,
       table_id = "r1b1",
@@ -1655,7 +1686,12 @@ io.on("connection", async (socket) => {
     ) => {
       try {
         // let round_data = access_round(tour_id, round_num);
+        let test = "r1b1";
+        //let tester = test.split("[a-z]");
         let table_data = access_table(tour_id, round_num, table_id);
+        let num = table_data.table_id.substring(1).split("b")[0];
+        socket.emit("test", num);
+        console.log("num", num, typeof num);
 
         // ///Get all card in round
         // let round_data = access_round(tour_id, round_num);
