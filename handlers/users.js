@@ -4,6 +4,7 @@ require("../config/database").connect();
 const express = require("express");
 const User = require("../model/user");
 const TourR = require("../model/tourR");
+const News = require("../model/news");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const path = require("path");
@@ -137,7 +138,6 @@ exports.login = async (req, res) => {
     res.status(400).send("Invalid Credentials");
   } catch (err) {}
 };
-
 
 //Test
 exports.home2 = (req, res) => {
@@ -330,46 +330,49 @@ exports.manageTour = async (req, res) => {
   }
 };
 
-exports.getAnnouncement = async (req, res)=> {
+exports.getAnnouncement = async (req, res) => {
   try {
-    const { id } = req.query
-    const board_data = await Board.findOne({_id: id})
-    res.status(200).send(board_data)
+    const { id } = req.query;
+    const news_data = await News.findOne({ _id: id });
+    res.status(200).send(news_data);
   } catch (error) {
     console.log(err);
     res.status(409).send("This tour is not found");
   }
-}
+};
 
-exports.getAnnouncementsByOffset = async (req, res)=> {
+exports.getAnnouncementsByOffset = async (req, res) => {
   try {
-    const { offset, limit } = req.query
-    const boards = await Board.find().sort({"data.time": -1}).skip(offset).limit(limit)
-    console.log(boards)
-    res.status(200).send(boards)
+    const { offset, limit } = req.query;
+    const news = await News.find()
+      .sort({ "data.time": -1 })
+      .skip(offset)
+      .limit(limit);
+    console.log(news);
+    res.status(200).send(news);
   } catch (error) {
     console.log(err);
     res.status(409).send("This tour is not found");
   }
-}
+};
 
-exports.addAnnouncement = async (req, res)=> {
+exports.addAnnouncement = async (req, res) => {
   try {
-    await Board.create(req.body);
-    res.status(200).send('OK')
+    await News.create(req.body);
+    res.status(200).send("OK");
   } catch (error) {
     console.log(err);
     res.status(409).send("This tour is not found");
   }
-}
+};
 
-exports.updateAnnouncement = async (req, res)=> {
+exports.updateAnnouncement = async (req, res) => {
   try {
-    console.log('UPDATE',req.body)
-    await Board.findOneAndUpdate({_id: req.body.id}, req.body)
-    res.status(200).send('OK')
+    console.log("UPDATE", req.body);
+    await News.findOneAndUpdate({ _id: req.body.id }, req.body);
+    res.status(200).send("OK");
   } catch (error) {
     console.log(err);
     res.status(409).send("This tour is not found");
   }
-}
+};

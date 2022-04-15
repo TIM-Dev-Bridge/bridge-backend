@@ -33,7 +33,7 @@ const bcrypt = require("bcryptjs");
 //----------------------------Database----------------------------//
 const TourR = require("./model/tourR");
 const User = require("./model/user");
-const Board = require("./model/board");
+const News = require("./model/news");
 const { log } = require("console");
 
 const _ = require("lodash");
@@ -1411,6 +1411,7 @@ io.on("connection", async (socket) => {
           });
 
           ///!Save MP variable
+
           //Save board score NS
           let selectIndexNS = [];
           ///Select pair from all ns
@@ -1699,6 +1700,10 @@ io.on("connection", async (socket) => {
           let selectNS = tours[tour_id].boardScores[
             boardIndex
           ].pairs_score.filter((pair) => pair.direction == 0);
+          // console.log(
+          //   "pair_score",
+          //   tours[tour_id].boardScores[boardIndex].pairs_score
+          // );
           ///Convert to score array
           let getScoreNS = selectNS.map((score) => score.score);
           socket.emit("test", getScoreNS);
