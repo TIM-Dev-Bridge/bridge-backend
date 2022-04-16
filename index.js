@@ -166,7 +166,7 @@ const matchmaking = (tour_name) => {
   let rounds = [];
 
   //Change to function create tournament round
-  for (var round = 0; round < tours[tour_name].board_round; round++) {
+  for (var round = 0; round < tours[tour_name].board_per_round; round++) {
     for (var table = 0; table < unique_team.length / 2; table++) {
       let temp_versus = _.sortBy(
         tours[tour_name].players.filter(
@@ -718,7 +718,9 @@ io.on("connection", async (socket) => {
         var pairPlayers = tours[tour_name].players.filter(
           (player) => player.status == "in-pair"
         );
-
+        let timeStart = TourR.find({ tour_name: tour_name }).time_start;
+        let timeJoin = new Date().getTime();
+        //io.timeout(timeJoin - timeStart).emit("test", "Good luck");
         io.in(tour_name).emit("update-player-pair", pairPlayers);
         io.in(tour_name).emit("");
         io.in(tour_name).emit("update-player-waiting", waitingPlayer);
@@ -1886,7 +1888,11 @@ io.on("connection", async (socket) => {
         //   game.sumSelfIMPArray(getPairId, tours[tour_id].boardScores)
         // );
         //!------------------------------------------------------------------------
-        console.log("test", _.range(0, 1));
+        let time = "12/18/2021, 5:06:00 PM";
+        let now = new Date();
+        console.log("now", now);
+        console.log("now", now.getTime());
+        console.log("time", time.getTime());
       } catch (error) {
         console.log("error", error);
       }
