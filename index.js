@@ -1888,11 +1888,18 @@ io.on("connection", async (socket) => {
         //   game.sumSelfIMPArray(getPairId, tours[tour_id].boardScores)
         // );
         //!------------------------------------------------------------------------
-        let time = "12/18/2021, 5:06:00 PM";
         let now = new Date();
+        // let prevtime = "12/18/2021, 5:06:00 PM";
+        let startTime = "2022-04-16T16:28:00.000Z";
+        let milStartTime = new Date(startTime).getTime();
+        let curTime = new Date();
+        let milCurTme = curTime.getTime();
+        let diff_time = milStartTime - milCurTme;
+        console.log("diff_time", diff_time);
+        socket.timeout(diff_time).emit("test", "Time is Arrive !!!");
+        // console.log("milStartTime", milStartTime);
+        // console.log("milCurTme", milCurTme);
         console.log("now", now);
-        console.log("now", now.getTime());
-        console.log("time", time.getTime());
       } catch (error) {
         console.log("error", error);
       }
