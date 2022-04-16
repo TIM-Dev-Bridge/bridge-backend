@@ -295,6 +295,23 @@ const specWhilePlaying = ({ socket_id, tour_name, room = "room_1" }) => {
   });
 };
 
+const withTimeout = (onSuccess, onTimeout, timeout) => {
+  let called = false;
+
+  const timer = setTimeout(() => {
+    if (called) return;
+    called = true;
+    onTimeout();
+  }, timeout);
+
+  return (...args) => {
+    if (called) return;
+    called = true;
+    clearTimeout(timer);
+    onSuccess.apply(this, args);
+  };
+};
+
 // // Authentication user
 // io.use(function (socket, next) {
 //   if (socket.handshake.query && socket.handshake.query.token) {
@@ -1890,13 +1907,31 @@ io.on("connection", async (socket) => {
         //!------------------------------------------------------------------------
         let now = new Date();
         // let prevtime = "12/18/2021, 5:06:00 PM";
-        let startTime = "2022-04-16T16:28:00.000Z";
+        let startTime = "2022-04-16T17:56:00.000Z";
         let milStartTime = new Date(startTime).getTime();
         let curTime = new Date();
         let milCurTme = curTime.getTime();
         let diff_time = milStartTime - milCurTme;
         console.log("diff_time", diff_time);
-        socket.timeout(diff_time).emit("test", "Time is Arrive !!!");
+
+        // socket.emit(
+        //   "test",
+        //   withTimeout(
+        //     () => {
+        //       console.log("success!");
+        //       socket.emit("test", "success!");
+        //     },
+        //     () => {
+        //       console.log("timeout!");
+        //       socket.emit("test", "timeout!");
+        //     },
+        //     diff_time
+        //   )
+        // );
+        socket.timeout(diff_time).emit("test", () => {
+          socket.emit("test", "Time is Arrive !!!!@");
+        });
+
         // console.log("milStartTime", milStartTime);
         // console.log("milCurTme", milCurTme);
         console.log("now", now);
