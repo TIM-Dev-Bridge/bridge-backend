@@ -442,6 +442,7 @@ io.on("connection", async (socket) => {
   socket.on("create-tour", async (tour_data, callback) => {
     console.log("NEW TOUR ", tours[tour_data.tour_name]);
     try {
+      console.log("tour_data", tour_data);
       //fist time not have
       // const sameTour = await TourR.findOne({ tour_name: tour_data.tour_name });
       // if (sameTour) {
@@ -459,6 +460,24 @@ io.on("connection", async (socket) => {
 
       tours[tour_data.tour_name] = tour_data;
       console.log(tours[tour_data.tour_name]);
+
+      ///Set time to force user
+      // let startTime = "2022-04-16T17:56:00.000Z";
+      // let milStartTime = new Date(startTime).getTime();
+      // let curTime = new Date();
+      // let milCurTme = curTime.getTime();
+      // let diff_time = milStartTime - milCurTme;
+
+      // tours[tour_data.tour_name].count_update++;
+      // let count = tours[tour_data.tour_name].count_update;
+      // socket.timeout(5000).emit("test", () => {
+      //   socket.emit("test", "Prepare for join start tour");
+      //   if (tours[tour_data.tour_name].count_update == count) {
+      //     io.emit("test", "Use this time");
+      //   }
+      // });
+      // console.log("update", tours[tour_data.tour_name].count_update);
+      // console.log("update", count);
 
       const tourList = [];
       for (const tour_name in tours) {
@@ -515,17 +534,17 @@ io.on("connection", async (socket) => {
   socket.on("update-tour", async (tour_data) => {
     try {
       //fist time not have
-      const haveTour = await TourR.findOne({ tour_name: tour_data.tour_name });
-      if (!haveTour) {
-        //callback(false, "This tour already create");
-        console.log("failed");
-        return socket.emit(
-          "update-tour",
-          "This tour name not have in our tournament"
-        );
-      }
+      // const haveTour = await TourR.findOne({ tour_name: tour_data.tour_name });
+      // if (!haveTour) {
+      //   //callback(false, "This tour already create");
+      //   console.log("failed");
+      //   return socket.emit(
+      //     "update-tour",
+      //     "This tour name not have in our tournament"
+      //   );
+      // }
       //Encrypt password tour
-      let encryptedPassword = await bcrypt.hash(tour_data.password, 10);
+      //let encryptedPassword = await bcrypt.hash(tour_data.password, 10);
       //Update tournament on database
       const tournament = await TourR.updateOne(
         { tour_name: tour_data.tour_name },
@@ -534,7 +553,7 @@ io.on("connection", async (socket) => {
             tour_name: tour_data.tour_name,
             max_player: tour_data.max_player,
             type: tour_data.type,
-            password: encryptedPassword,
+            password: tour_data.password,
             players: tour_data.players,
             time_start: tour_data.time_start,
             status: tour_data.status,
@@ -548,7 +567,14 @@ io.on("connection", async (socket) => {
           },
         }
       );
-
+      tours[tour_data.tour_name].count_update++;
+      let count = tours[tour_data.tour_name].count_update;
+      socket.timeout(5000).emit("test", () => {
+        socket.emit("test", "Prepare for join start tour");
+        if (tours[tour_data.tour_name].count_update == count) {
+          io.emit("test", "Use this time");
+        }
+      });
       console.log("updated success");
       //callback(true, "Room created");
     } catch (error) {
@@ -1905,36 +1931,21 @@ io.on("connection", async (socket) => {
         //   game.sumSelfIMPArray(getPairId, tours[tour_id].boardScores)
         // );
         //!------------------------------------------------------------------------
-        let now = new Date();
-        // let prevtime = "12/18/2021, 5:06:00 PM";
-        let startTime = "2022-04-16T17:56:00.000Z";
-        let milStartTime = new Date(startTime).getTime();
-        let curTime = new Date();
-        let milCurTme = curTime.getTime();
-        let diff_time = milStartTime - milCurTme;
-        console.log("diff_time", diff_time);
-
-        // socket.emit(
-        //   "test",
-        //   withTimeout(
-        //     () => {
-        //       console.log("success!");
-        //       socket.emit("test", "success!");
-        //     },
-        //     () => {
-        //       console.log("timeout!");
-        //       socket.emit("test", "timeout!");
-        //     },
-        //     diff_time
-        //   )
-        // );
-        socket.timeout(diff_time).emit("test", () => {
-          socket.emit("test", "Time is Arrive !!!!@");
-        });
-
-        // console.log("milStartTime", milStartTime);
-        // console.log("milCurTme", milCurTme);
-        console.log("now", now);
+        // let now = new Date();
+        // // let prevtime = "12/18/2021, 5:06:00 PM";
+        // let startTime = "2022-04-16T17:56:00.000Z";
+        // let milStartTime = new Date(startTime).getTime();
+        // let min = 2;
+        // let plus2min = milStartTime + 60000 * min;
+        // let human = new Date(plus2min);
+        // console.log("human", human);
+        // let curTime = new Date();
+        // let milCurTme = curTime.getTime();
+        // let diff_time = milStartTime - milCurTme;
+        // console.log("diff_time", diff_time);
+        // console.log("now", now);
+        //!------------------------------------------------------------------------
+        socket.emit("test", users, users["plantA"] != undefined);
       } catch (error) {
         console.log("error", error);
       }
@@ -2044,22 +2055,11 @@ io.on("connection", async (socket) => {
   );
 
   socket.on("grant_user_to_td", async (admin, username = "plantA") => {
-    users[username].access = "td";
-    let update_user = await User.updateOne(
-      {
-        username,
-      },
-      {
-        $set: {
-          access: "td",
-        },
-      }
-    );
-    socket.emit("test", update_user);
-  });
-  socket.on("grant_user_to_td", async (admin, username = "plantA") => {
     let db_user = await User.findOne({ username });
-    users[username].access = "td";
+    if (users[username] != undefined) {
+      users[username].access = "td";
+      io.emit("grant_user_to_td", (users[username].access = "td"));
+    }
     console.log("data", users[username]);
     let update_user = await User.updateOne(
       {
@@ -2071,11 +2071,15 @@ io.on("connection", async (socket) => {
         },
       }
     );
-    socket.emit("test", update_user);
+    socket.emit("grant_user_to_td", update_user);
   });
+
   socket.on("refuse_user_to_td", async (admin, username = "plantA") => {
     let db_user = await User.findOne({ username });
-    users[username].access = "user";
+    if (users[username] != undefined) {
+      users[username].access = "user";
+      io.emit("refuse_user_to_td", (users[username].access = "user"));
+    }
     console.log("data", users[username]);
     let update_user = await User.updateOne(
       {
@@ -2087,11 +2091,15 @@ io.on("connection", async (socket) => {
         },
       }
     );
-    socket.emit("test", update_user);
+    socket.emit("refuse_user_to_td", update_user);
   });
+
   socket.on("ban_user", async (admin, username = "plantA") => {
     let db_user = await User.findOne({ username });
-    users[username].access = "ban";
+    if (users[username] != undefined) {
+      users[username].access = "ban";
+      io.emit("refuse_user_to_td", (users[username].access = "ban"));
+    }
     console.log("data", users[username]);
     let update_user = await User.updateOne(
       {
@@ -2103,11 +2111,14 @@ io.on("connection", async (socket) => {
         },
       }
     );
-    socket.emit("test", update_user);
+    socket.emit("ban_user", update_user);
   });
   socket.on("refuse_ban_user", async (admin, username = "plantA") => {
     let db_user = await User.findOne({ username });
-    users[username].access = "user";
+    if (users[username] != undefined) {
+      users[username].access = "user";
+      io.emit("refuse_ban_user", (users[username].access = "user"));
+    }
     console.log("data", users[username]);
     let update_user = await User.updateOne(
       {
@@ -2119,7 +2130,7 @@ io.on("connection", async (socket) => {
         },
       }
     );
-    socket.emit("test", update_user);
+    socket.emit("refuse_ban_user", update_user);
   });
   socket.on("get-time", () => {
     let currentTime = new Date();

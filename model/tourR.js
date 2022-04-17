@@ -19,6 +19,7 @@ const userSchema = new mongoose.Schema({
   score_type: { type: String, default: "MP" },
   barometer: { type: Boolean, default: true },
   boardScores: { type: Array },
+  count_update: { type: Number, default: 0 },
   createBy: { type: String },
 });
 
