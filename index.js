@@ -197,7 +197,7 @@ const matchmaking = (tour_name) => {
   let rounds = [];
 
   //Change to function create tournament round
-  for (var round = 0; round < tours[tour_name].board_per_round; round++) {
+  for (var round = 0; round < tours[tour_name].board_to_play; round++) {
     for (var table = 0; table < unique_team.length / 2; table++) {
       let temp_versus = _.sortBy(
         tours[tour_name].players.filter(
@@ -228,7 +228,7 @@ const matchmaking = (tour_name) => {
         directions: versus.map(({ id, direction }) => {
           return { id, direction };
         }),
-        cur_board: round * table + 1,
+        cur_board: round * tours[tour_name].board_per_round + 1,
         bidding: biddingObj(),
         playing: playingObj(),
         score: [],
@@ -1464,8 +1464,7 @@ io.on("connection", async (socket) => {
         // access_bidding.doubles = INIT.doubles;
         // access_bidding.firstDirectionSuites = INIT.firstDirectionSuites;
 
-        access_playing.initSuite = undefined;
-        access_playing.communityCards = [];
+        
         /// playing for 13 turn.
         if (
           access_playing.turn >= 1
@@ -1691,6 +1690,8 @@ io.on("connection", async (socket) => {
             card,
             nextDirection: leader,
             prevDirection: direction,
+            initSuite: access_playing.initSuite,
+            isFourthPlay: access_playing.communityCards.length === 4
           },
         });
 
@@ -1702,6 +1703,8 @@ io.on("connection", async (socket) => {
             turn: ++access_playing.turn,
           },
         });
+        access_playing.initSuite = undefined;
+        access_playing.communityCards = [];
         return;
       }
 
@@ -1712,6 +1715,8 @@ io.on("connection", async (socket) => {
           card,
           nextDirection,
           prevDirection: direction,
+          initSuite: access_playing.initSuite,
+          isFourthPlay: access_playing.communityCards.length === 4
         },
       });
     }
