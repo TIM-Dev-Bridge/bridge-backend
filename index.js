@@ -193,7 +193,7 @@ const matchmaking = (tour_name) => {
         directions: versus.map(({ id, direction }) => {
           return { id, direction };
         }),
-        cur_board: round * tours[tour_name].board_per_round + 1,
+        cur_board: round * table + 1,
         bidding,
         playing,
         score: [],
