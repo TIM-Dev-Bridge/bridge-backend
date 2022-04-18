@@ -229,8 +229,8 @@ const matchmaking = (tour_name) => {
           return { id, direction };
         }),
         cur_board: round * table + 1,
-        bidding,
-        playing,
+        bidding: biddingObj(),
+        playing: playingObj(),
         score: [],
         ///Should create room variable
         count_player: 0,
