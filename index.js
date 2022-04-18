@@ -1945,7 +1945,22 @@ io.on("connection", async (socket) => {
         // console.log("diff_time", diff_time);
         // console.log("now", now);
         //!------------------------------------------------------------------------
-        socket.emit("test", users, users["plantA"] != undefined);
+        let userInRoom = ["aaabbb", "ccscaaa", "wwweee", "qweqwe"];
+        let count = 0;
+        userInRoom.map((id) => {
+          tours["Mark1"].players.map((player) => {
+            console.log("player", player);
+            if (id == player.socket_id) {
+              count++;
+            }
+          });
+        });
+        console.log("pass");
+        console.log("pass", count);
+
+        if (count == 4) {
+          console.log("joinroom");
+        }
       } catch (error) {
         console.log("error", error);
       }
@@ -2171,6 +2186,9 @@ io.on("connection", async (socket) => {
   });
   socket.on("removeAllHistoryData", async (tour_id) => {
     await History.deleteMany({ tid: tour_id });
+  });
+  socket.on("getAllUserOnline", () => {
+    socket.emit("test", users);
   });
   socket.on("disconnect", () => {
     console.log("User was disconnect");

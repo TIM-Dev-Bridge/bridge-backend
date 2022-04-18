@@ -7,24 +7,28 @@ exports.generateFullGameData = () => {
         name: "plantA",
         status: "in-pair",
         pair_id: 1,
+        socket_id: "aaabbb",
       },
       {
         id: "",
         name: "peterpan",
         status: "in-pair",
         pair_id: 1,
+        socket_id: "cccaaa",
       },
       {
         id: "",
         name: "mutizaki",
         status: "in-pair",
         pair_id: 4,
+        socket_id: "wwweee",
       },
       {
         id: "",
         name: "seperite",
         status: "in-pair",
         pair_id: 3,
+        socket_id: "qweqwe",
       },
       {
         id: "",
