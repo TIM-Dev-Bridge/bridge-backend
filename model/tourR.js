@@ -14,7 +14,7 @@ const userSchema = new mongoose.Schema({
   status: { type: String, default: "Pending" },
   board_to_play: { type: Number, default: 0 },
   minute_board: { type: Number, default: 0 },
-  board_round: { type: Number, default: 0 },
+  board_per_round: { type: Number, default: 0 },
   movement: { type: String, default: "Clocked" },
   score_type: { type: String, default: "MP" },
   barometer: { type: Boolean, default: true },

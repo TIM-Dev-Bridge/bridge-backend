@@ -96,7 +96,7 @@ const bidding = {
   ],
 };
 
-const biddingObj =()=> {
+const biddingObj = () => {
   return {
     round: 0,
     declarer: 0,
@@ -112,8 +112,8 @@ const biddingObj =()=> {
       [0, 0, 0, 0, 0],
       [0, 0, 0, 0, 0],
     ],
-  }
-}
+  };
+};
 
 const playing = {
   turn: 0,
@@ -125,7 +125,7 @@ const playing = {
   playedCards: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}],
 };
 
-const playingObj =()=> {
+const playingObj = () => {
   return {
     turn: 0,
     doubles: [],
@@ -134,8 +134,8 @@ const playingObj =()=> {
     initSuite: undefined,
     tricks: [0, 0],
     playedCards: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}],
-  }
-}
+  };
+};
 
 const BOARD = board.createSettingBoard();
 
@@ -183,8 +183,27 @@ const ioToRoomOnBiddingPhase = ({
   });
 };
 
-const matchmaking = (tour_name) => {
-  let unique_team = _.range(1, tours[tour_name].players.length / 2 + 1).sort();
+const matchmaking = async (tour_name) => {
+  if ((tours[tour_name].players.length / 2) % 2 != 0) {
+    console.log("---------------------------------------------asdasd----");
+    await tours[tour_name].players.push({
+      id: "not_player",
+      name: "not_player",
+      status: "in-pair",
+      pair_id: 999,
+    });
+    await tours[tour_name].players.push({
+      id: "not_player",
+      name: "not_player",
+      status: "in-pair",
+      pair_id: 999,
+    });
+  }
+  console.log("player", tours[tour_name].players);
+  //let unique_team = _.range(1, tours[tour_name].players.length / 2 + 1).sort();
+  let unique_team = _.uniq(
+    tours[tour_name].players.map((player) => player.pair_id)
+  );
   let half = Math.ceil(unique_team.length / 2);
 
   console.log(`unique_team`, unique_team);
@@ -197,7 +216,9 @@ const matchmaking = (tour_name) => {
   let rounds = [];
 
   //Change to function create tournament round
-  for (var round = 0; round < tours[tour_name].board_per_round; round++) {
+  let play_round =
+    tours[tour_name].board_to_play / tours[tour_name].board_per_round;
+  for (var round = 0; round < play_round; round++) {
     for (var table = 0; table < unique_team.length / 2; table++) {
       let temp_versus = _.sortBy(
         tours[tour_name].players.filter(
@@ -228,7 +249,7 @@ const matchmaking = (tour_name) => {
         directions: versus.map(({ id, direction }) => {
           return { id, direction };
         }),
-        cur_board: round * table + 1,
+        cur_board: round * tours[tour_name].board_per_round + 1,
         bidding: biddingObj(),
         playing: playingObj(),
         score: [],
@@ -295,7 +316,7 @@ const sendCardOneHand = ({
   table_id,
   sendAll = false,
 }) => {
-  console.log("TABLE :", tour_name, round_num, table_id)
+  console.log("TABLE :", tour_name, round_num, table_id);
   let round_data = access_round(tour_name, round_num);
   let table_data = access_table(tour_name, round_num, table_id);
   if (sendAll === true)
@@ -747,11 +768,47 @@ io.on("connection", async (socket) => {
         //           });
         //         }
 
+        tours[tour_name].players.push({
+          id: "peterpan",
+          name: "peterpan",
+          status: "in-pair",
+          pair_id: 1,
+        });
+        tours[tour_name].players.push({
+          id: "wer",
+          name: "wer",
+          status: "in-pair",
+          pair_id: 4,
+        });
+        tours[tour_name].players.push({
+          id: "qwe",
+          name: "qwe",
+          status: "in-pair",
+          pair_id: 4,
+        });
+        tours[tour_name].players.push({
+          id: "pokemon",
+          name: "pokemon",
+          status: "in-pair",
+          pair_id: 3,
+        });
+        tours[tour_name].players.push({
+          id: "teseded",
+          name: "teseded",
+          status: "in-pair",
+          pair_id: 3,
+        });
         // tours[tour_name].players.push({
-        //   id: "",
-        //   name: "peterpan",
+        //   id: "uio",
+        //   name: "uio",
         //   status: "in-pair",
-        //   pair_id: 1,
+        //   pair_id: 5,
+        // });
+        // tours[tour_name].players.push({
+        //   id: "oiu",
+        //   name: "oiu",
+        //   status: "in-pair",
+        //   pair_id: 5,
         // });
         // tours[tour_name].players.push({
         //   id: "",
@@ -767,12 +824,6 @@ io.on("connection", async (socket) => {
         // });
         // tours[tour_name].players.push({
         //   id: "",
-        //   name: "pokemon",
-        //   status: "in-pair",
-        //   pair_id: 2,
-        // });
-        // tours[tour_name].players.push({
-        //   id: "",
         //   name: "carspian",
         //   status: "in-pair",
         //   pair_id: 3,
@@ -782,12 +833,6 @@ io.on("connection", async (socket) => {
         //   name: "qwerty",
         //   status: "in-pair",
         //   pair_id: 4,
-        // });
-        // tours[tour_name].players.push({
-        //   id: "",
-        //   name: "teseded",
-        //   status: "in-pair",
-        //   pair_id: 2,
         // });
 
         var pairPlayers = tours[tour_name].players.filter(
@@ -1083,7 +1128,26 @@ io.on("connection", async (socket) => {
   );
   //#start
   socket.on("start", async (tour_name) => {
-    let rounds = matchmaking(tour_name);
+    ///Sort player when player left the room
+    socket.emit("test", tours[tour_name].players);
+    tours[tour_name].players.sort((a, b) => {
+      return a.pair_id - b.pair_id;
+    });
+    socket.emit("test", tours[tour_name].players);
+    let pairIdArray = tours[tour_name].players.map((pair) => pair.pair_id);
+    socket.emit("test", pairIdArray);
+    let defaultPairId = [
+      ..._.range(1, tours[tour_name].players.length / 2 + 1),
+      ..._.range(1, tours[tour_name].players.length / 2 + 1),
+    ].sort();
+    socket.emit("test", defaultPairId);
+    tours[tour_name].players.map((pair, index) => {
+      pair.pair_id = defaultPairId[index];
+    });
+    socket.emit("test", tours[tour_name].players);
+    //let assignPairId =
+
+    let rounds = await matchmaking(tour_name);
     tours[tour_name][`rounds`] = rounds;
     io.in(tour_name).emit(
       "start-tour",
@@ -1097,7 +1161,7 @@ io.on("connection", async (socket) => {
             directions,
           })
         );
-        socket.emit("test", new_table.directions);
+        //socket.emit("test", new_table.directions);
         console.log("DATA", new_table);
         return { round_num, tables: new_table };
       })
@@ -1225,7 +1289,7 @@ io.on("connection", async (socket) => {
       const anotherTeam = nextDirection % 2;
       const isPass = suite === -1;
 
-      console.log("TABLE ID to get", table_id)
+      console.log("TABLE ID to get", table_id);
       let table_data = access_table(
         (tour_name = tour_name),
         (round_num = round_num),
@@ -1233,7 +1297,7 @@ io.on("connection", async (socket) => {
       );
       let access_bidding = table_data.bidding;
       let access_playing = table_data.playing;
-      console.log("TABLE ID to get", table_data, access_bidding)
+      console.log("TABLE ID to get", table_data, access_bidding);
 
       if (isPass) {
         ++access_bidding.passCount;
@@ -1464,7 +1528,6 @@ io.on("connection", async (socket) => {
         // access_bidding.doubles = INIT.doubles;
         // access_bidding.firstDirectionSuites = INIT.firstDirectionSuites;
 
-        
         /// playing for 13 turn.
         if (
           access_playing.turn >= 13
@@ -1654,13 +1717,13 @@ io.on("connection", async (socket) => {
               nextDirection: leader,
               prevDirection: direction,
               initSuite: access_playing.initSuite,
-              isFourthPlay: access_playing.communityCards.length === 4
+              isFourthPlay: access_playing.communityCards.length === 4,
             },
           });
 
           //Change board
           if (access_playing.turn >= 13) {
-          // if (++table_data.cur_board > tours[tour_name].board_per_round) {
+            // if (++table_data.cur_board > tours[tour_name].board_per_round) {
             /// clear all temp var here ...
             ioToRoomOnPlaying({
               room,
@@ -1668,7 +1731,6 @@ io.on("connection", async (socket) => {
               payload: {},
             });
           }
-
 
           ///Calculate score per rounds
           if (count_finish_table >= round_data.tables.length) {
@@ -1681,8 +1743,16 @@ io.on("connection", async (socket) => {
             ];
 
             ///Send finsh all table
-            console.log("FINISH ALL", count_finish_table, round_data.tables.length)
-            io.to(tour_name).emit("finish-all-table", finish_table, count_finish_table);
+            console.log(
+              "FINISH ALL",
+              count_finish_table,
+              round_data.tables.length
+            );
+            io.to(tour_name).emit(
+              "finish-all-table",
+              finish_table,
+              count_finish_table
+            );
             return;
           }
 
@@ -1707,7 +1777,7 @@ io.on("connection", async (socket) => {
             nextDirection: leader,
             prevDirection: direction,
             initSuite: access_playing.initSuite,
-            isFourthPlay: access_playing.communityCards.length === 4
+            isFourthPlay: access_playing.communityCards.length === 4,
           },
         });
 
@@ -1738,9 +1808,9 @@ io.on("connection", async (socket) => {
     }
   );
 
-  socket.on('leave-table', (table_id)=> {
-    socket.leave(table_id)
-  })
+  socket.on("leave-table", (table_id) => {
+    socket.leave(table_id);
+  });
 
   socket.on(
     "join-room-spec",
