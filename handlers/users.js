@@ -3,6 +3,7 @@ require("../config/database").connect();
 
 const express = require("express");
 const User = require("../model/user");
+const Block = require("../model/news")
 const TourR = require("../model/tourR");
 const News = require("../model/news");
 const bcrypt = require("bcryptjs");
@@ -336,7 +337,7 @@ exports.getAnnouncement = async (req, res) => {
     const news_data = await News.findOne({ _id: id });
     res.status(200).send(news_data);
   } catch (error) {
-    console.log(err);
+    console.log(error);
     res.status(409).send("This tour is not found");
   }
 };
@@ -351,7 +352,7 @@ exports.getAnnouncementsByOffset = async (req, res) => {
     console.log(news);
     res.status(200).send(news);
   } catch (error) {
-    console.log(err);
+    console.log(error);
     res.status(409).send("This tour is not found");
   }
 };
