@@ -722,7 +722,7 @@ io.on("connection", async (socket) => {
           id: player_name,
           name: player_name,
           status: "waiting",
-          pair_id: 1,
+          //pair_id: 0,
         });
         console.log("PUSH", tours[tour_name].players);
         // tours[tour_name].players.push(player_name)
@@ -768,36 +768,36 @@ io.on("connection", async (socket) => {
         //           });
         //         }
 
-        tours[tour_name].players.push({
-          id: "peterpan",
-          name: "peterpan",
-          status: "in-pair",
-          pair_id: 1,
-        });
-        tours[tour_name].players.push({
-          id: "wer",
-          name: "wer",
-          status: "in-pair",
-          pair_id: 4,
-        });
-        tours[tour_name].players.push({
-          id: "qwe",
-          name: "qwe",
-          status: "in-pair",
-          pair_id: 4,
-        });
-        tours[tour_name].players.push({
-          id: "pokemon",
-          name: "pokemon",
-          status: "in-pair",
-          pair_id: 3,
-        });
-        tours[tour_name].players.push({
-          id: "teseded",
-          name: "teseded",
-          status: "in-pair",
-          pair_id: 3,
-        });
+        // tours[tour_name].players.push({
+        //   id: "peterpan",
+        //   name: "peterpan",
+        //   status: "in-pair",
+        //   pair_id: 1,
+        // });
+        // tours[tour_name].players.push({
+        //   id: "wer",
+        //   name: "wer",
+        //   status: "in-pair",
+        //   pair_id: 4,
+        // });
+        // tours[tour_name].players.push({
+        //   id: "qwe",
+        //   name: "qwe",
+        //   status: "in-pair",
+        //   pair_id: 4,
+        // });
+        // tours[tour_name].players.push({
+        //   id: "pokemon",
+        //   name: "pokemon",
+        //   status: "in-pair",
+        //   pair_id: 3,
+        // });
+        // tours[tour_name].players.push({
+        //   id: "teseded",
+        //   name: "teseded",
+        //   status: "in-pair",
+        //   pair_id: 3,
+        // });
         // tours[tour_name].players.push({
         //   id: "uio",
         //   name: "uio",
@@ -1189,7 +1189,6 @@ io.on("connection", async (socket) => {
         return { round_num: round, boards: [] };
       }),
     });
-    //socket.join("room_1")
   });
 
   /*
