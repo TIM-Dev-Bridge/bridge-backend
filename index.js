@@ -96,6 +96,25 @@ const bidding = {
   ],
 };
 
+const biddingObj =()=> {
+  return {
+    round: 0,
+    declarer: 0,
+    passCount: 0,
+    isPassOut: true,
+    maxContract: -1,
+    prevBidDirection: 0,
+    doubles: [
+      [false, false],
+      [false, false],
+    ],
+    firstDirectionSuites: [
+      [0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0],
+    ],
+  }
+}
+
 const playing = {
   turn: 0,
   doubles: [],
@@ -105,6 +124,18 @@ const playing = {
   tricks: [0, 0],
   playedCards: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}],
 };
+
+const playingObj =()=> {
+  return {
+    turn: 0,
+    doubles: [],
+    bidSuite: 0,
+    communityCards: [],
+    initSuite: undefined,
+    tricks: [0, 0],
+    playedCards: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}],
+  }
+}
 
 const BOARD = board.createSettingBoard();
 
@@ -264,6 +295,7 @@ const sendCardOneHand = ({
   table_id,
   sendAll = false,
 }) => {
+  console.log("TABLE :", tour_name, round_num, table_id)
   let round_data = access_round(tour_name, round_num);
   let table_data = access_table(tour_name, round_num, table_id);
   if (sendAll === true)
@@ -715,48 +747,48 @@ io.on("connection", async (socket) => {
         //           });
         //         }
 
-        tours[tour_name].players.push({
-          id: "",
-          name: "peterpan",
-          status: "in-pair",
-          pair_id: 1,
-        });
-        tours[tour_name].players.push({
-          id: "",
-          name: "mutizaki",
-          status: "in-pair",
-          pair_id: 4,
-        });
-        tours[tour_name].players.push({
-          id: "",
-          name: "seperite",
-          status: "in-pair",
-          pair_id: 3,
-        });
-        tours[tour_name].players.push({
-          id: "",
-          name: "pokemon",
-          status: "in-pair",
-          pair_id: 2,
-        });
-        tours[tour_name].players.push({
-          id: "",
-          name: "carspian",
-          status: "in-pair",
-          pair_id: 3,
-        });
-        tours[tour_name].players.push({
-          id: "",
-          name: "qwerty",
-          status: "in-pair",
-          pair_id: 4,
-        });
-        tours[tour_name].players.push({
-          id: "",
-          name: "teseded",
-          status: "in-pair",
-          pair_id: 2,
-        });
+        // tours[tour_name].players.push({
+        //   id: "",
+        //   name: "peterpan",
+        //   status: "in-pair",
+        //   pair_id: 1,
+        // });
+        // tours[tour_name].players.push({
+        //   id: "",
+        //   name: "mutizaki",
+        //   status: "in-pair",
+        //   pair_id: 4,
+        // });
+        // tours[tour_name].players.push({
+        //   id: "",
+        //   name: "seperite",
+        //   status: "in-pair",
+        //   pair_id: 3,
+        // });
+        // tours[tour_name].players.push({
+        //   id: "",
+        //   name: "pokemon",
+        //   status: "in-pair",
+        //   pair_id: 2,
+        // });
+        // tours[tour_name].players.push({
+        //   id: "",
+        //   name: "carspian",
+        //   status: "in-pair",
+        //   pair_id: 3,
+        // });
+        // tours[tour_name].players.push({
+        //   id: "",
+        //   name: "qwerty",
+        //   status: "in-pair",
+        //   pair_id: 4,
+        // });
+        // tours[tour_name].players.push({
+        //   id: "",
+        //   name: "teseded",
+        //   status: "in-pair",
+        //   pair_id: 2,
+        // });
 
         var pairPlayers = tours[tour_name].players.filter(
           (player) => player.status == "in-pair"
@@ -1122,9 +1154,9 @@ io.on("connection", async (socket) => {
         (table_id = table_id)
       );
       ///Player get cards
-      //let socket_id = users[player_id].socket_id;
+      let socket_id = users[player_id].socket_id;
       ///fake id
-      let socket_id = "123";
+      // let socket_id = "123";
       sendCardOneHand({
         room,
         socket_id,
@@ -1193,6 +1225,7 @@ io.on("connection", async (socket) => {
       const anotherTeam = nextDirection % 2;
       const isPass = suite === -1;
 
+      console.log("TABLE ID to get", table_id)
       let table_data = access_table(
         (tour_name = tour_name),
         (round_num = round_num),
@@ -1200,6 +1233,7 @@ io.on("connection", async (socket) => {
       );
       let access_bidding = table_data.bidding;
       let access_playing = table_data.playing;
+      console.log("TABLE ID to get", table_data, access_bidding)
 
       if (isPass) {
         ++access_bidding.passCount;
@@ -1430,11 +1464,10 @@ io.on("connection", async (socket) => {
         // access_bidding.doubles = INIT.doubles;
         // access_bidding.firstDirectionSuites = INIT.firstDirectionSuites;
 
-        access_playing.initSuite = undefined;
-        access_playing.communityCards = [];
+        
         /// playing for 13 turn.
         if (
-          access_playing.turn >= 1
+          access_playing.turn >= 13
           //access_table.board_num >= tours[tour_name].board_per_round
         ) {
           ///Calculate score per tables
@@ -1593,7 +1626,7 @@ io.on("connection", async (socket) => {
                 rankingPercentage;
             });
           }
-          io.emit("test", tours[tour_name].boardScores);
+          io.to(room).emit("test", tours[tour_name].boardScores);
           io.emit("test", tours[tour_name].rankPairs);
 
           ///reset bidding
@@ -1613,6 +1646,30 @@ io.on("connection", async (socket) => {
           );
           let count_finish_table = finish_table.length;
 
+          ioToRoomOnPlaying({
+            room,
+            status: "default",
+            payload: {
+              card,
+              nextDirection: leader,
+              prevDirection: direction,
+              initSuite: access_playing.initSuite,
+              isFourthPlay: access_playing.communityCards.length === 4
+            },
+          });
+
+          //Change board
+          if (access_playing.turn >= 13) {
+          // if (++table_data.cur_board > tours[tour_name].board_per_round) {
+            /// clear all temp var here ...
+            ioToRoomOnPlaying({
+              room,
+              status: "ending",
+              payload: {},
+            });
+          }
+
+
           ///Calculate score per rounds
           if (count_finish_table >= round_data.tables.length) {
             ///Get score all ns & ew
@@ -1624,29 +1681,21 @@ io.on("connection", async (socket) => {
             ];
 
             ///Send finsh all table
-            socket.emit("finsh-all-table", finish_table, count_finish_table);
-          }
-          //Change board
-          if (++table_data.cur_board > tours[tour_name].board_per_round) {
-            /// clear all temp var here ...
-            ioToRoomOnPlaying({
-              room,
-              status: "ending",
-              payload: {},
-            });
+            console.log("FINISH ALL", count_finish_table, round_data.tables.length)
+            io.to(tour_name).emit("finish-all-table", finish_table, count_finish_table);
             return;
           }
 
-          ioToRoomOnBiddingPhase({
-            room,
-            // contract,
-            nextDirection,
-            tour_name,
-            round_num,
-            table_id,
-          });
+          // ioToRoomOnBiddingPhase({
+          //   room,
+          //   // contract,
+          //   nextDirection,
+          //   tour_name,
+          //   round_num,
+          //   table_id,
+          // });
 
-          access_playing.turn = 0;
+          // access_playing.turn = 0;
           return;
         }
 
@@ -1657,6 +1706,8 @@ io.on("connection", async (socket) => {
             card,
             nextDirection: leader,
             prevDirection: direction,
+            initSuite: access_playing.initSuite,
+            isFourthPlay: access_playing.communityCards.length === 4
           },
         });
 
@@ -1668,6 +1719,8 @@ io.on("connection", async (socket) => {
             turn: ++access_playing.turn,
           },
         });
+        access_playing.initSuite = undefined;
+        access_playing.communityCards = [];
         return;
       }
 
@@ -1678,10 +1731,16 @@ io.on("connection", async (socket) => {
           card,
           nextDirection,
           prevDirection: direction,
+          initSuite: access_playing.initSuite,
+          isFourthPlay: access_playing.communityCards.length === 4,
         },
       });
     }
   );
+
+  socket.on('leave-table', (table_id)=> {
+    socket.leave(table_id)
+  })
 
   socket.on(
     "join-room-spec",
