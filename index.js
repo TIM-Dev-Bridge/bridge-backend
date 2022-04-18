@@ -197,7 +197,7 @@ const matchmaking = (tour_name) => {
   let rounds = [];
 
   //Change to function create tournament round
-  for (var round = 0; round < tours[tour_name].board_to_play; round++) {
+  for (var round = 0; round < tours[tour_name].board_per_round; round++) {
     for (var table = 0; table < unique_team.length / 2; table++) {
       let temp_versus = _.sortBy(
         tours[tour_name].players.filter(
@@ -229,8 +229,8 @@ const matchmaking = (tour_name) => {
           return { id, direction };
         }),
         cur_board: round * tours[tour_name].board_per_round + 1,
-        bidding: biddingObj(),
-        playing: playingObj(),
+        bidding,
+        playing,
         score: [],
         ///Should create room variable
         count_player: 0,
@@ -1467,7 +1467,7 @@ io.on("connection", async (socket) => {
         
         /// playing for 13 turn.
         if (
-          access_playing.turn >= 1
+          access_playing.turn >= 13
           //access_table.board_num >= tours[tour_name].board_per_round
         ) {
           ///Calculate score per tables
@@ -1626,7 +1626,7 @@ io.on("connection", async (socket) => {
                 rankingPercentage;
             });
           }
-          io.emit("test", tours[tour_name].boardScores);
+          io.to(room).emit("test", tours[tour_name].boardScores);
           io.emit("test", tours[tour_name].rankPairs);
 
           ///reset bidding
@@ -1646,6 +1646,30 @@ io.on("connection", async (socket) => {
           );
           let count_finish_table = finish_table.length;
 
+          ioToRoomOnPlaying({
+            room,
+            status: "default",
+            payload: {
+              card,
+              nextDirection: leader,
+              prevDirection: direction,
+              initSuite: access_playing.initSuite,
+              isFourthPlay: access_playing.communityCards.length === 4
+            },
+          });
+
+          //Change board
+          if (access_playing.turn >= 13) {
+          // if (++table_data.cur_board > tours[tour_name].board_per_round) {
+            /// clear all temp var here ...
+            ioToRoomOnPlaying({
+              room,
+              status: "ending",
+              payload: {},
+            });
+          }
+
+
           ///Calculate score per rounds
           if (count_finish_table >= round_data.tables.length) {
             ///Get score all ns & ew
@@ -1657,29 +1681,21 @@ io.on("connection", async (socket) => {
             ];
 
             ///Send finsh all table
-            socket.emit("finsh-all-table", finish_table, count_finish_table);
-          }
-          //Change board
-          if (++table_data.cur_board > tours[tour_name].board_per_round) {
-            /// clear all temp var here ...
-            ioToRoomOnPlaying({
-              room,
-              status: "ending",
-              payload: {},
-            });
+            console.log("FINISH ALL", count_finish_table, round_data.tables.length)
+            io.to(tour_name).emit("finish-all-table", finish_table, count_finish_table);
             return;
           }
 
-          ioToRoomOnBiddingPhase({
-            room,
-            // contract,
-            nextDirection,
-            tour_name,
-            round_num,
-            table_id,
-          });
+          // ioToRoomOnBiddingPhase({
+          //   room,
+          //   // contract,
+          //   nextDirection,
+          //   tour_name,
+          //   round_num,
+          //   table_id,
+          // });
 
-          access_playing.turn = 0;
+          // access_playing.turn = 0;
           return;
         }
 
@@ -1716,7 +1732,7 @@ io.on("connection", async (socket) => {
           nextDirection,
           prevDirection: direction,
           initSuite: access_playing.initSuite,
-          isFourthPlay: access_playing.communityCards.length === 4
+          isFourthPlay: access_playing.communityCards.length === 4,
         },
       });
     }

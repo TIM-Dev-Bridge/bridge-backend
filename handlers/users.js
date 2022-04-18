@@ -3,7 +3,7 @@ require("../config/database").connect();
 
 const express = require("express");
 const User = require("../model/user");
-const Block = require("../model/board")
+const Block = require("../model/news")
 const TourR = require("../model/tourR");
 const News = require("../model/news");
 const bcrypt = require("bcryptjs");
