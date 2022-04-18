@@ -33,7 +33,8 @@ const bcrypt = require("bcryptjs");
 //----------------------------Database----------------------------//
 const TourR = require("./model/tourR");
 const User = require("./model/user");
-const Board = require("./model/board");
+const News = require("./model/news");
+const History = require("./model/history");
 const { log } = require("console");
 
 const _ = require("lodash");
@@ -41,11 +42,14 @@ let card_handle = require("./handlers/card");
 let score = require("./handlers/score");
 let board = require("./handlers/board");
 let bypass = require("./handlers/bypass");
+let game = require("./handlers/game");
+let handler_room = require("./handlers/room");
 const { access } = require("fs");
 const { random } = require("lodash");
 
 let users = {};
 let tours = {};
+let rooms = [];
 
 const DIRECTION = {
   N: 0,
@@ -92,6 +96,25 @@ const bidding = {
   ],
 };
 
+const biddingObj =()=> {
+  return {
+    round: 0,
+    declarer: 0,
+    passCount: 0,
+    isPassOut: true,
+    maxContract: -1,
+    prevBidDirection: 0,
+    doubles: [
+      [false, false],
+      [false, false],
+    ],
+    firstDirectionSuites: [
+      [0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0],
+    ],
+  }
+}
+
 const playing = {
   turn: 0,
   doubles: [],
@@ -101,6 +124,18 @@ const playing = {
   tricks: [0, 0],
   playedCards: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}],
 };
+
+const playingObj =()=> {
+  return {
+    turn: 0,
+    doubles: [],
+    bidSuite: 0,
+    communityCards: [],
+    initSuite: undefined,
+    tricks: [0, 0],
+    playedCards: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}],
+  }
+}
 
 const BOARD = board.createSettingBoard();
 
@@ -213,6 +248,16 @@ const matchmaking = (tour_name) => {
     let temp_second = second_pair.shift();
     second_pair.push(temp_second);
   }
+  ///Create boardScores
+  let count_board = _.range(1, round * tours[tour_name].board_per_round + 1);
+  tours[tour_name].boardScores = count_board.map((count) => ({
+    board_num: count,
+    count_done: 0,
+    pairs_score: [],
+  }));
+  tours[tour_name].rankPairs = unique_team.map((pair) => ({
+    pair_id: pair,
+  }));
   return rounds;
 };
 
@@ -233,7 +278,7 @@ const access_table = (tour_name, round_num, table_id) => {
       "round_num",
       parseInt(round_num),
     ]);
-    console.log('round', round)
+    console.log("round", round);
     let table = _.find(round.tables, ["table_id", table_id]);
     return table;
   } catch (error) {
@@ -250,6 +295,7 @@ const sendCardOneHand = ({
   table_id,
   sendAll = false,
 }) => {
+  console.log("TABLE :", tour_name, round_num, table_id)
   let round_data = access_round(tour_name, round_num);
   let table_data = access_table(tour_name, round_num, table_id);
   if (sendAll === true)
@@ -281,6 +327,23 @@ const specWhilePlaying = ({ socket_id, tour_name, room = "room_1" }) => {
   });
 };
 
+const withTimeout = (onSuccess, onTimeout, timeout) => {
+  let called = false;
+
+  const timer = setTimeout(() => {
+    if (called) return;
+    called = true;
+    onTimeout();
+  }, timeout);
+
+  return (...args) => {
+    if (called) return;
+    called = true;
+    clearTimeout(timer);
+    onSuccess.apply(this, args);
+  };
+};
+
 // // Authentication user
 // io.use(function (socket, next) {
 //   if (socket.handshake.query && socket.handshake.query.token) {
@@ -303,13 +366,18 @@ const specWhilePlaying = ({ socket_id, tour_name, room = "room_1" }) => {
 //   }
 // });
 
-io.on("connection", (socket) => {
+io.on("connection", async (socket) => {
   console.log("can connected");
 
   if (users[socket.handshake.query.username] == undefined) {
+    // let user_db = await User.findOne({
+    //   username: socket.handshake.query.username,
+    // });
     const user = {
       socket_id: socket.id,
       username: socket.handshake.query.username,
+      access: "user",
+      //access: user_db.access,
       tour: undefined,
       session: undefined,
     };
@@ -406,6 +474,7 @@ io.on("connection", (socket) => {
   socket.on("create-tour", async (tour_data, callback) => {
     console.log("NEW TOUR ", tours[tour_data.tour_name]);
     try {
+      console.log("tour_data", tour_data);
       //fist time not have
       // const sameTour = await TourR.findOne({ tour_name: tour_data.tour_name });
       // if (sameTour) {
@@ -423,6 +492,24 @@ io.on("connection", (socket) => {
 
       tours[tour_data.tour_name] = tour_data;
       console.log(tours[tour_data.tour_name]);
+
+      ///Set time to force user
+      // let startTime = "2022-04-16T17:56:00.000Z";
+      // let milStartTime = new Date(startTime).getTime();
+      // let curTime = new Date();
+      // let milCurTme = curTime.getTime();
+      // let diff_time = milStartTime - milCurTme;
+
+      // tours[tour_data.tour_name].count_update++;
+      // let count = tours[tour_data.tour_name].count_update;
+      // socket.timeout(5000).emit("test", () => {
+      //   socket.emit("test", "Prepare for join start tour");
+      //   if (tours[tour_data.tour_name].count_update == count) {
+      //     io.emit("test", "Use this time");
+      //   }
+      // });
+      // console.log("update", tours[tour_data.tour_name].count_update);
+      // console.log("update", count);
 
       const tourList = [];
       for (const tour_name in tours) {
@@ -479,17 +566,17 @@ io.on("connection", (socket) => {
   socket.on("update-tour", async (tour_data) => {
     try {
       //fist time not have
-      const haveTour = await TourR.findOne({ tour_name: tour_data.tour_name });
-      if (!haveTour) {
-        //callback(false, "This tour already create");
-        console.log("failed");
-        return socket.emit(
-          "update-tour",
-          "This tour name not have in our tournament"
-        );
-      }
+      // const haveTour = await TourR.findOne({ tour_name: tour_data.tour_name });
+      // if (!haveTour) {
+      //   //callback(false, "This tour already create");
+      //   console.log("failed");
+      //   return socket.emit(
+      //     "update-tour",
+      //     "This tour name not have in our tournament"
+      //   );
+      // }
       //Encrypt password tour
-      let encryptedPassword = await bcrypt.hash(tour_data.password, 10);
+      //let encryptedPassword = await bcrypt.hash(tour_data.password, 10);
       //Update tournament on database
       const tournament = await TourR.updateOne(
         { tour_name: tour_data.tour_name },
@@ -498,7 +585,7 @@ io.on("connection", (socket) => {
             tour_name: tour_data.tour_name,
             max_player: tour_data.max_player,
             type: tour_data.type,
-            password: encryptedPassword,
+            password: tour_data.password,
             players: tour_data.players,
             time_start: tour_data.time_start,
             status: tour_data.status,
@@ -512,7 +599,14 @@ io.on("connection", (socket) => {
           },
         }
       );
-
+      tours[tour_data.tour_name].count_update++;
+      let count = tours[tour_data.tour_name].count_update;
+      socket.timeout(5000).emit("test", () => {
+        socket.emit("test", "Prepare for join start tour");
+        if (tours[tour_data.tour_name].count_update == count) {
+          io.emit("test", "Use this time");
+        }
+      });
       console.log("updated success");
       //callback(true, "Room created");
     } catch (error) {
@@ -607,7 +701,7 @@ io.on("connection", (socket) => {
           id: player_name,
           name: player_name,
           status: "waiting",
-          pair_id: undefined,
+          pair_id: 1,
         });
         console.log("PUSH", tours[tour_name].players);
         // tours[tour_name].players.push(player_name)
@@ -653,53 +747,55 @@ io.on("connection", (socket) => {
         //           });
         //         }
 
-        tours[tour_name].players.push({
-          id: "",
-          name: "peterpan",
-          status: "in-pair",
-          pair_id: 1,
-        });
-        tours[tour_name].players.push({
-          id: "",
-          name: "mutizaki",
-          status: "in-pair",
-          pair_id: 4,
-        });
-        tours[tour_name].players.push({
-          id: "",
-          name: "seperite",
-          status: "in-pair",
-          pair_id: 3,
-        });
-        tours[tour_name].players.push({
-          id: "",
-          name: "pokemon",
-          status: "in-pair",
-          pair_id: 2,
-        });
-        tours[tour_name].players.push({
-          id: "",
-          name: "carspian",
-          status: "in-pair",
-          pair_id: 3,
-        });
-        tours[tour_name].players.push({
-          id: "",
-          name: "qwerty",
-          status: "in-pair",
-          pair_id: 4,
-        });
-        tours[tour_name].players.push({
-          id: "",
-          name: "teseded",
-          status: "in-pair",
-          pair_id: 2,
-        });
+        // tours[tour_name].players.push({
+        //   id: "",
+        //   name: "peterpan",
+        //   status: "in-pair",
+        //   pair_id: 1,
+        // });
+        // tours[tour_name].players.push({
+        //   id: "",
+        //   name: "mutizaki",
+        //   status: "in-pair",
+        //   pair_id: 4,
+        // });
+        // tours[tour_name].players.push({
+        //   id: "",
+        //   name: "seperite",
+        //   status: "in-pair",
+        //   pair_id: 3,
+        // });
+        // tours[tour_name].players.push({
+        //   id: "",
+        //   name: "pokemon",
+        //   status: "in-pair",
+        //   pair_id: 2,
+        // });
+        // tours[tour_name].players.push({
+        //   id: "",
+        //   name: "carspian",
+        //   status: "in-pair",
+        //   pair_id: 3,
+        // });
+        // tours[tour_name].players.push({
+        //   id: "",
+        //   name: "qwerty",
+        //   status: "in-pair",
+        //   pair_id: 4,
+        // });
+        // tours[tour_name].players.push({
+        //   id: "",
+        //   name: "teseded",
+        //   status: "in-pair",
+        //   pair_id: 2,
+        // });
 
         var pairPlayers = tours[tour_name].players.filter(
           (player) => player.status == "in-pair"
         );
-
+        let timeStart = TourR.find({ tour_name: tour_name }).time_start;
+        let timeJoin = new Date().getTime();
+        //io.timeout(timeJoin - timeStart).emit("test", "Good luck");
         io.in(tour_name).emit("update-player-pair", pairPlayers);
         io.in(tour_name).emit("");
         io.in(tour_name).emit("update-player-waiting", waitingPlayer);
@@ -986,7 +1082,7 @@ io.on("connection", (socket) => {
     }
   );
   //#start
-  socket.on("start", (tour_name) => {
+  socket.on("start", async (tour_name) => {
     let rounds = matchmaking(tour_name);
     tours[tour_name][`rounds`] = rounds;
     io.in(tour_name).emit(
@@ -1001,6 +1097,7 @@ io.on("connection", (socket) => {
             directions,
           })
         );
+        socket.emit("test", new_table.directions);
         console.log("DATA", new_table);
         return { round_num, tables: new_table };
       })
@@ -1020,6 +1117,15 @@ io.on("connection", (socket) => {
       //   return { round: _.omit(round, ["card","tables"]), tables: newTable };
       // }),
     );
+    ///Save in database history
+    let round_num = _.range(1, tours[tour_name].board_round + 1);
+    await History.create({
+      tid: tour_name,
+      rounds: round_num.map((round) => {
+        return { round_num: round, boards: [] };
+      }),
+    });
+    //socket.join("room_1")
   });
 
   /*
@@ -1037,7 +1143,7 @@ io.on("connection", (socket) => {
       table_id,
     }) => {
       socket.join(room);
-      let clients = io.sockets.adapter.rooms.get(room);
+      //users[player_name].game_status = "player";
       console.log("direction", direction);
       /// return current players.
       // io.to(room).emit("waiting_for_start", tours[tour_name].players);
@@ -1048,9 +1154,9 @@ io.on("connection", (socket) => {
         (table_id = table_id)
       );
       ///Player get cards
-      //let socket_id = users[player_id].socket_id;
+      let socket_id = users[player_id].socket_id;
       ///fake id
-      let socket_id = "123";
+      // let socket_id = "123";
       sendCardOneHand({
         room,
         socket_id,
@@ -1059,12 +1165,34 @@ io.on("connection", (socket) => {
         round_num,
         table_id,
       });
+      // ///Real check
+      // let [...idInRoom] = io.sockets.adapter.rooms.get(table_id);
+      // let userScreen = Object.keys(users).map((key) => {
+      //   return users[key];
+      // });
+      // let playerInRoom = handler_room.accessInRoom(idInRoom, userScreen);
+      // /// if fully player, change to 'bidding phase'.
+      // if (playerInRoom.length === 4 && table_data.status == "waiting") {
+      //   table_data.status = "playing";
 
+      //   ioToRoomOnBiddingPhase({ room, tour_name, round_num, table_id });
+      //   ///!send table status
+      //   io.to(tours[tour_name]).emit("update-room-status", table_data.status);
+      //   console.log("can go bidding phase");
+      // }
+      // // else if (table_data.status == "playing" && player_id in spec) {
+      // // }
+      ///Fake check
+      let [...idInRoom] = io.sockets.adapter.rooms.get(room);
+      console.log("idInRoom", idInRoom);
+      //let playerInRoom = handler_room.accessInRoom(idInRoom, userScreen);
       /// if fully player, change to 'bidding phase'.
-      if (clients.size === 4 && table_data.status == "waiting") {
+      if (idInRoom.length === 4 && table_data.status == "waiting") {
         table_data.status = "playing";
 
         ioToRoomOnBiddingPhase({ room, tour_name, round_num, table_id });
+        ///!send table status
+        io.to(tours[tour_name]).emit("update-room-status", table_data.status);
         console.log("can go bidding phase");
       }
       // else if (table_data.status == "playing" && player_id in spec) {
@@ -1077,7 +1205,7 @@ io.on("connection", (socket) => {
    */
   socket.on(
     "bid",
-    ({
+    async ({
       player_id,
       room,
       contract,
@@ -1097,6 +1225,7 @@ io.on("connection", (socket) => {
       const anotherTeam = nextDirection % 2;
       const isPass = suite === -1;
 
+      console.log("TABLE ID to get", table_id)
       let table_data = access_table(
         (tour_name = tour_name),
         (round_num = round_num),
@@ -1104,6 +1233,7 @@ io.on("connection", (socket) => {
       );
       let access_bidding = table_data.bidding;
       let access_playing = table_data.playing;
+      console.log("TABLE ID to get", table_data, access_bidding)
 
       if (isPass) {
         ++access_bidding.passCount;
@@ -1232,7 +1362,7 @@ io.on("connection", (socket) => {
 
   socket.on(
     "play_card",
-    ({
+    async ({
       player_id,
       room = "room_1",
       card,
@@ -1334,11 +1464,10 @@ io.on("connection", (socket) => {
         // access_bidding.doubles = INIT.doubles;
         // access_bidding.firstDirectionSuites = INIT.firstDirectionSuites;
 
-        access_playing.initSuite = undefined;
-        access_playing.communityCards = [];
+        
         /// playing for 13 turn.
         if (
-          access_playing.turn >= 2
+          access_playing.turn >= 13
           //access_table.board_num >= tours[tour_name].board_per_round
         ) {
           ///Calculate score per tables
@@ -1351,10 +1480,156 @@ io.on("connection", (socket) => {
               access_playing.tricks
             )
           );
-
           console.log("score", table_data.score);
+          ///Save score to boardScores
+          let boardIndex = score.findIndexScoreBoard(
+            tours[tour_name].boardScores,
+            table_data.cur_board
+          );
+          ///Save score NS
+          tours[tour_name].boardScores[boardIndex].pairs_score.push({
+            pair_id: table_data.versus.split(",")[0],
+            score: table_data.score[0],
+            direction: 0,
+          });
+          ///Save score EW
+          tours[tour_name].boardScores[boardIndex].pairs_score.push({
+            pair_id: table_data.versus.split(",")[1],
+            score: table_data.score[1],
+            direction: 1,
+          });
+          ///Save history of board
+          await History.updateOne(
+            {
+              tid: tour_name,
+              rounds: {
+                $elemMatch: {
+                  round_num: parseInt(
+                    table_data.table_id.substring(1).split("b")[0]
+                  ),
+                },
+              },
+            },
+            {
+              $push: {
+                "rounds.$.boards": table_data,
+              },
+            }
+          );
+          // await History.find({ tid: tour_name }).map((round) => {
+          //   round.boards.map((board) => {
+          //     board.cur_board == table_data.cur_board;
+          //   });
+          // });
+          tours[tour_name].boardScores[table_data.cur_board - 1].count_done++;
+          socket.emit("test", tours[tour_name].boardScores);
+          console.log(
+            "test-------------------------------",
+            tours[tour_name].boardScores
+          );
+          ///!Save MP variable
+          if (
+            tours[tour_name].boardScores[table_data.cur_board - 1].count_done ==
+            tours[tour_name].board_per_round
+          ) {
+            let allBoardIndex = _.range(
+              0,
+              tours[tour_name].board_per_round * tours[tour_name].board_round
+            );
+            allBoardIndex.map((boardIndex) => {
+              //Save board score NS
+              let selectIndexNS = [];
+              ///Select pair from all ns
+              let selectNS = tours[tour_name].boardScores[
+                boardIndex
+              ].pairs_score.filter((pair) => pair.direction == 0);
+              ///Convert to score array
+              let getScoreNS = selectNS.map((score) => score.score);
+              console.log("getScoreNS", getScoreNS);
+              let [mpNS, percentNS] = score.calBoardMps(getScoreNS);
+              ///Select index
+              tours[tour_name].boardScores[boardIndex].pairs_score.map(
+                (pair, index) => {
+                  if (pair.direction == 0) {
+                    selectIndexNS.push(index);
+                  }
+                }
+              );
+              ///Fill mp,percent to boardScore
+              selectIndexNS.map((pair_index, index) => {
+                tours[tour_name].boardScores[boardIndex].pairs_score[
+                  pair_index
+                ]["imp"] = mpNS[index];
+                tours[tour_name].boardScores[boardIndex].pairs_score[
+                  pair_index
+                ]["percent"] = percentNS[index];
+              });
 
-          //reset bidding
+              //Save board score EW
+              let selectIndexEW = [];
+              ///Select pair from all ns
+              let selectEW = tours[tour_name].boardScores[
+                boardIndex
+              ].pairs_score.filter((pair) => pair.direction == 1);
+              ///Convert to score array
+              let getScoreEW = selectEW.map((score) => score.score);
+              console.log("getScoreEW", getScoreEW);
+              let [mpEW, percentEW] = score.calBoardMps(getScoreEW);
+              ///Select index
+              tours[tour_name].boardScores[boardIndex].pairs_score.map(
+                (pair, index) => {
+                  if (pair.direction == 1) {
+                    selectIndexEW.push(index);
+                  }
+                }
+              );
+              ///Fill mp,percent to boardScore
+              selectIndexEW.map((pair_index, index) => {
+                tours[tour_name].boardScores[boardIndex].pairs_score[
+                  pair_index
+                ]["imp"] = mpEW[index];
+                tours[tour_name].boardScores[boardIndex].pairs_score[
+                  pair_index
+                ]["percent"] = percentEW[index];
+              });
+
+              socket.to(room).emit("score", tours[tour_name].boardScores);
+              socket
+                .to("start-room")
+                .emit("score", tours[tour_name].boardScores);
+            });
+            console.log("rankPair", tours[tour_name].rankPairs);
+            //?Rank
+            tours[tour_name].rankPairs.map(({ pair_id }) => {
+              let rankIndex = score.findIndexRankPairId(
+                tours[tour_name].rankPairs,
+                pair_id
+              );
+              let selfIMP = game.getSelfIMPArray(
+                pair_id,
+                tours[tour_name].boardScores
+              );
+              let selfPercent = game.getSelfIPercentArray(
+                pair_id,
+                tours[tour_name].boardScores
+              );
+              console.log("selfIMP", selfIMP);
+              console.log("selfPercent", selfPercent);
+              let [totalMps, rankingPercentage] = score.calRankingScore(
+                selfIMP,
+                selfPercent
+              );
+              console.log("totalMps", totalMps);
+              console.log("rankingPercentage", rankingPercentage);
+              tours[tour_name].rankPairs[rankIndex]["totalMP"] = totalMps;
+              tours[tour_name].rankPairs[rankIndex]["rankPercent"] =
+                rankingPercentage;
+            });
+          }
+          io.to(room).emit("test", tours[tour_name].boardScores);
+          io.emit("test", tours[tour_name].rankPairs);
+
+          ///reset bidding
           access_bidding.declarer = 0;
           access_bidding.passCount = 0;
           access_bidding.isPassOut = true;
@@ -1371,43 +1646,56 @@ io.on("connection", (socket) => {
           );
           let count_finish_table = finish_table.length;
 
-          ///Send finsh all table
-          if (count_finish_table == round_data.tables.length) {
-            socket.emit("finsh-all-table", finish_table, count_finish_table);
-          }
+          ioToRoomOnPlaying({
+            room,
+            status: "default",
+            payload: {
+              card,
+              nextDirection: leader,
+              prevDirection: direction,
+              initSuite: access_playing.initSuite,
+              isFourthPlay: access_playing.communityCards.length === 4
+            },
+          });
 
-          ///Calculate score per rounds
-          if (count_finish_table >= round_data.tables.length) {
-            ///Get score all ns & ew
-            let score_all = round_data.tables.map(({ score }) => ({ score }));
-            let score_all_ns = round_data.tables.map(({ score }) => score[0]);
-            let score_all_ew = round_data.tables.map(({ score }) => score[1]);
-            table_data.mp_rounds = [
-              score.calBoardMps(score_all_ns),
-              score.calBoardMps(score_all_ew),
-            ];
-          }
-          //Chage board
-          if (++table_data.cur_board > tours[tour_name].board_per_round) {
+          //Change board
+          if (access_playing.turn >= 13) {
+          // if (++table_data.cur_board > tours[tour_name].board_per_round) {
             /// clear all temp var here ...
             ioToRoomOnPlaying({
               room,
               status: "ending",
               payload: {},
             });
+          }
+
+
+          ///Calculate score per rounds
+          if (count_finish_table >= round_data.tables.length) {
+            ///Get score all ns & ew
+            let score_all_ns = round_data.tables.map(({ score }) => score[0]);
+            let score_all_ew = round_data.tables.map(({ score }) => score[1]);
+            table_data.mp_rounds = [
+              score.calBoardMps(score_all_ns),
+              score.calBoardMps(score_all_ew),
+            ];
+
+            ///Send finsh all table
+            console.log("FINISH ALL", count_finish_table, round_data.tables.length)
+            io.to(tour_name).emit("finish-all-table", finish_table, count_finish_table);
             return;
           }
 
-          ioToRoomOnBiddingPhase({
-            room,
-            // contract,
-            nextDirection,
-            tour_name,
-            round_num,
-            table_id,
-          });
+          // ioToRoomOnBiddingPhase({
+          //   room,
+          //   // contract,
+          //   nextDirection,
+          //   tour_name,
+          //   round_num,
+          //   table_id,
+          // });
 
-          access_playing.turn = 0;
+          // access_playing.turn = 0;
           return;
         }
 
@@ -1418,6 +1706,8 @@ io.on("connection", (socket) => {
             card,
             nextDirection: leader,
             prevDirection: direction,
+            initSuite: access_playing.initSuite,
+            isFourthPlay: access_playing.communityCards.length === 4
           },
         });
 
@@ -1429,6 +1719,8 @@ io.on("connection", (socket) => {
             turn: ++access_playing.turn,
           },
         });
+        access_playing.initSuite = undefined;
+        access_playing.communityCards = [];
         return;
       }
 
@@ -1439,13 +1731,19 @@ io.on("connection", (socket) => {
           card,
           nextDirection,
           prevDirection: direction,
+          initSuite: access_playing.initSuite,
+          isFourthPlay: access_playing.communityCards.length === 4,
         },
       });
     }
   );
 
+  socket.on('leave-table', (table_id)=> {
+    socket.leave(table_id)
+  })
+
   socket.on(
-    "spec-join-room",
+    "join-room-spec",
     ({
       spec_id,
       spec_name,
@@ -1455,7 +1753,8 @@ io.on("connection", (socket) => {
       table_id,
     }) => {
       socket.join(room);
-      let clients = io.sockets.adapter.rooms.get(room);
+      users[spec_name].game_status = "spec";
+
       let round_data = access_round((tour_name = "Mark1"), (round_num = "1"));
       let table_data = access_table(
         (tour_name = "Mark1"),
@@ -1464,7 +1763,7 @@ io.on("connection", (socket) => {
       );
 
       if (table_data.status == "playing") {
-        socket.emit("spec-join-room", round_data);
+        socket.emit("join-spec", table_data);
       }
     }
   );
@@ -1490,14 +1789,24 @@ io.on("connection", (socket) => {
   ///Test
   socket.on(
     "test",
-    (tour_id = "Mark1", round_num = 1, table_id = "r1b1", cur_board = 0) => {
+    async (
+      tour_id = "Mark1",
+      round_num = 1,
+      table_id = "r1b1",
+      cur_board = 0,
+      player_id = "peterpan"
+    ) => {
       try {
+        // let round_data = access_round(tour_id, round_num);
+        //let tester = test.split("[a-z]");
+        //let table_data = access_table(tour_id, round_num, table_id);
+
         // ///Get all card in round
         // let round_data = access_round(tour_id, round_num);
         // let get_all_cards = round_data.cards[cur_board];
+        // let table_data = access_table(tour_id, round_num, table_id);
 
         // ///Get played card and convert to array
-        // let table_data = access_table(tour_id, round_num, table_id);
         // let played_card_object = table_data.playing.playedCards;
         // let played_card_array = [[], [], [], []];
         // played_card_object.map((turn) => {
@@ -1519,19 +1828,201 @@ io.on("connection", (socket) => {
         // });
 
         // socket.emit("test", get_all_cards, played_card_array, left_card_array);
+        //!------------------------------------------------------------------------
+        // let round_data = access_round(tour_id, round_num);
+        // let score_all_ns = round_data.tables.map(({ score }) => score[0]);
+        // let score_all_ew = round_data.tables.map(({ score }) => score[1]);
+        // let mp_rounds = [
+        //   score.calBoardMps(score_all_ns),
+        //   score.calBoardMps(score_all_ew),
+        // ];
+        // let scores = [40, 30, 30, 30, 23, 23, 10];
+        // console.log("score_all_ns : ", score_all_ns);
+        // let [mps, percentage] = score.calBoardMps(scores);
+        // socket.emit("test", mps, percentage);
+        // socket.emit("test", mp_rounds);
+        //!------------------------------------------------------------------------
+        // let round_data = access_round(tour_id, round_num);
+        // let score_all_ns = round_data.tables.map(({ score }) => score[0]);
+        // let [mp_ns, percentage_ns] = score.calBoardMps(score_all_ns);
+        // let pairs_ns = round_data.tables.map(
+        //   ({ versus }) => versus.split(",")[0]
+        // );
 
-        let round_data = access_round(tour_id, round_num);
-        let score_all_ns = round_data.tables.map(({ score }) => score[0]);
-        let score_all_ew = round_data.tables.map(({ score }) => score[1]);
-        let mp_rounds = [
-          score.calBoardMps(score_all_ns),
-          score.calBoardMps(score_all_ew),
-        ];
-        let scores = [40, 30, 30, 30, 23, 23, 10];
-        console.log("score_all_ns : ", score_all_ns);
-        let [mps, percentage] = score.calBoardMps(scores);
-        socket.emit("test", mps);
-        socket.emit("test", mp_rounds);
+        // let teams_ns = pairs_ns.map((pair, index) => {
+        //   return { pair: pair, mp: mp_ns[index] };
+        // });
+
+        // let score_all_ew = round_data.tables.map(({ score }) => score[1]);
+        // let [mp_ew, percentage_ew] = score.calBoardMps(score_all_ew);
+        // let pairs_ew = round_data.tables.map(
+        //   ({ versus }) => versus.split(",")[1]
+        // );
+
+        // let teams_ew = pairs_ew.map((pair, index) => {
+        //   return { pair: pair, mp: mp_ew[index] };
+        // });
+
+        // let teamScores = [...teams_ns, ...teams_ew];
+
+        // console.log("score_all", pairs_ns);
+        // console.log("mp_ns", mp_ns);
+        // console.log("teamScores", teamScores);
+        //!------------------------------------------------------------------------
+        // let boardIndex = score.findIndexScoreBoard(
+        //   tours[tour_id].boardScores,
+        //   table_data.cur_board
+        // );
+        // ///get board id #6
+        // let arrBoardIndex = [0, 1, 2, 3, 4, 5];
+
+        // arrBoardIndex.map((boardIndex) => {
+        //   //?NS
+        //   let selectIndexNS = [];
+        //   ///Select pair from all ns
+        //   let selectNS = tours[tour_id].boardScores[
+        //     boardIndex
+        //   ].pairs_score.filter((pair) => pair.direction == 0);
+        //   // console.log(
+        //   //   "pair_score",
+        //   //   tours[tour_id].boardScores[boardIndex].pairs_score
+        //   // );
+        //   ///Convert to score array
+        //   let getScoreNS = selectNS.map((score) => score.score);
+        //   //socket.emit("test", getScoreNS);
+        //   let [mpNS, percentNS] = score.calBoardMps(getScoreNS);
+        //   //socket.emit("test", mpNS);
+
+        //   ///Select index
+        //   tours[tour_id].boardScores[boardIndex].pairs_score.map(
+        //     (pair, index) => {
+        //       if (pair.direction == 0) {
+        //         selectIndexNS.push(index);
+        //       }
+        //     }
+        //   );
+        //   ///Fill mp,percent to boardScore
+        //   selectIndexNS.map((pair_index, index) => {
+        //     tours[tour_id].boardScores[boardIndex].pairs_score[pair_index][
+        //       "imp"
+        //     ] = mpNS[index];
+        //     tours[tour_id].boardScores[boardIndex].pairs_score[pair_index][
+        //       "percent"
+        //     ] = percentNS[index];
+        //   });
+
+        //   //?EW
+        //   let selectIndexEW = [];
+        //   ///Select pair from all ns
+        //   let selectEW = tours[tour_id].boardScores[
+        //     boardIndex
+        //   ].pairs_score.filter((pair) => pair.direction == 1);
+        //   ///Convert to score array
+        //   let getScoreEW = selectEW.map((score) => score.score);
+        //   let [mpEW, percentEW] = score.calBoardMps(getScoreEW);
+
+        //   ///Select index
+        //   tours[tour_id].boardScores[boardIndex].pairs_score.map(
+        //     (pair, index) => {
+        //       if (pair.direction == 1) {
+        //         selectIndexEW.push(index);
+        //       }
+        //     }
+        //   );
+
+        //   ///Fill mp,percent to boardScore
+        //   selectIndexEW.map((pair_index, index) => {
+        //     tours[tour_id].boardScores[boardIndex].pairs_score[pair_index][
+        //       "imp"
+        //     ] = mpEW[index];
+        //     tours[tour_id].boardScores[boardIndex].pairs_score[pair_index][
+        //       "percent"
+        //     ] = percentEW[index];
+        //   });
+        // });
+
+        // socket.emit("test", tours[tour_id].boardScores);
+
+        // //?Rank
+        // let getPairId = game.getPairId(tours[tour_id], player_id);
+        // tours[tour_id].rankPair.map(({ pair_id }) => {
+        //   let rankIndex = score.findIndexRankPairId(
+        //     tours[tour_id].rankPair,
+        //     pair_id
+        //   );
+        //   let selfIMP = game.getSelfIMPArray(
+        //     pair_id,
+        //     tours[tour_id].boardScores
+        //   );
+        //   let selfPercent = game.getSelfIPercentArray(
+        //     pair_id,
+        //     tours[tour_id].boardScores
+        //   );
+        //   console.log("selfIMP", selfIMP);
+        //   console.log("selfPercent", selfPercent);
+        //   let [totalMps, rankingPercentage] = score.calRankingScore(
+        //     selfIMP,
+        //     selfPercent
+        //   );
+        //   console.log("totalMps", totalMps);
+        //   console.log("rankingPercentage", rankingPercentage);
+        //   tours[tour_id].rankPair[rankIndex]["totalMP"] = totalMps;
+        //   tours[tour_id].rankPair[rankIndex]["rankPercent"] = rankingPercentage;
+        // });
+
+        //socket.emit("test", tours[tour_id].rankPair);
+        // socket.emit("test", tours[tour_id].boardScores);
+        // socket.emit("test", game.getUniqePairId(tours[tour_id].players));
+        // socket.emit(
+        //   "test",
+        //   game.getSelfScoreArray(getPairId, tours[tour_id].boardScores)
+        // );
+        // socket.emit(
+        //   "test",
+        //   game.getSelfIMPArray(getPairId, tours[tour_id].boardScores)
+        // );
+        // socket.emit(
+        //   "test",
+        //   game.sumSelfScoreArray(getPairId, tours[tour_id].boardScores)
+        // );
+        // socket.emit(
+        //   "test",
+        //   game.sumSelfIMPArray(getPairId, tours[tour_id].boardScores)
+        // );
+        //!------------------------------------------------------------------------
+        // let now = new Date();
+        // // let prevtime = "12/18/2021, 5:06:00 PM";
+        // let startTime = "2022-04-16T17:56:00.000Z";
+        // let milStartTime = new Date(startTime).getTime();
+        // let min = 2;
+        // let plus2min = milStartTime + 60000 * min;
+        // let human = new Date(plus2min);
+        // console.log("human", human);
+        // let curTime = new Date();
+        // let milCurTme = curTime.getTime();
+        // let diff_time = milStartTime - milCurTme;
+        // console.log("diff_time", diff_time);
+        // console.log("now", now);
+        //!------------------------------------------------------------------------
+        socket.emit("test", users, users["plantA"] != undefined);
+      } catch (error) {
+        console.log("error", error);
+      }
+    }
+  );
+  socket.on(
+    "test2",
+    (tour_id = "Mark1", round_num = 1, table_id = "r1b1", cur_board = 0) => {
+      try {
+        let room = "r1b1";
+        socket.join(room);
+        let clients = io.sockets.adapter.rooms.get(room);
+        console.log("clients", clients);
+        console.log("room", socket.rooms);
+        let getRoom = io.sockets.adapter.rooms;
+        console.log("getRoom", getRoom);
+        let room1 = io.sockets.adapter.rooms.get(room);
+        console.log("room1", room1);
       } catch (error) {
         console.log("error", error);
       }
@@ -1559,10 +2050,16 @@ io.on("connection", (socket) => {
           maxContract,
           doubles,
         }))(table_data.bidding);
-        let temp_play = ({ tricks }) => ({ tricks });
-        console.log("data", { ...temp_bid, ...temp_play });
+        let temp_play = (({ tricks }) => ({ tricks }))(table_data.playing);
+        let output = {
+          round: round_num,
+          boardSequence: table_data.boards.length,
+          board_num: table_data.cur_board,
+          ...temp_bid,
+          ...temp_play,
+        };
 
-        socket.emit("test", temp_play);
+        socket.emit("test", output);
       } catch (error) {
         console.log("error", error);
       }
@@ -1575,37 +2072,165 @@ io.on("connection", (socket) => {
 
   socket.on("getSelfScore", (player_id = "peterpan", tour_id = "Mark1") => {
     try {
-      //?Function get pairId
-      let getPlayer = _.find(tours[tour_id].players, ["name", player_id]);
-      let getPairId = getPlayer.pair_id;
-
-      let rounds = tours[tour_id][`rounds`];
-      let teams = rounds.map(({ round_num, tables }) => {
-        let myTeam = tables
-          .filter(({ versus }) => versus.includes(getPairId))
-          .map(({ table_id, cur_board, directions, score }) => ({
-            table_id,
-            cur_board,
-            directions,
-            score,
-          }));
-        return { round_num, tables: myTeam };
-      });
-
-      socket.emit("test", teams);
-      socket.emit("getSelfScore", teams);
+      let getPairId = game.getPairId(tours[tour_id], player_id);
+      let selfScore = game.getSelfScore(getPairId, tours[tour_id].boardScores);
+      socket.emit("getSelfScore", selfScore);
     } catch (error) {
       console.log("error", error);
     }
   });
 
-  socket.on("getNsRankings", () => {});
-  socket.on("getEwRankings", () => {});
+  socket.on("getNsRankings", (tour_id) => {
+    try {
+      let selectNS = tours[tour_id].boardScores.map((board) => {
+        let pair = board.pairs_score.filter((pair) => pair.direction == 0);
+        return { board_num: board.board_num, pairs: pair };
+      });
+      socket.emit("test", selectNS);
+    } catch (error) {}
+  });
 
-  socket.on("getCurrentMatchStatus", () => {});
+  socket.on("getEwRankings", (tour_id) => {
+    try {
+      let selectEW = tours[tour_id].boardScores.map((board) => {
+        let pair = board.pairs_score.filter((pair) => pair.direction == 1);
+        return { board_num: board.board_num, pairs: pair };
+      });
+      socket.emit("test", selectEW);
+    } catch (error) {}
+  });
 
-  socket.on("grant_user_to_td", (admin) => {});
+  socket.on(
+    "getCurrentMatchStatus",
+    (tour_id = "Mark1", round_num = 1, table_id = "r1b1") => {
+      table_data = access_table(tour_id, round_num, table_id);
+      let versus = access_table.versus.split(",");
+      return {
+        nsTeam: versus[0],
+        nsTeam: versus[1],
+        status: table_data.status,
+      };
+    }
+  );
 
+  socket.on("grant_user_to_td", async (admin, username = "plantA") => {
+    let db_user = await User.findOne({ username });
+    if (users[username] != undefined) {
+      users[username].access = "td";
+      io.emit("grant_user_to_td", (users[username].access = "td"));
+    }
+    console.log("data", users[username]);
+    let update_user = await User.updateOne(
+      {
+        username,
+      },
+      {
+        $set: {
+          access: "td",
+        },
+      }
+    );
+    socket.emit("grant_user_to_td", update_user);
+  });
+
+  socket.on("refuse_user_to_td", async (admin, username = "plantA") => {
+    let db_user = await User.findOne({ username });
+    if (users[username] != undefined) {
+      users[username].access = "user";
+      io.emit("refuse_user_to_td", (users[username].access = "user"));
+    }
+    console.log("data", users[username]);
+    let update_user = await User.updateOne(
+      {
+        username,
+      },
+      {
+        $set: {
+          access: "user",
+        },
+      }
+    );
+    socket.emit("refuse_user_to_td", update_user);
+  });
+
+  socket.on("ban_user", async (admin, username = "plantA") => {
+    let db_user = await User.findOne({ username });
+    if (users[username] != undefined) {
+      users[username].access = "ban";
+      io.emit("refuse_user_to_td", (users[username].access = "ban"));
+    }
+    console.log("data", users[username]);
+    let update_user = await User.updateOne(
+      {
+        username,
+      },
+      {
+        $set: {
+          access: "ban",
+        },
+      }
+    );
+    socket.emit("ban_user", update_user);
+  });
+  socket.on("refuse_ban_user", async (admin, username = "plantA") => {
+    let db_user = await User.findOne({ username });
+    if (users[username] != undefined) {
+      users[username].access = "user";
+      io.emit("refuse_ban_user", (users[username].access = "user"));
+    }
+    console.log("data", users[username]);
+    let update_user = await User.updateOne(
+      {
+        username,
+      },
+      {
+        $set: {
+          access: "user",
+        },
+      }
+    );
+    socket.emit("refuse_ban_user", update_user);
+  });
+  socket.on("get-time", () => {
+    let currentTime = new Date();
+    let currentHours = currentTime.getHours();
+    let currentMinutes = currentTime.getMinutes();
+    let currentSeconds = currentTime.getSeconds();
+
+    // Pad the minutes and seconds with leading zeros, if required
+    currentMinutes = (currentMinutes < 10 ? "0" : "") + currentMinutes;
+    currentSeconds = (currentSeconds < 10 ? "0" : "") + currentSeconds;
+
+    // Choose either "AM" or "PM" as appropriate
+    let timeOfDay = currentHours < 12 ? "AM" : "PM";
+
+    // Convert the hours component to 12-hour format if needed
+    currentHours = currentHours > 12 ? currentHours - 12 : currentHours;
+
+    // Convert an hours component of "0" to "12"
+    currentHours = currentHours == 0 ? 12 : currentHours;
+
+    // Compose the string for display
+    let currentTimeString =
+      currentHours +
+      ":" +
+      currentMinutes +
+      ":" +
+      currentSeconds +
+      " " +
+      timeOfDay;
+    socket.emit("test", currentTimeString);
+  });
+  socket.on("getAllUserList", async () => {
+    let all_user = await User.find();
+    socket.emit("getAllUserList", all_user);
+  });
+  socket.on("getAllScore", async (tour_id) => {
+    socket.emit("getAllScore", tours[tour_id].boardScores);
+  });
+  socket.on("removeAllHistoryData", async (tour_id) => {
+    await History.deleteMany({ tid: tour_id });
+  });
   socket.on("disconnect", () => {
     console.log("User was disconnect");
   });

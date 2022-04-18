@@ -123,7 +123,7 @@ exports.generateFullGameData = () => {
                   3: 9,
                 },
                 { 1: 3, 2: 5, 3: 11, 0: 7 },
-                {2: 19, 3: 12, 0:50},
+                { 2: 19, 3: 12, 0: 50 },
                 {},
                 {},
                 {},
@@ -519,6 +519,205 @@ exports.generateFullGameData = () => {
             score: [50, 0],
           },
         ],
+      },
+    ],
+    boardScores: [
+      {
+        board_num: 1,
+        pairs_score: [
+          {
+            pair_id: 1,
+            score: 50,
+            direction: 0,
+          },
+          {
+            pair_id: 2,
+            score: 0,
+            direction: 1,
+          },
+          {
+            pair_id: 3,
+            score: 10,
+            direction: 0,
+          },
+          {
+            pair_id: 4,
+            score: 20,
+            direction: 1,
+          },
+          {
+            pair_id: 5,
+            score: 30,
+            direction: 0,
+          },
+        ],
+      },
+      {
+        board_num: 2,
+        pairs_score: [
+          {
+            pair_id: 1,
+            score: 80,
+            direction: 0,
+          },
+          {
+            pair_id: 2,
+            score: 70,
+            direction: 1,
+          },
+          {
+            pair_id: 3,
+            score: 0,
+            direction: 0,
+          },
+          {
+            pair_id: 4,
+            score: 0,
+            direction: 1,
+          },
+          {
+            pair_id: 5,
+            score: 900,
+            direction: 0,
+          },
+        ],
+      },
+      {
+        board_num: 3,
+        pairs_score: [
+          {
+            pair_id: 1,
+            score: 0,
+            direction: 0,
+          },
+          {
+            pair_id: 2,
+            score: 100,
+            direction: 1,
+          },
+          {
+            pair_id: 3,
+            score: 200,
+            direction: 0,
+          },
+          {
+            pair_id: 4,
+            score: 300,
+            direction: 1,
+          },
+          {
+            pair_id: 5,
+            score: 400,
+            direction: 0,
+          },
+        ],
+      },
+      {
+        board_num: 4,
+        pairs_score: [
+          {
+            pair_id: 1,
+            score: 500,
+            direction: 0,
+          },
+          {
+            pair_id: 2,
+            score: 600,
+            direction: 1,
+          },
+          {
+            pair_id: 3,
+            score: 700,
+            direction: 0,
+          },
+          {
+            pair_id: 4,
+            score: 0,
+            direction: 1,
+          },
+          {
+            pair_id: 5,
+            score: 10,
+            direction: 0,
+          },
+        ],
+      },
+      {
+        board_num: 5,
+        pairs_score: [
+          {
+            pair_id: 1,
+            score: 0,
+            direction: 0,
+          },
+          {
+            pair_id: 2,
+            score: 40,
+            direction: 1,
+          },
+          {
+            pair_id: 3,
+            score: 940,
+            direction: 0,
+          },
+          {
+            pair_id: 4,
+            score: 80,
+            direction: 1,
+          },
+          {
+            pair_id: 5,
+            score: 70,
+            direction: 0,
+          },
+        ],
+      },
+      {
+        board_num: 6,
+        pairs_score: [
+          {
+            pair_id: 1,
+            score: 70,
+            direction: 0,
+          },
+          {
+            pair_id: 2,
+            score: 45,
+            direction: 1,
+          },
+          {
+            pair_id: 3,
+            score: 95,
+            direction: 0,
+          },
+          {
+            pair_id: 4,
+            score: 79,
+            direction: 1,
+          },
+          {
+            pair_id: 5,
+            score: 780,
+            direction: 0,
+          },
+        ],
+      },
+    ],
+    rankPair: [
+      {
+        pair_id: 1,
+      },
+      {
+        pair_id: 2,
+      },
+      {
+        pair_id: 3,
+      },
+      {
+        pair_id: 4,
+      },
+      {
+        pair_id: 5,
       },
     ],
   };

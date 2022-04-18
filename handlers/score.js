@@ -244,6 +244,7 @@ function roundTo(n, digits) {
 }
 
 exports.calBoardMps = (scores) => {
+  if (scores.length == 1) return [[1], [100]];
   const mappedScores = scores.map((e, i) => {
     return { value: e, originalIndex: i };
   });
@@ -251,7 +252,7 @@ exports.calBoardMps = (scores) => {
   const mps = [];
   const tempIndex = [];
   let count = 0;
-  let previousScore = 0;
+  let previousScore = null;
   let accScore = 0;
   mappedScores.forEach((score, index, array) => {
     count++;
@@ -281,7 +282,7 @@ exports.calBoardMps = (scores) => {
   unsortedMps = mps.map((e) => e.value);
   return [
     unsortedMps,
-    unsortedMps.map((mp) => roundTo((mp * 100) / mps.length, 2)),
+    unsortedMps.map((mp) => roundTo((mp * 100) / (mps.length - 1), 2)),
   ];
 };
 
@@ -293,8 +294,19 @@ exports.calRankingScore = (mps, percentages) => {
     ),
     roundTo(
       percentages.reduce((total, percentage) => total + percentage, 0) /
-        percentage.length,
+        percentages.length,
       2
     ),
   ];
+};
+
+exports.findIndexScoreBoard = (boardScores, cur_board) => {
+  let boardIndex = boardScores.findIndex(
+    (board) => board.board_num == cur_board
+  );
+  return boardIndex;
+};
+exports.findIndexRankPairId = (rankPair, id) => {
+  let rankIndex = rankPair.findIndex((pair) => pair.pair_id == id);
+  return rankIndex;
 };
