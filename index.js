@@ -165,7 +165,7 @@ const ioToRoomOnBiddingPhase = ({
   round_num,
   table_id,
   nextDirection = 0,
-  doubleEnable = true
+  doubleEnable = true,
 }) => {
   let table_data = access_table(tour_name, round_num, table_id);
   let round_data = access_round(tour_name, round_num);
@@ -183,7 +183,7 @@ const ioToRoomOnBiddingPhase = ({
       turn: table_data.playing.turn,
       ///Front-end must filter
       cards: round_data.cards,
-      doubleEnable: doubleEnable
+      doubleEnable: doubleEnable,
     },
   });
 };
@@ -736,10 +736,10 @@ io.on("connection", async (socket) => {
       console.log(tours[tour_name].max_player);
       console.log(users[player_name].tour);
       console.log(player_name);
-      console.log(tours[tour_name].players)
+      console.log(tours[tour_name].players);
 
-      if ((tours[tour_name].players.find( player => player.id == player_name))) {
-        console.log("ALREADY EXIST")
+      if (tours[tour_name].players.find((player) => player.id == player_name)) {
+        console.log("ALREADY EXIST");
         users[player_name].tour = tour_name;
         // tours[tour_name].player_waiting.push(player_name)
         var waitingPlayer = tours[tour_name].players
@@ -756,7 +756,7 @@ io.on("connection", async (socket) => {
         io.in(tour_name).emit("");
         io.in(tour_name).emit("update-player-waiting", waitingPlayer);
         updateTourList();
-        return
+        return;
       }
 
       if (
@@ -776,109 +776,6 @@ io.on("connection", async (socket) => {
         var waitingPlayer = tours[tour_name].players
           .filter((player) => player.status == "waiting")
           .map((player) => player.name);
-
-        //         if (player_name == "taetae11") {
-        //           tours[tour_name].players.push({
-        //             id: player_name,
-        //             name: player_name,
-        //             status: "in-pair",
-        //             pair_id: 1,
-        //           });
-        //         }
-        //
-        //         if (player_name == "mickschumacher") {
-        //           tours[tour_name].players.push({
-        //             id: player_name,
-        //             name: player_name,
-        //             status: "in-pair",
-        //             pair_id: 1,
-        //           });
-        //         }
-        //
-        //         if (player_name == "charlesleclerc16") {
-        //           tours[tour_name].players.push({
-        //             id: player_name,
-        //             name: player_name,
-        //             status: "in-pair",
-        //             pair_id: 2,
-        //           });
-        //         }
-        //
-        //         if (player_name == "Sebvettel05") {
-        //           tours[tour_name].players.push({
-        //             id: player_name,
-        //             name: player_name,
-        //             status: "in-pair",
-        //             pair_id: 2,
-        //           });
-        //         }
-
-        // tours[tour_name].players.push({
-        //   id: "peterpan",
-        //   name: "peterpan",
-        //   status: "in-pair",
-        //   pair_id: 1,
-        // });
-        // tours[tour_name].players.push({
-        //   id: "wer",
-        //   name: "wer",
-        //   status: "in-pair",
-        //   pair_id: 4,
-        // });
-        // tours[tour_name].players.push({
-        //   id: "qwe",
-        //   name: "qwe",
-        //   status: "in-pair",
-        //   pair_id: 4,
-        // });
-        // tours[tour_name].players.push({
-        //   id: "pokemon",
-        //   name: "pokemon",
-        //   status: "in-pair",
-        //   pair_id: 3,
-        // });
-        // tours[tour_name].players.push({
-        //   id: "teseded",
-        //   name: "teseded",
-        //   status: "in-pair",
-        //   pair_id: 3,
-        // });
-        // tours[tour_name].players.push({
-        //   id: "uio",
-        //   name: "uio",
-        //   status: "in-pair",
-        //   pair_id: 5,
-        // });
-        // tours[tour_name].players.push({
-        //   id: "oiu",
-        //   name: "oiu",
-        //   status: "in-pair",
-        //   pair_id: 5,
-        // });
-        // tours[tour_name].players.push({
-        //   id: "",
-        //   name: "mutizaki",
-        //   status: "in-pair",
-        //   pair_id: 4,
-        // });
-        // tours[tour_name].players.push({
-        //   id: "",
-        //   name: "seperite",
-        //   status: "in-pair",
-        //   pair_id: 3,
-        // });
-        // tours[tour_name].players.push({
-        //   id: "",
-        //   name: "carspian",
-        //   status: "in-pair",
-        //   pair_id: 3,
-        // });
-        // tours[tour_name].players.push({
-        //   id: "",
-        //   name: "qwerty",
-        //   status: "in-pair",
-        //   pair_id: 4,
-        // });
 
         var pairPlayers = tours[tour_name].players.filter(
           (player) => player.status == "in-pair"
@@ -1461,8 +1358,8 @@ io.on("connection", async (socket) => {
           //else send error
         }
       }
-      
-      let doubleEnable = !(access_bidding.doubles[team][TYPE.RDBL] == true)
+
+      let doubleEnable = !(access_bidding.doubles[team][TYPE.RDBL] == true);
       //ioToRoomOnBiddingPhase({ room, contract, nextDirection });
       ioToRoomOnBiddingPhase({
         room,
@@ -1471,7 +1368,7 @@ io.on("connection", async (socket) => {
         tour_name,
         round_num,
         table_id,
-        doubleEnable
+        doubleEnable,
       });
     }
   );
@@ -1852,7 +1749,7 @@ io.on("connection", async (socket) => {
             prevDirection: direction,
             initSuite: access_playing.initSuite,
             isFourthPlay: access_playing.communityCards.length === 4,
-            bidSuite: access_playing.bidSuite
+            bidSuite: access_playing.bidSuite,
           },
         });
 
@@ -1878,7 +1775,7 @@ io.on("connection", async (socket) => {
           prevDirection: direction,
           initSuite: access_playing.initSuite,
           isFourthPlay: access_playing.communityCards.length === 4,
-          bidSuite: access_playing.bidSuite
+          bidSuite: access_playing.bidSuite,
         },
       });
     }
