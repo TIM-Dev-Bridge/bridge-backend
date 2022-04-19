@@ -165,9 +165,13 @@ const ioToRoomOnBiddingPhase = ({
   round_num,
   table_id,
   nextDirection = 0,
+  doubleEnable = true
 }) => {
   let table_data = access_table(tour_name, round_num, table_id);
   let round_data = access_round(tour_name, round_num);
+
+  let access_bidding = table_data.bidding;
+
   console.log("next", nextDirection);
   ioToRoomOnPlaying({
     room,
@@ -179,6 +183,7 @@ const ioToRoomOnBiddingPhase = ({
       turn: table_data.playing.turn,
       ///Front-end must filter
       cards: round_data.cards,
+      doubleEnable: doubleEnable
     },
   });
 };
@@ -730,6 +735,30 @@ io.on("connection", async (socket) => {
       console.log(tours[tour_name].players.length);
       console.log(tours[tour_name].max_player);
       console.log(users[player_name].tour);
+      console.log(player_name);
+      console.log(tours[tour_name].players)
+
+      if ((tours[tour_name].players.find( player => player.id == player_name))) {
+        console.log("ALREADY EXIST")
+        users[player_name].tour = tour_name;
+        // tours[tour_name].player_waiting.push(player_name)
+        var waitingPlayer = tours[tour_name].players
+          .filter((player) => player.status == "waiting")
+          .map((player) => player.name);
+
+        var pairPlayers = tours[tour_name].players.filter(
+          (player) => player.status == "in-pair"
+        );
+        let timeStart = TourR.find({ tour_name: tour_name }).time_start;
+        let timeJoin = new Date().getTime();
+        //io.timeout(timeJoin - timeStart).emit("test", "Good luck");
+        io.in(tour_name).emit("update-player-pair", pairPlayers);
+        io.in(tour_name).emit("");
+        io.in(tour_name).emit("update-player-waiting", waitingPlayer);
+        updateTourList();
+        return
+      }
+
       if (
         tours[tour_name].players.length < tours[tour_name].max_player &&
         users[player_name].tour == undefined
@@ -1432,6 +1461,8 @@ io.on("connection", async (socket) => {
           //else send error
         }
       }
+      
+      let doubleEnable = !(access_bidding.doubles[team][TYPE.RDBL] == true)
       //ioToRoomOnBiddingPhase({ room, contract, nextDirection });
       ioToRoomOnBiddingPhase({
         room,
@@ -1440,6 +1471,7 @@ io.on("connection", async (socket) => {
         tour_name,
         round_num,
         table_id,
+        doubleEnable
       });
     }
   );
@@ -1820,6 +1852,7 @@ io.on("connection", async (socket) => {
             prevDirection: direction,
             initSuite: access_playing.initSuite,
             isFourthPlay: access_playing.communityCards.length === 4,
+            bidSuite: access_playing.bidSuite
           },
         });
 
@@ -1845,6 +1878,7 @@ io.on("connection", async (socket) => {
           prevDirection: direction,
           initSuite: access_playing.initSuite,
           isFourthPlay: access_playing.communityCards.length === 4,
+          bidSuite: access_playing.bidSuite
         },
       });
     }
