@@ -185,7 +185,6 @@ const ioToRoomOnBiddingPhase = ({
 
 const matchmaking = async (tour_name) => {
   if ((tours[tour_name].players.length / 2) % 2 != 0) {
-    console.log("---------------------------------------------asdasd----");
     await tours[tour_name].players.push({
       id: "not_player",
       name: "not_player",
@@ -316,22 +315,39 @@ const sendCardOneHand = ({
   table_id,
   sendAll = false,
 }) => {
-  console.log("TABLE :", tour_name, round_num, table_id);
+  console.log("TABLE :", tour_name, round_num, table_id, direction);
   let round_data = access_round(tour_name, round_num);
   let table_data = access_table(tour_name, round_num, table_id);
   if (sendAll === true)
     io.to(room).emit(
       "opposite",
-      round_data.cards[table_data.cur_board - 1][direction],
+      round_data.cards[
+        table_data.cur_board -
+          tours[tour_name].board_per_round * (parseInt(round_num) - 1) -
+          1
+      ][direction],
       direction
     );
   else console.log("CURRENT", socket_id);
   io.to(socket_id).emit(
     "card",
-    round_data.cards[table_data.cur_board - 1][direction]
+    round_data.cards[
+      table_data.cur_board -
+        tours[tour_name].board_per_round * (parseInt(round_num) - 1) -
+        1
+    ][direction],
+    direction
   );
 
-  console.log("card", round_data.cards[table_data.cur_board - 1][direction]);
+  console.log(
+    "card",
+    round_data.cards[
+      table_data.cur_board -
+        tours[tour_name].board_per_round * (parseInt(round_num) - 1) -
+        1
+    ][direction],
+    direction
+  );
   console.log("direction", direction);
 };
 
@@ -1181,8 +1197,12 @@ io.on("connection", async (socket) => {
       //   return { round: _.omit(round, ["card","tables"]), tables: newTable };
       // }),
     );
+    console.log("ROUND", tours[tour_name].rounds);
     ///Save in database history
-    let round_num = _.range(1, tours[tour_name].board_round + 1);
+    let round_num = _.range(
+      1,
+      tours[tour_name].board_to_play / tours[tour_name].board_per_round + 1
+    );
     await History.create({
       tid: tour_name,
       rounds: round_num.map((round) => {
@@ -1248,6 +1268,7 @@ io.on("connection", async (socket) => {
       ///Fake check
       let [...idInRoom] = io.sockets.adapter.rooms.get(room);
       console.log("idInRoom", idInRoom);
+      console.log("table status", table_data.status);
       //let playerInRoom = handler_room.accessInRoom(idInRoom, userScreen);
       /// if fully player, change to 'bidding phase'.
       if (idInRoom.length === 4 && table_data.status == "waiting") {
@@ -1543,6 +1564,12 @@ io.on("connection", async (socket) => {
             )
           );
           console.log("score", table_data.score);
+          ///Send board summary
+          io.to(room).emit(
+            "board-summary",
+            access_playing.tricks,
+            table_data.score
+          );
           ///Save score to boardScores
           let boardIndex = score.findIndexScoreBoard(
             tours[tour_name].boardScores,
@@ -1692,12 +1719,12 @@ io.on("connection", async (socket) => {
           io.emit("test", tours[tour_name].rankPairs);
 
           ///reset bidding
-          access_bidding.declarer = 0;
-          access_bidding.passCount = 0;
-          access_bidding.isPassOut = true;
-          access_bidding.maxContract = -1;
-          access_bidding.doubles = INIT.doubles;
-          access_bidding.firstDirectionSuites = INIT.firstDirectionSuites;
+          // access_bidding.declarer = 0;
+          // access_bidding.passCount = 0;
+          // access_bidding.isPassOut = true;
+          // access_bidding.maxContract = -1;
+          // access_bidding.doubles = INIT.doubles;
+          // access_bidding.firstDirectionSuites = INIT.firstDirectionSuites;
 
           ///Change status table to finish
           table_data.status = "Finish";
@@ -1720,10 +1747,26 @@ io.on("connection", async (socket) => {
             },
           });
 
+          io.emit("get-tours", tours[tour_name].rounds);
           //Change board
           if (access_playing.turn >= 13) {
             // if (++table_data.cur_board > tours[tour_name].board_per_round) {
             /// clear all temp var here ...
+            ///reset bidding
+            // access_bidding.declarer = 0;
+            // access_bidding.passCount = 0;
+            // access_bidding.isPassOut = true;
+            // access_bidding.maxContract = -1;
+            // access_bidding.doubles = INIT.doubles;
+            // access_bidding.firstDirectionSuites = INIT.firstDirectionSuites;
+            // ///reset playing
+            // access_playing.turn = 0;
+            // access_playing.doubles = [];
+            // access_playing.bidSuite = 0;
+            // access_playing.communityCards = [];
+            // access_playing.initSuite = undefined;
+            // access_playing.tricks = [0, 0];
+            // access_playing.playedCards = [];
             ioToRoomOnPlaying({
               room,
               status: "ending",
