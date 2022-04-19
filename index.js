@@ -51,13 +51,7 @@ let users = {};
 let tours = {};
 let rooms = [];
 
-const DIRECTION = {
-  N: 0,
-  E: 1,
-  S: 2,
-  W: 3,
-};
-
+const DIRECTIONS = ["N", "E", "S", "W"];
 const INIT = {
   doubles: [
     [false, false],
@@ -1124,6 +1118,13 @@ io.on("connection", async (socket) => {
       // }),
     );
     console.log("ROUND", tours[tour_name].rounds);
+
+    ///Send tourdata without round
+    let select_data = (({ rounds, ...data }) => ({ ...data }))(
+      tours[tour_name]
+    );
+    io.to(tour_name).emit("tour-no-round", select_data);
+
     ///Save in database history
     let round_num = _.range(
       1,
@@ -1421,10 +1422,11 @@ io.on("connection", async (socket) => {
       console.log("communityCards", access_playing.communityCards);
 
       //Save played card
-      access_playing.playedCards[access_playing.turn - 1] = {
+      access_playing.playedCards[access_playing.turn - 1] = await {
         ...access_playing.playedCards[access_playing.turn - 1],
         ...{
-          [`${direction}`]: card,
+          [DIRECTIONS[direction]]: card,
+          //[`D${direction}`]: card,
         },
       };
 
@@ -2047,22 +2049,25 @@ io.on("connection", async (socket) => {
         // console.log("diff_time", diff_time);
         // console.log("now", now);
         //!------------------------------------------------------------------------
-        let userInRoom = ["aaabbb", "ccscaaa", "wwweee", "qweqwe"];
-        let count = 0;
-        userInRoom.map((id) => {
-          tours["Mark1"].players.map((player) => {
-            console.log("player", player);
-            if (id == player.socket_id) {
-              count++;
-            }
-          });
-        });
-        console.log("pass");
-        console.log("pass", count);
+        // let userInRoom = ["aaabbb", "ccscaaa", "wwweee", "qweqwe"];
+        // let count = 0;
+        // userInRoom.map((id) => {
+        //   tours["Mark1"].players.map((player) => {
+        //     console.log("player", player);
+        //     if (id == player.socket_id) {
+        //       count++;
+        //     }
+        //   });
+        // });
+        // console.log("pass");
+        // console.log("pass", count);
 
-        if (count == 4) {
-          console.log("joinroom");
-        }
+        // if (count == 4) {
+        //   console.log("joinroom");
+        // }
+        //!------------------------------------------------------------------------
+
+        console.log("temp", temp);
       } catch (error) {
         console.log("error", error);
       }
