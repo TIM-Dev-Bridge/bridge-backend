@@ -1467,10 +1467,6 @@ io.on("connection", async (socket) => {
         leader % 2 == 0
           ? access_playing.tricks[0]++
           : access_playing.tricks[1]++;
-        console.log("access_bidding", access_bidding);
-        console.log(`access_playing`, access_playing);
-        console.log(`leader`, leader);
-        console.log("cur_board", table_data.cur_board);
 
         // access_bidding.declarer = 0;
         // access_bidding.passCount = 0;
@@ -1543,10 +1539,6 @@ io.on("connection", async (socket) => {
           // });
           tours[tour_name].boardScores[table_data.cur_board - 1].count_done++;
           socket.emit("test", tours[tour_name].boardScores);
-          console.log(
-            "test-------------------------------",
-            tours[tour_name].boardScores
-          );
           ///!Save MP variable
           if (
             tours[tour_name].boardScores[table_data.cur_board - 1].count_done ==
@@ -1647,7 +1639,12 @@ io.on("connection", async (socket) => {
             });
           }
           io.to(room).emit("test", tours[tour_name].boardScores);
-          io.emit("test", tours[tour_name].rankPairs);
+          ///Send ranking score with name of players
+          let rankConvert = game.convertPairToNameRank(
+            tours[tour_id].players,
+            tours[tour_id].rankPair
+          );
+          io.to(room).emit("test", rankConvert);
 
           ///reset bidding
           // access_bidding.declarer = 0;
@@ -2066,8 +2063,11 @@ io.on("connection", async (socket) => {
         //   console.log("joinroom");
         // }
         //!------------------------------------------------------------------------
-
-        console.log("temp", temp);
+        let rankConvert = game.convertPairToNameRank(
+          tours[tour_id].players,
+          tours[tour_id].rankPair
+        );
+        socket.emit("test", rankConvert, "1");
       } catch (error) {
         console.log("error", error);
       }

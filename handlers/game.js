@@ -108,3 +108,18 @@ exports.getUniqePairId = (players) => {
   let uniqe = players.map((player) => player.pair_id);
   return _.uniq(uniqe).sort();
 };
+
+exports.convertPairToNameRank = (players, rankPair) => {
+  console.log("first", players, rankPair);
+  let rankConvert = rankPair.map((pair) => {
+    let player = players.filter((find) => find.pair_id === pair.pair_id);
+    return {
+      pair_id: pair.pair_id,
+      name1: player[0].name,
+      name2: player[1].name,
+      totalMP: pair.totalMP,
+      rankPercent: pair.rankPercent,
+    };
+  });
+  return rankConvert;
+};

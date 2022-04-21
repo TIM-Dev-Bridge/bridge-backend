@@ -54,6 +54,18 @@ exports.generateFullGameData = () => {
         status: "in-pair",
         pair_id: 2,
       },
+      {
+        id: "",
+        name: "dfghkjk",
+        status: "in-pair",
+        pair_id: 5,
+      },
+      {
+        id: "",
+        name: "ghjghjrt",
+        status: "in-pair",
+        pair_id: 5,
+      },
     ],
     max_player: 20,
     board_round: 3,
