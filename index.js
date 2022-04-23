@@ -1302,6 +1302,7 @@ io.on("connection", async (socket) => {
               board: table_data.cur_board,
               bidSuite: winnerSuite,
               turn: ++access_playing.turn,
+              maxContract: access_bidding.maxContract,
             },
           });
           return;
@@ -1824,198 +1825,36 @@ io.on("connection", async (socket) => {
       player_id = "peterpan"
     ) => {
       try {
-        // let round_data = access_round(tour_id, round_num);
-        //let tester = test.split("[a-z]");
-        //let table_data = access_table(tour_id, round_num, table_id);
+        ///Get all card in round
+        let round_data = access_round(tour_id, round_num);
+        let get_all_cards = round_data.cards[cur_board];
+        let table_data = access_table(tour_id, round_num, table_id);
+        socket.emit("test", round_data.cards);
 
-        // ///Get all card in round
-        // let round_data = access_round(tour_id, round_num);
-        // let get_all_cards = round_data.cards[cur_board];
-        // let table_data = access_table(tour_id, round_num, table_id);
+        ///Get played card and convert to array
+        let played_card_object = table_data.playing.playedCards;
+        let played_card_array = [[], [], [], []];
+        played_card_object.map((turn) => {
+          played_card_array[0].push(turn["N"]);
+          played_card_array[1].push(turn["E"]);
+          played_card_array[2].push(turn["S"]);
+          played_card_array[3].push(turn["W"]);
+        });
+        console.log("played_card_object", played_card_object);
 
-        // ///Get played card and convert to array
-        // let played_card_object = table_data.playing.playedCards;
-        // let played_card_array = [[], [], [], []];
-        // played_card_object.map((turn) => {
-        //   Object.keys(turn).map((key) => {
-        //     played_card_array[parseInt(key)].push(turn[key]);
-        //   });
-        // });
+        ///Select left card
+        let left_card_array = [[], [], [], []];
+        get_all_cards.map((all, index_all) => {
+          played_card_array.map((played, index_played) => {
+            if (index_all == index_played) {
+              let left = all.filter((x) => !played.includes(x));
+              left_card_array[index_all].push(...left);
+              return left;
+            }
+          });
+        });
 
-        // ///Select left card
-        // let left_card_array = [[], [], [], []];
-        // get_all_cards.map((all, index_all) => {
-        //   played_card_array.map((played, index_played) => {
-        //     if (index_all == index_played) {
-        //       let left = all.filter((x) => !played.includes(x));
-        //       left_card_array[index_all].push(...left);
-        //       return left;
-        //     }
-        //   });
-        // });
-
-        // socket.emit("test", get_all_cards, played_card_array, left_card_array);
-        //!------------------------------------------------------------------------
-        // let round_data = access_round(tour_id, round_num);
-        // let score_all_ns = round_data.tables.map(({ score }) => score[0]);
-        // let score_all_ew = round_data.tables.map(({ score }) => score[1]);
-        // let mp_rounds = [
-        //   score.calBoardMps(score_all_ns),
-        //   score.calBoardMps(score_all_ew),
-        // ];
-        // let scores = [40, 30, 30, 30, 23, 23, 10];
-        // console.log("score_all_ns : ", score_all_ns);
-        // let [mps, percentage] = score.calBoardMps(scores);
-        // socket.emit("test", mps, percentage);
-        // socket.emit("test", mp_rounds);
-        //!------------------------------------------------------------------------
-        // let round_data = access_round(tour_id, round_num);
-        // let score_all_ns = round_data.tables.map(({ score }) => score[0]);
-        // let [mp_ns, percentage_ns] = score.calBoardMps(score_all_ns);
-        // let pairs_ns = round_data.tables.map(
-        //   ({ versus }) => versus.split(",")[0]
-        // );
-
-        // let teams_ns = pairs_ns.map((pair, index) => {
-        //   return { pair: pair, mp: mp_ns[index] };
-        // });
-
-        // let score_all_ew = round_data.tables.map(({ score }) => score[1]);
-        // let [mp_ew, percentage_ew] = score.calBoardMps(score_all_ew);
-        // let pairs_ew = round_data.tables.map(
-        //   ({ versus }) => versus.split(",")[1]
-        // );
-
-        // let teams_ew = pairs_ew.map((pair, index) => {
-        //   return { pair: pair, mp: mp_ew[index] };
-        // });
-
-        // let teamScores = [...teams_ns, ...teams_ew];
-
-        // console.log("score_all", pairs_ns);
-        // console.log("mp_ns", mp_ns);
-        // console.log("teamScores", teamScores);
-        //!------------------------------------------------------------------------
-        // let boardIndex = score.findIndexScoreBoard(
-        //   tours[tour_id].boardScores,
-        //   table_data.cur_board
-        // );
-        // ///get board id #6
-        // let arrBoardIndex = [0, 1, 2, 3, 4, 5];
-
-        // arrBoardIndex.map((boardIndex) => {
-        //   //?NS
-        //   let selectIndexNS = [];
-        //   ///Select pair from all ns
-        //   let selectNS = tours[tour_id].boardScores[
-        //     boardIndex
-        //   ].pairs_score.filter((pair) => pair.direction == 0);
-        //   // console.log(
-        //   //   "pair_score",
-        //   //   tours[tour_id].boardScores[boardIndex].pairs_score
-        //   // );
-        //   ///Convert to score array
-        //   let getScoreNS = selectNS.map((score) => score.score);
-        //   //socket.emit("test", getScoreNS);
-        //   let [mpNS, percentNS] = score.calBoardMps(getScoreNS);
-        //   //socket.emit("test", mpNS);
-
-        //   ///Select index
-        //   tours[tour_id].boardScores[boardIndex].pairs_score.map(
-        //     (pair, index) => {
-        //       if (pair.direction == 0) {
-        //         selectIndexNS.push(index);
-        //       }
-        //     }
-        //   );
-        //   ///Fill mp,percent to boardScore
-        //   selectIndexNS.map((pair_index, index) => {
-        //     tours[tour_id].boardScores[boardIndex].pairs_score[pair_index][
-        //       "imp"
-        //     ] = mpNS[index];
-        //     tours[tour_id].boardScores[boardIndex].pairs_score[pair_index][
-        //       "percent"
-        //     ] = percentNS[index];
-        //   });
-
-        //   //?EW
-        //   let selectIndexEW = [];
-        //   ///Select pair from all ns
-        //   let selectEW = tours[tour_id].boardScores[
-        //     boardIndex
-        //   ].pairs_score.filter((pair) => pair.direction == 1);
-        //   ///Convert to score array
-        //   let getScoreEW = selectEW.map((score) => score.score);
-        //   let [mpEW, percentEW] = score.calBoardMps(getScoreEW);
-
-        //   ///Select index
-        //   tours[tour_id].boardScores[boardIndex].pairs_score.map(
-        //     (pair, index) => {
-        //       if (pair.direction == 1) {
-        //         selectIndexEW.push(index);
-        //       }
-        //     }
-        //   );
-
-        //   ///Fill mp,percent to boardScore
-        //   selectIndexEW.map((pair_index, index) => {
-        //     tours[tour_id].boardScores[boardIndex].pairs_score[pair_index][
-        //       "imp"
-        //     ] = mpEW[index];
-        //     tours[tour_id].boardScores[boardIndex].pairs_score[pair_index][
-        //       "percent"
-        //     ] = percentEW[index];
-        //   });
-        // });
-
-        // socket.emit("test", tours[tour_id].boardScores);
-
-        // //?Rank
-        // let getPairId = game.getPairId(tours[tour_id], player_id);
-        // tours[tour_id].rankPair.map(({ pair_id }) => {
-        //   let rankIndex = score.findIndexRankPairId(
-        //     tours[tour_id].rankPair,
-        //     pair_id
-        //   );
-        //   let selfIMP = game.getSelfIMPArray(
-        //     pair_id,
-        //     tours[tour_id].boardScores
-        //   );
-        //   let selfPercent = game.getSelfIPercentArray(
-        //     pair_id,
-        //     tours[tour_id].boardScores
-        //   );
-        //   console.log("selfIMP", selfIMP);
-        //   console.log("selfPercent", selfPercent);
-        //   let [totalMps, rankingPercentage] = score.calRankingScore(
-        //     selfIMP,
-        //     selfPercent
-        //   );
-        //   console.log("totalMps", totalMps);
-        //   console.log("rankingPercentage", rankingPercentage);
-        //   tours[tour_id].rankPair[rankIndex]["totalMP"] = totalMps;
-        //   tours[tour_id].rankPair[rankIndex]["rankPercent"] = rankingPercentage;
-        // });
-
-        //socket.emit("test", tours[tour_id].rankPair);
-        // socket.emit("test", tours[tour_id].boardScores);
-        // socket.emit("test", game.getUniqePairId(tours[tour_id].players));
-        // socket.emit(
-        //   "test",
-        //   game.getSelfScoreArray(getPairId, tours[tour_id].boardScores)
-        // );
-        // socket.emit(
-        //   "test",
-        //   game.getSelfIMPArray(getPairId, tours[tour_id].boardScores)
-        // );
-        // socket.emit(
-        //   "test",
-        //   game.sumSelfScoreArray(getPairId, tours[tour_id].boardScores)
-        // );
-        // socket.emit(
-        //   "test",
-        //   game.sumSelfIMPArray(getPairId, tours[tour_id].boardScores)
-        // );
+        socket.emit("test", get_all_cards, played_card_array, left_card_array);
         //!------------------------------------------------------------------------
         // let now = new Date();
         // // let prevtime = "12/18/2021, 5:06:00 PM";
@@ -2048,10 +1887,10 @@ io.on("connection", async (socket) => {
         //   console.log("joinroom");
         // }
         //!------------------------------------------------------------------------
-        let all_room = io.sockets.adapter.sids;
-        //let all_room = io.sockets.adapter.sids.get(socket.id);
-        console.log("all_room", all_room);
-        console.log("first", socket.id, typeof socket.id);
+        // let all_room = io.sockets.adapter.sids;
+        // //let all_room = io.sockets.adapter.sids.get(socket.id);
+        // console.log("all_room", all_room);
+        // console.log("first", socket.id, typeof socket.id);
       } catch (error) {
         console.log("error", error);
       }
