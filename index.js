@@ -763,6 +763,12 @@ io.on("connection", async (socket) => {
           status: "waiting",
           //pair_id: 0,
         });
+        // tours[tour_name].players.push({
+        //   id: player_name,
+        //   name: player_name,
+        //   status: "waiting",
+        //   //pair_id: 0,
+        // });
         console.log("PUSH", tours[tour_name].players);
         // tours[tour_name].players.push(player_name)
         users[player_name].tour = tour_name;
@@ -1532,22 +1538,66 @@ io.on("connection", async (socket) => {
               },
             }
           );
-          // await History.find({ tid: tour_name }).map((round) => {
-          //   round.boards.map((board) => {
-          //     board.cur_board == table_data.cur_board;
-          //   });
-          // });
-          tours[tour_name].boardScores[table_data.cur_board - 1].count_done++;
-          socket.emit("test", tours[tour_name].boardScores);
-          ///!Save MP variable
-          if (
-            tours[tour_name].boardScores[table_data.cur_board - 1].count_done ==
-            tours[tour_name].board_per_round
-          ) {
-            let allBoardIndex = _.range(
-              0,
-              tours[tour_name].board_per_round * tours[tour_name].board_round
-            );
+
+          ///reset bidding
+          // access_bidding.declarer = 0;
+          // access_bidding.passCount = 0;
+          // access_bidding.isPassOut = true;
+          // access_bidding.maxContract = -1;
+          // access_bidding.doubles = INIT.doubles;
+          // access_bidding.firstDirectionSuites = INIT.firstDirectionSuites;
+
+          ///Change status table to finish
+          table_data.status = "Finish";
+
+          ///Count finish
+          let finish_table = round_data.tables.filter(
+            ({ status }) => status == "Finish"
+          );
+          let count_finish_table = finish_table.length;
+
+          ioToRoomOnPlaying({
+            room,
+            status: "default",
+            payload: {
+              card,
+              nextDirection: leader,
+              prevDirection: direction,
+              initSuite: access_playing.initSuite,
+              isFourthPlay: access_playing.communityCards.length === 4,
+            },
+          });
+
+          io.emit("get-tours", tours[tour_name].rounds);
+          //Change board
+          if (access_playing.turn >= 1) {
+            // if (++table_data.cur_board > tours[tour_name].board_per_round) {
+            /// clear all temp var here ...
+            ///reset bidding
+            // access_bidding.declarer = 0;
+            // access_bidding.passCount = 0;
+            // access_bidding.isPassOut = true;
+            // access_bidding.maxContract = -1;
+            // access_bidding.doubles = INIT.doubles;
+            // access_bidding.firstDirectionSuites = INIT.firstDirectionSuites;
+            // ///reset playing
+            // access_playing.turn = 0;
+            // access_playing.doubles = [];
+            // access_playing.bidSuite = 0;
+            // access_playing.communityCards = [];
+            // access_playing.initSuite = undefined;
+            // access_playing.tricks = [0, 0];
+            // access_playing.playedCards = [];
+            ioToRoomOnPlaying({
+              room,
+              status: "ending",
+              payload: {},
+            });
+          }
+
+          ///Calculate score per rounds
+          if (count_finish_table >= round_data.tables.length) {
+            let allBoardIndex = _.range(0, tours[tour_name].board_to_play);
             allBoardIndex.map((boardIndex) => {
               //Save board score NS
               let selectIndexNS = [];
@@ -1637,80 +1687,15 @@ io.on("connection", async (socket) => {
               tours[tour_name].rankPairs[rankIndex]["rankPercent"] =
                 rankingPercentage;
             });
-          }
-          io.to(room).emit("test", tours[tour_name].boardScores);
-          ///Send ranking score with name of players
-          let rankConvert = game.convertPairToNameRank(
-            tours[tour_id].players,
-            tours[tour_id].rankPair
-          );
-          io.to(room).emit("test", rankConvert);
 
-          ///reset bidding
-          // access_bidding.declarer = 0;
-          // access_bidding.passCount = 0;
-          // access_bidding.isPassOut = true;
-          // access_bidding.maxContract = -1;
-          // access_bidding.doubles = INIT.doubles;
-          // access_bidding.firstDirectionSuites = INIT.firstDirectionSuites;
+            io.to(room).emit("all-board-score", tours[tour_name].boardScores);
+            ///Send ranking score with name of players
+            let rankConvert = await game.convertPairToNameRank(
+              tours[tour_name].players,
+              tours[tour_name].rankPairs
+            );
 
-          ///Change status table to finish
-          table_data.status = "Finish";
-
-          ///Count finish
-          let finish_table = round_data.tables.filter(
-            ({ status }) => status == "Finish"
-          );
-          let count_finish_table = finish_table.length;
-
-          ioToRoomOnPlaying({
-            room,
-            status: "default",
-            payload: {
-              card,
-              nextDirection: leader,
-              prevDirection: direction,
-              initSuite: access_playing.initSuite,
-              isFourthPlay: access_playing.communityCards.length === 4,
-            },
-          });
-
-          io.emit("get-tours", tours[tour_name].rounds);
-          //Change board
-          if (access_playing.turn >= 13) {
-            // if (++table_data.cur_board > tours[tour_name].board_per_round) {
-            /// clear all temp var here ...
-            ///reset bidding
-            // access_bidding.declarer = 0;
-            // access_bidding.passCount = 0;
-            // access_bidding.isPassOut = true;
-            // access_bidding.maxContract = -1;
-            // access_bidding.doubles = INIT.doubles;
-            // access_bidding.firstDirectionSuites = INIT.firstDirectionSuites;
-            // ///reset playing
-            // access_playing.turn = 0;
-            // access_playing.doubles = [];
-            // access_playing.bidSuite = 0;
-            // access_playing.communityCards = [];
-            // access_playing.initSuite = undefined;
-            // access_playing.tricks = [0, 0];
-            // access_playing.playedCards = [];
-            ioToRoomOnPlaying({
-              room,
-              status: "ending",
-              payload: {},
-            });
-          }
-
-          ///Calculate score per rounds
-          if (count_finish_table >= round_data.tables.length) {
-            ///Get score all ns & ew
-            let score_all_ns = round_data.tables.map(({ score }) => score[0]);
-            let score_all_ew = round_data.tables.map(({ score }) => score[1]);
-            table_data.mp_rounds = [
-              score.calBoardMps(score_all_ns),
-              score.calBoardMps(score_all_ew),
-            ];
+            io.to(room).emit("rank-with-name", rankConvert);
 
             ///Send finsh all table
             console.log(
@@ -2063,11 +2048,10 @@ io.on("connection", async (socket) => {
         //   console.log("joinroom");
         // }
         //!------------------------------------------------------------------------
-        let rankConvert = game.convertPairToNameRank(
-          tours[tour_id].players,
-          tours[tour_id].rankPair
-        );
-        socket.emit("test", rankConvert, "1");
+        let all_room = io.sockets.adapter.sids;
+        //let all_room = io.sockets.adapter.sids.get(socket.id);
+        console.log("all_room", all_room);
+        console.log("first", socket.id, typeof socket.id);
       } catch (error) {
         console.log("error", error);
       }
@@ -2297,8 +2281,17 @@ io.on("connection", async (socket) => {
   socket.on("getAllUserOnline", () => {
     socket.emit("test", users);
   });
-  socket.on("disconnect", () => {
+  socket.on("disconnect", async () => {
     console.log("User was disconnect");
+    socket.leaveAll();
+    console.log("all room", io.sockets.adapter.sids);
+    // console.log("first", await io.sockets.adapter.sids.get(socket.id));
+    // let [...all_room] = io.sockets.adapter.sids.get(socket.id);
+    // console.log("all_room", all_room);
+    // for (let room in all_room) {
+    //   socket.leave(room);
+    //   console.log("user leave", room);
+    // }
   });
 });
 

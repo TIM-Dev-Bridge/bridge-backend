@@ -110,7 +110,6 @@ exports.getUniqePairId = (players) => {
 };
 
 exports.convertPairToNameRank = (players, rankPair) => {
-  console.log("first", players, rankPair);
   let rankConvert = rankPair.map((pair) => {
     let player = players.filter((find) => find.pair_id === pair.pair_id);
     return {
@@ -121,5 +120,6 @@ exports.convertPairToNameRank = (players, rankPair) => {
       rankPercent: pair.rankPercent,
     };
   });
+  console.log("rankConvert", rankConvert);
   return rankConvert;
 };
