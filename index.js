@@ -1170,9 +1170,9 @@ io.on("connection", async (socket) => {
         (table_id = table_id)
       );
       ///Player get cards
-      let socket_id = users[player_id].socket_id;
+      // let socket_id = users[player_id].socket_id;
       ///fake id
-      // let socket_id = "123";
+      let socket_id = "123";
       sendCardOneHand({
         room,
         socket_id,
@@ -1744,13 +1744,13 @@ io.on("connection", async (socket) => {
           payload: {
             leader,
             turn: ++access_playing.turn,
+            tricks: access_playing.tricks
           },
         });
         access_playing.initSuite = undefined;
         access_playing.communityCards = [];
         return;
       }
-
       ioToRoomOnPlaying({
         room,
         status: "default",
