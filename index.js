@@ -1943,7 +1943,7 @@ io.on("connection", async (socket) => {
           boardSequence: table_data.boards.length,
           board_num: table_data.cur_board,
           total_round:
-            tours[tour_id].board_to_play / tours[tour_id].board_to_play,
+            tours[tour_id].board_to_play / tours[tour_id].board_per_round,
           ...temp_bid,
           ...temp_play,
         };
