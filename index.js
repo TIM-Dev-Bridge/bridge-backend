@@ -1932,7 +1932,8 @@ io.on("connection", async (socket) => {
           (round_num = round_num),
           (table_id = table_id)
         );
-        let temp_bid = (({ maxContract, doubles }) => ({
+        let temp_bid = (({ declarer, maxContract, doubles }) => ({
+          declarer,
           maxContract,
           doubles,
         }))(table_data.bidding);
@@ -1941,6 +1942,7 @@ io.on("connection", async (socket) => {
           round: round_num,
           boardSequence: table_data.boards.length,
           board_num: table_data.cur_board,
+          total_round: tours[tour_id].board_to_play / tours[tour_id].board_to_play,
           ...temp_bid,
           ...temp_play,
         };
