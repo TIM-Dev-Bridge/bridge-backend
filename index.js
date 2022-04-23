@@ -1998,7 +1998,7 @@ io.on("connection", async (socket) => {
     }
   );
 
-  socket.on("getHistory", (tour_id = "Mark1", username = "plantA") => {
+  socket.on("getMyPastMatch", (tour_id = "Mark1", username = "plantA") => {
     try {
       let pairId = game.getPairId(tours[tour_id], username);
       let all_round = tours[tour_id].rounds.map((round) => {
