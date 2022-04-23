@@ -1944,7 +1944,7 @@ io.on("connection", async (socket) => {
           ...temp_play,
         };
 
-        socket.emit("test", output);
+        socket.emit("getCurrentMatchInfo", output);
       } catch (error) {
         console.log("error", error);
       }
