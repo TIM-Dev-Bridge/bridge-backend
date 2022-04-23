@@ -35,7 +35,7 @@ const TourR = require("./model/tourR");
 const User = require("./model/user");
 const News = require("./model/news");
 const History = require("./model/history");
-const { log } = require("console");
+const { log, table } = require("console");
 
 const _ = require("lodash");
 let card_handle = require("./handlers/card");
@@ -1825,36 +1825,33 @@ io.on("connection", async (socket) => {
       player_id = "peterpan"
     ) => {
       try {
-        ///Get all card in round
-        let round_data = access_round(tour_id, round_num);
-        let get_all_cards = round_data.cards[cur_board];
-        let table_data = access_table(tour_id, round_num, table_id);
-        socket.emit("test", round_data.cards);
-
-        ///Get played card and convert to array
-        let played_card_object = table_data.playing.playedCards;
-        let played_card_array = [[], [], [], []];
-        played_card_object.map((turn) => {
-          played_card_array[0].push(turn["N"]);
-          played_card_array[1].push(turn["E"]);
-          played_card_array[2].push(turn["S"]);
-          played_card_array[3].push(turn["W"]);
-        });
-        console.log("played_card_object", played_card_object);
-
-        ///Select left card
-        let left_card_array = [[], [], [], []];
-        get_all_cards.map((all, index_all) => {
-          played_card_array.map((played, index_played) => {
-            if (index_all == index_played) {
-              let left = all.filter((x) => !played.includes(x));
-              left_card_array[index_all].push(...left);
-              return left;
-            }
-          });
-        });
-
-        socket.emit("test", get_all_cards, played_card_array, left_card_array);
+        // ///Get all card in round
+        // let round_data = access_round(tour_id, round_num);
+        // let get_all_cards = round_data.cards[cur_board];
+        // let table_data = access_table(tour_id, round_num, table_id);
+        // socket.emit("test", round_data.cards);
+        // ///Get played card and convert to array
+        // let played_card_object = table_data.playing.playedCards;
+        // let played_card_array = [[], [], [], []];
+        // played_card_object.map((turn) => {
+        //   played_card_array[0].push(turn["N"]);
+        //   played_card_array[1].push(turn["E"]);
+        //   played_card_array[2].push(turn["S"]);
+        //   played_card_array[3].push(turn["W"]);
+        // });
+        // console.log("played_card_object", played_card_object);
+        // ///Select left card
+        // let left_card_array = [[], [], [], []];
+        // get_all_cards.map((all, index_all) => {
+        //   played_card_array.map((played, index_played) => {
+        //     if (index_all == index_played) {
+        //       let left = all.filter((x) => !played.includes(x));
+        //       left_card_array[index_all].push(...left);
+        //       return left;
+        //     }
+        //   });
+        // });
+        // socket.emit("test", get_all_cards, played_card_array, left_card_array);
         //!------------------------------------------------------------------------
         // let now = new Date();
         // // let prevtime = "12/18/2021, 5:06:00 PM";
@@ -1882,7 +1879,6 @@ io.on("connection", async (socket) => {
         // });
         // console.log("pass");
         // console.log("pass", count);
-
         // if (count == 4) {
         //   console.log("joinroom");
         // }
@@ -1992,8 +1988,8 @@ io.on("connection", async (socket) => {
   socket.on(
     "getCurrentMatchStatus",
     (tour_id = "Mark1", round_num = 1, table_id = "r1b1") => {
-      table_data = access_table(tour_id, round_num, table_id);
-      let versus = access_table.versus.split(",");
+      let table_data = access_table(tour_id, round_num, table_id);
+      let versus = table_data.versus.split(",");
       return {
         nsTeam: versus[0],
         nsTeam: versus[1],
@@ -2001,6 +1997,34 @@ io.on("connection", async (socket) => {
       };
     }
   );
+
+  socket.on("getHistory", (tour_id = "Mark1", username = "plantA") => {
+    try {
+      let pairId = game.getPairId(tours[tour_id], username);
+      let all_round = tours[tour_id].rounds.map((round) => {
+        let select_table = round.tables.filter((table) =>
+          table.versus.split(",").includes(pairId.toString())
+        );
+        console.log("select_table", select_table);
+        let all_table = select_table.map((table) => {
+          return {
+            table_id: table.table_id,
+            directions: table.directions,
+            declarer: table.bidding.declarer,
+            NSScore: table.score[0],
+            EWScore: table.score[1],
+            MP: tours[tour_id].boardScores[table.boards[0] - 1].selfIMP,
+            totalMP: tours[tour_id].rankPairs[pairId].totalMP,
+          };
+        });
+        return { round: round.round_num, tables: all_table };
+      });
+      console.log("all", all_round);
+      socket.emit("getHistory", all_round);
+    } catch (error) {
+      console.log("error is", error);
+    }
+  });
 
   socket.on("grant_user_to_td", async (admin, username = "plantA") => {
     let db_user = await User.findOne({ username });
