@@ -2020,7 +2020,7 @@ io.on("connection", async (socket) => {
         return { round: round.round_num, tables: all_table };
       });
       console.log("all", all_round);
-      socket.emit("getHistory", all_round);
+      socket.emit("getMyPastMatch", all_round);
     } catch (error) {
       console.log("error is", error);
     }
