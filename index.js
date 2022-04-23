@@ -1170,9 +1170,9 @@ io.on("connection", async (socket) => {
         (table_id = table_id)
       );
       ///Player get cards
-      // let socket_id = users[player_id].socket_id;
+      let socket_id = users[player_id].socket_id;
       ///fake id
-      let socket_id = "123";
+      // let socket_id = "123";
       sendCardOneHand({
         room,
         socket_id,
@@ -1744,7 +1744,7 @@ io.on("connection", async (socket) => {
           payload: {
             leader,
             turn: ++access_playing.turn,
-            tricks: access_playing.tricks
+            tricks: access_playing.tricks,
           },
         });
         access_playing.initSuite = undefined;
@@ -1942,7 +1942,8 @@ io.on("connection", async (socket) => {
           round: round_num,
           boardSequence: table_data.boards.length,
           board_num: table_data.cur_board,
-          total_round: tours[tour_id].board_to_play / tours[tour_id].board_to_play,
+          total_round:
+            tours[tour_id].board_to_play / tours[tour_id].board_to_play,
           ...temp_bid,
           ...temp_play,
         };
