@@ -1570,7 +1570,7 @@ io.on("connection", async (socket) => {
 
           io.emit("get-tours", tours[tour_name].rounds);
           //Change board
-          if (access_playing.turn >= 1) {
+          if (access_playing.turn >= 13) {
             // if (++table_data.cur_board > tours[tour_name].board_per_round) {
             /// clear all temp var here ...
             ///reset bidding
