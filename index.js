@@ -589,9 +589,6 @@ io.on("connection", async (socket) => {
         type: String(tours[tour_name].type),
         players: String(tours[tour_name].players.length),
       };
-      if (tourData.title == "tour-f2") {
-        tourData.players = 10 + tours[tour_name].players.length;
-      }
       tourList.push(tourData);
     }
     console.log(`tourList`, tourList);
@@ -806,9 +803,6 @@ io.on("connection", async (socket) => {
         type: String(tours[tour_name].type),
         players: String(tours[tour_name].players.length),
       };
-      if (tour_name == "tour-f2") {
-        tourData.players = 10 + tours[tour_name].players.length;
-      }
       tourList.push(tourData);
     }
     io.emit("update-tour-list", tourList);
@@ -1770,28 +1764,59 @@ io.on("connection", async (socket) => {
     socket.leave(table_id);
   });
 
+  socket.on("join-tour-spec", async (player_name, tour_name) => {
+    socket.join(tour_name);
+    tours[tour_name]["non_player"].push({
+      id: player_name,
+      name: player_name,
+      status: "spec",
+    });
+    io.to(tour_name).emit("join-tour-spec", tours[tour_name]);
+  });
+
   socket.on(
     "join-room-spec",
     ({
-      spec_id,
       spec_name,
-      tour_name,
+      tour_name = "Mark1",
       room = "room_1",
-      round_num,
-      table_id,
+      round_num = 1,
+      table_id = "r1b1",
     }) => {
-      socket.join(room);
-      users[spec_name].game_status = "spec";
+      try {
+        socket.join(room);
+        users[spec_name].game_status = "spec";
 
-      let round_data = access_round((tour_name = "Mark1"), (round_num = "1"));
-      let table_data = access_table(
-        (tour_name = "Mark1"),
-        (round_num = "1"),
-        (table_id = "r1b1")
-      );
-
-      if (table_data.status == "playing") {
-        socket.emit("join-spec", table_data);
+        ///Get all card in round
+        let round_data = access_round(tour_name, round_num);
+        let get_all_cards = round_data.cards[cur_board];
+        let table_data = access_table(tour_name, round_num, table_id);
+        socket.emit("test", round_data.cards);
+        ///Get played card and convert to array
+        let played_card_object = table_data.playing.playedCards;
+        let played_card_array = [[], [], [], []];
+        played_card_object.map((turn) => {
+          played_card_array[0].push(turn["N"]);
+          played_card_array[1].push(turn["E"]);
+          played_card_array[2].push(turn["S"]);
+          played_card_array[3].push(turn["W"]);
+        });
+        console.log("played_card_object", played_card_object);
+        ///Select left card
+        let left_card_array = [[], [], [], []];
+        get_all_cards.map((all, index_all) => {
+          played_card_array.map((played, index_played) => {
+            if (index_all == index_played) {
+              let left = all.filter((x) => !played.includes(x));
+              left_card_array[index_all].push(...left);
+              return left;
+            }
+          });
+        });
+        //socket.emit("test", get_all_cards, played_card_array, left_card_array);
+        socket.emit("test", table_data, left_card_array);
+      } catch (error) {
+        console.log("error", error);
       }
     }
   );
@@ -1825,33 +1850,6 @@ io.on("connection", async (socket) => {
       player_id = "peterpan"
     ) => {
       try {
-        // ///Get all card in round
-        // let round_data = access_round(tour_id, round_num);
-        // let get_all_cards = round_data.cards[cur_board];
-        // let table_data = access_table(tour_id, round_num, table_id);
-        // socket.emit("test", round_data.cards);
-        // ///Get played card and convert to array
-        // let played_card_object = table_data.playing.playedCards;
-        // let played_card_array = [[], [], [], []];
-        // played_card_object.map((turn) => {
-        //   played_card_array[0].push(turn["N"]);
-        //   played_card_array[1].push(turn["E"]);
-        //   played_card_array[2].push(turn["S"]);
-        //   played_card_array[3].push(turn["W"]);
-        // });
-        // console.log("played_card_object", played_card_object);
-        // ///Select left card
-        // let left_card_array = [[], [], [], []];
-        // get_all_cards.map((all, index_all) => {
-        //   played_card_array.map((played, index_played) => {
-        //     if (index_all == index_played) {
-        //       let left = all.filter((x) => !played.includes(x));
-        //       left_card_array[index_all].push(...left);
-        //       return left;
-        //     }
-        //   });
-        // });
-        // socket.emit("test", get_all_cards, played_card_array, left_card_array);
         //!------------------------------------------------------------------------
         // let now = new Date();
         // // let prevtime = "12/18/2021, 5:06:00 PM";
@@ -1998,33 +1996,58 @@ io.on("connection", async (socket) => {
     }
   );
 
-  socket.on("getMyPastMatch", (tour_id = "Mark1", username = "plantA") => {
-    try {
-      let pairId = game.getPairId(tours[tour_id], username);
-      let all_round = tours[tour_id].rounds.map((round) => {
-        let select_table = round.tables.filter((table) =>
-          table.versus.split(",").includes(pairId.toString())
-        );
-        console.log("select_table", select_table);
-        let all_table = select_table.map((table) => {
-          return {
-            table_id: table.table_id,
-            directions: table.directions,
-            declarer: table.bidding.declarer,
-            NSScore: table.score[0],
-            EWScore: table.score[1],
-            MP: tours[tour_id].boardScores[table.boards[0] - 1].selfIMP,
-            totalMP: tours[tour_id].rankPairs[pairId].totalMP,
-          };
+  socket.on(
+    "getMyPastMatch",
+    async (tour_id = "Mark1", username = "plantA") => {
+      try {
+        let pairId = game.getPairId(tours[tour_id], username);
+        let all_round = tours[tour_id].rounds.map((round) => {
+          let select_table = round.tables.filter((table) =>
+            table.versus.split(",").includes(pairId.toString())
+          );
+          let all_table = select_table.map((table) => {
+            let boardIndex = score.findIndexScoreBoard(
+              tours[tour_id].boardScores,
+              table.cur_board
+            );
+            let rankIndex = score.findIndexRankPairId(
+              tours[tour_id].rankPairs,
+              pairId
+            );
+            if (
+              tours[tour_id].boardScores[boardIndex].pairs_score[rankIndex] ==
+              undefined
+            ) {
+              return {
+                table_id: table.table_id,
+                directions: table.directions,
+                declarer: table.bidding.declarer,
+                NSScore: table.score[0],
+                EWScore: table.score[1],
+                MP: undefined,
+                totalMP: undefined,
+              };
+            } else
+              return {
+                table_id: table.table_id,
+                directions: table.directions,
+                declarer: table.bidding.declarer,
+                NSScore: table.score[0],
+                EWScore: table.score[1],
+                MP: tours[tour_id].boardScores[boardIndex].pairs_score[
+                  rankIndex
+                ].imp,
+                totalMP: tours[tour_id].rankPairs[pairId].totalMP,
+              };
+          });
+          return { round: round.round_num, tables: all_table };
         });
-        return { round: round.round_num, tables: all_table };
-      });
-      console.log("all", all_round);
-      socket.emit("getMyPastMatch", all_round);
-    } catch (error) {
-      console.log("error is", error);
+        socket.emit("getMyPastMatch", all_round);
+      } catch (error) {
+        console.log("error is", error);
+      }
     }
-  });
+  );
 
   socket.on("grant_user_to_td", async (admin, username = "plantA") => {
     let db_user = await User.findOne({ username });
