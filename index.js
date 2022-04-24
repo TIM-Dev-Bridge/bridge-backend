@@ -1965,22 +1965,38 @@ io.on("connection", async (socket) => {
 
   socket.on("getNsRankings", (tour_id) => {
     try {
-      let selectNS = tours[tour_id].boardScores.map((board) => {
-        let pair = board.pairs_score.filter((pair) => pair.direction == 0);
-        return { board_num: board.board_num, pairs: pair };
+      let SelectNSPair = [];
+      let boardIndex = 0;
+      tours[tour_id].boardScores[boardIndex].pairs_score.map((pair) => {
+        if (pair.direction == 0) {
+          SelectNSPair.push(parseInt(pair.pair_id));
+        }
       });
-      socket.emit("test", selectNS);
-    } catch (error) {}
+      let getNSRank = tours[tour_id].rankPairs.filter((pair) =>
+        SelectNSPair.includes(pair.pair_id)
+      );
+      socket.emit("getNsRankings", getNSRank);
+    } catch (error) {
+      console.log("error", error);
+    }
   });
 
   socket.on("getEwRankings", (tour_id) => {
     try {
-      let selectEW = tours[tour_id].boardScores.map((board) => {
-        let pair = board.pairs_score.filter((pair) => pair.direction == 1);
-        return { board_num: board.board_num, pairs: pair };
+      let SelectEWPair = [];
+      let boardIndex = 0;
+      tours[tour_id].boardScores[boardIndex].pairs_score.map((pair) => {
+        if (pair.direction == 1) {
+          SelectEWPair.push(parseInt(pair.pair_id));
+        }
       });
-      socket.emit("test", selectEW);
-    } catch (error) {}
+      let getEWRank = tours[tour_id].rankPairs.filter((pair) =>
+        SelectEWPair.includes(pair.pair_id)
+      );
+      socket.emit("getEwRankings", getEWRank);
+    } catch (error) {
+      console.log("error", error);
+    }
   });
 
   socket.on(
@@ -2173,8 +2189,8 @@ io.on("connection", async (socket) => {
   });
   socket.on("disconnect", async () => {
     console.log("User was disconnect");
-    socket.leaveAll();
-    console.log("all room", io.sockets.adapter.sids);
+    //socket.leaveAll();
+    //console.log("all room", io.sockets.adapter.sids);
     // console.log("first", await io.sockets.adapter.sids.get(socket.id));
     // let [...all_room] = io.sockets.adapter.sids.get(socket.id);
     // console.log("all_room", all_room);

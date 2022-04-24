@@ -719,7 +719,7 @@ exports.generateFullGameData = () => {
         ],
       },
     ],
-    rankPair: [
+    rankPairs: [
       {
         pair_id: 1,
       },
