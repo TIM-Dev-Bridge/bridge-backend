@@ -2016,7 +2016,8 @@ io.on("connection", async (socket) => {
             );
             if (
               tours[tour_id].boardScores[boardIndex].pairs_score[rankIndex] ==
-              undefined
+                undefined ||
+              tours[tour_id].rankPairs[rankIndex] == undefined
             ) {
               return {
                 table_id: table.table_id,
@@ -2037,7 +2038,7 @@ io.on("connection", async (socket) => {
                 MP: tours[tour_id].boardScores[boardIndex].pairs_score[
                   rankIndex
                 ].imp,
-                totalMP: tours[tour_id].rankPairs[pairId].totalMP,
+                totalMP: tours[tour_id].rankPairs[rankIndex].totalMP,
               };
           });
           return { round: round.round_num, tables: all_table };
