@@ -510,24 +510,20 @@ io.on("connection", async (socket) => {
   socket.on("create-tour", async (tour_data, callback) => {
     console.log("NEW TOUR ", tours[tour_data.tour_name]);
     try {
-      console.log("tour_data", tour_data);
-      //fist time not have
+      /// Validate
       // const sameTour = await TourR.findOne({ tour_name: tour_data.tour_name });
       // if (sameTour) {
       //   //callback(false, "This tour already create");
       //   return socket.emit("create-tour", "This tour already create");
       // }
 
-      //Encrypt password tour
-      //encryptedPassword = await bcrypt.hash(tour_data.password, 10);
-      //Create tournament on database
-      // let tournament = await TourR.create({
-      // ...tour_data
-      // });
-      // console.log("created tournament successful");
+      // Create tournament on database
+      let tournament = await TourR.create({
+        ...tour_data,
+      });
+      console.log("created tournament successful");
 
       tours[tour_data.tour_name] = tour_data;
-      console.log(tours[tour_data.tour_name]);
 
       ///Set time to force user
       // let startTime = "2022-04-16T17:56:00.000Z";
@@ -1065,23 +1061,17 @@ io.on("connection", async (socket) => {
   //#start
   socket.on("start", async (tour_name) => {
     ///Sort player when player left the room
-    socket.emit("test", tours[tour_name].players);
     tours[tour_name].players.sort((a, b) => {
       return a.pair_id - b.pair_id;
     });
-    socket.emit("test", tours[tour_name].players);
     let pairIdArray = tours[tour_name].players.map((pair) => pair.pair_id);
-    socket.emit("test", pairIdArray);
     let defaultPairId = [
       ..._.range(1, tours[tour_name].players.length / 2 + 1),
       ..._.range(1, tours[tour_name].players.length / 2 + 1),
     ].sort();
-    socket.emit("test", defaultPairId);
     tours[tour_name].players.map((pair, index) => {
       pair.pair_id = defaultPairId[index];
     });
-    socket.emit("test", tours[tour_name].players);
-    //let assignPairId =
 
     let rounds = await matchmaking(tour_name);
     tours[tour_name][`rounds`] = rounds;
@@ -1154,7 +1144,7 @@ io.on("connection", async (socket) => {
     }) => {
       socket.join(room);
       //users[player_name].game_status = "player";
-      console.log("direction", direction);
+      // console.log("direction", direction);
       /// return current players.
       // io.to(room).emit("waiting_for_start", tours[tour_name].players);
 
@@ -1194,8 +1184,9 @@ io.on("connection", async (socket) => {
       // // }
       ///Fake check
       let [...idInRoom] = io.sockets.adapter.rooms.get(room);
-      console.log("idInRoom", idInRoom);
-      console.log("table status", table_data.status);
+      /// Log player in room
+      // console.log("idInRoom", idInRoom);
+      // console.log("table status", table_data.status);
       //let playerInRoom = handler_room.accessInRoom(idInRoom, userScreen);
       /// if fully player, change to 'bidding phase'.
       if (idInRoom.length === 4 && table_data.status == "waiting") {
@@ -1206,8 +1197,6 @@ io.on("connection", async (socket) => {
         io.to(tours[tour_name]).emit("update-room-status", table_data.status);
         console.log("can go bidding phase");
       }
-      // else if (table_data.status == "playing" && player_id in spec) {
-      // }
     }
   );
 
@@ -1221,14 +1210,12 @@ io.on("connection", async (socket) => {
       room,
       contract,
       direction,
-      //Chage
       tour_name,
       round_num,
       table_id,
     }) => {
       console.log("direction now", direction, contract);
       const nextDirection = direction < 3 ? parseInt(direction, 10) + 1 : 0;
-      // const nextDirection = direction < 3 ? parseInt(direction, 10) + 1 : 0;
 
       /// convert contract to suite.
       const suite = contract % 5;

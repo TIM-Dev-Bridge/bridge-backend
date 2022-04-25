@@ -3,7 +3,7 @@ require("../config/database").connect();
 
 const express = require("express");
 const User = require("../model/user");
-const Block = require("../model/news")
+const Block = require("../model/news");
 const TourR = require("../model/tourR");
 const News = require("../model/news");
 const bcrypt = require("bcryptjs");
@@ -112,7 +112,7 @@ exports.login = async (req, res) => {
       password,
     });
     if (!valid) return res.status(400).json(errors);
-
+    
     // Validate if user exist in database
     const user = await User.findOne({ email });
 
