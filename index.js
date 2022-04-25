@@ -152,6 +152,33 @@ const ioToRoomOnPlaying = ({ status = "", room = "", payload = {} }) => {
   io.to(room).emit("playing", { status, payload });
 };
 
+const ioToRoomOnStartBidding = ({
+  room = "",
+  tour_name = "",
+  table_id = "",
+  round_num,
+  // room = "",
+  // contract = -1,
+  // tour_name,
+  // round_num,
+  // table_id,
+  // nextDirection = 0,
+  // doubleEnable = true,
+}) => {
+  let table_data = access_table(tour_name, round_num, table_id);
+  ioToRoomOnPlaying({
+    room,
+    status: "initial_bidding",
+    payload: {
+      board_type: BOARD[table_data.cur_board - 1],
+      cur_board: table_data.cur_board,
+      board_per_round: tours[tour_name].board_per_round,
+      cur_round: round_num,
+      total_round: tours[tour_name].board_to_play / tours[tour_name].board_per_round,
+    },
+  })
+}
+
 const ioToRoomOnBiddingPhase = ({
   room = "",
   contract = -1,
@@ -1200,7 +1227,7 @@ io.on("connection", async (socket) => {
       /// if fully player, change to 'bidding phase'.
       if (idInRoom.length === 4 && table_data.status == "waiting") {
         table_data.status = "playing";
-
+        ioToRoomOnStartBidding({ room, tour_name, round_num, table_id,});
         ioToRoomOnBiddingPhase({ room, tour_name, round_num, table_id });
         ///!send table status
         io.to(tours[tour_name]).emit("update-room-status", table_data.status);
@@ -1309,7 +1336,9 @@ io.on("connection", async (socket) => {
             ioToRoomOnPlaying({
               room,
               status: "ending",
-              payload: {},
+              payload: {
+                 tricks: access_playing.tricks,
+              },
             });
             return;
           }
