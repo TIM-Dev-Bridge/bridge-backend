@@ -1337,7 +1337,6 @@ io.on("connection", async (socket) => {
               room,
               status: "ending",
               payload: {
-                 tricks: access_playing.tricks,
               },
             });
             return;
@@ -1615,7 +1614,8 @@ io.on("connection", async (socket) => {
             ioToRoomOnPlaying({
               room,
               status: "ending",
-              payload: {},
+              payload: {
+                tricks: access_playing.tricks,},
             });
           }
 
