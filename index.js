@@ -224,14 +224,12 @@ const matchmaking = async (tour_name) => {
       pair_id: 999,
     });
   }
-  console.log("player", tours[tour_name].players);
   //let unique_team = _.range(1, tours[tour_name].players.length / 2 + 1).sort();
   let unique_team = _.uniq(
     tours[tour_name].players.map((player) => player.pair_id)
   );
   let half = Math.ceil(unique_team.length / 2);
 
-  console.log(`unique_team`, unique_team);
   //Slice
   let first_pair = unique_team.slice(0, half);
   let second_pair = unique_team.slice(-half);
@@ -253,7 +251,6 @@ const matchmaking = async (tour_name) => {
         ),
         ["pair_id"]
       );
-      console.log("temp_versus", temp_versus);
       let versus = temp_versus.map((team, index) => {
         if (index == 2) {
           return { ...team, direction: 1 };
@@ -262,7 +259,6 @@ const matchmaking = async (tour_name) => {
         }
         return { ...team, direction: index };
       });
-      console.log("versus", versus);
       tables.push({
         table_id: `r${round + 1}b${table + 1}`, //mongodb id
         status: "waiting",
@@ -324,7 +320,6 @@ const access_table = (tour_name, round_num, table_id) => {
       "round_num",
       parseInt(round_num),
     ]);
-    console.log("round", round);
     let table = _.find(round.tables, ["table_id", table_id]);
     return table;
   } catch (error) {
@@ -341,7 +336,7 @@ const sendCardOneHand = ({
   table_id,
   sendAll = false,
 }) => {
-  console.log("TABLE :", tour_name, round_num, table_id, direction);
+  //console.log("TABLE :", tour_name, round_num, table_id, direction);
   let round_data = access_round(tour_name, round_num);
   let table_data = access_table(tour_name, round_num, table_id);
   if (sendAll === true)
@@ -354,7 +349,6 @@ const sendCardOneHand = ({
       ][direction],
       direction
     );
-  else console.log("CURRENT", socket_id);
   io.to(socket_id).emit(
     "card",
     round_data.cards[
@@ -364,17 +358,6 @@ const sendCardOneHand = ({
     ][direction],
     direction
   );
-
-  console.log(
-    "card",
-    round_data.cards[
-      table_data.cur_board -
-        tours[tour_name].board_per_round * (parseInt(round_num) - 1) -
-        1
-    ][direction],
-    direction
-  );
-  console.log("direction", direction);
 };
 
 const specWhilePlaying = ({ socket_id, tour_name, room = "room_1" }) => {
@@ -390,22 +373,6 @@ const specWhilePlaying = ({ socket_id, tour_name, room = "room_1" }) => {
   });
 };
 
-const withTimeout = (onSuccess, onTimeout, timeout) => {
-  let called = false;
-
-  const timer = setTimeout(() => {
-    if (called) return;
-    called = true;
-    onTimeout();
-  }, timeout);
-
-  return (...args) => {
-    if (called) return;
-    called = true;
-    clearTimeout(timer);
-    onSuccess.apply(this, args);
-  };
-};
 
 // // Authentication user
 // io.use(function (socket, next) {
@@ -430,7 +397,6 @@ const withTimeout = (onSuccess, onTimeout, timeout) => {
 // });
 
 io.on("connection", async (socket) => {
-  console.log("can connected");
 
   if (users[socket.handshake.query.username] == undefined) {
     // let user_db = await User.findOne({
@@ -445,9 +411,7 @@ io.on("connection", async (socket) => {
       session: undefined,
     };
     users[socket.handshake.query.username] = user;
-    console.log("User created", users[socket.handshake.query.username]);
   } else {
-    console.log("Exist User", socket.handshake.query.username);
     users[socket.handshake.query.username].socket_id = socket.id;
   }
 
@@ -482,8 +446,6 @@ io.on("connection", async (socket) => {
     try {
       // const user_data = await User.findOne({ username: username });
       // socket.emit("get-user-data", user_data);
-      console.log(users);
-      console.log("in function");
     } catch (error) {
       console.log(err);
       socket.emit("get-user-data", "Cannot find user data");
@@ -535,7 +497,7 @@ io.on("connection", async (socket) => {
 
   //Create tour
   socket.on("create-tour", async (tour_data, callback) => {
-    console.log("NEW TOUR ", tours[tour_data.tour_name]);
+    //console.log("NEW TOUR ", tours[tour_data.tour_name]);
     try {
       /// Validate
       // const sameTour = await TourR.findOne({ tour_name: tour_data.tour_name });
@@ -655,15 +617,15 @@ io.on("connection", async (socket) => {
           },
         }
       );
-      tours[tour_data.tour_name].count_update++;
-      let count = tours[tour_data.tour_name].count_update;
-      socket.timeout(5000).emit("test", () => {
-        socket.emit("test", "Prepare for join start tour");
-        if (tours[tour_data.tour_name].count_update == count) {
-          io.emit("test", "Use this time");
-        }
-      });
-      console.log("updated success");
+      // tours[tour_data.tour_name].count_update++;
+      // let count = tours[tour_data.tour_name].count_update;
+      // socket.timeout(5000).emit("test", () => {
+      //   socket.emit("test", "Prepare for join start tour");
+      //   if (tours[tour_data.tour_name].count_update == count) {
+      //     io.emit("test", "Use this time");
+      //   }
+      // });
+      // console.log("updated success");
       //callback(true, "Room created");
     } catch (error) {
       console.log("error is", error);
@@ -789,7 +751,6 @@ io.on("connection", async (socket) => {
         //   status: "waiting",
         //   //pair_id: 0,
         // });
-        console.log("PUSH", tours[tour_name].players);
         // tours[tour_name].players.push(player_name)
         users[player_name].tour = tour_name;
         // tours[tour_name].player_waiting.push(player_name)
@@ -800,8 +761,8 @@ io.on("connection", async (socket) => {
         var pairPlayers = tours[tour_name].players.filter(
           (player) => player.status == "in-pair"
         );
-        let timeStart = TourR.find({ tour_name: tour_name }).time_start;
-        let timeJoin = new Date().getTime();
+        // let timeStart = TourR.find({ tour_name: tour_name }).time_start;
+        // let timeJoin = new Date().getTime();
         //io.timeout(timeJoin - timeStart).emit("test", "Good luck");
         io.in(tour_name).emit("update-player-pair", pairPlayers);
         io.in(tour_name).emit("");
@@ -1114,8 +1075,6 @@ io.on("connection", async (socket) => {
             directions,
           })
         );
-        //socket.emit("test", new_table.directions);
-        console.log("DATA", new_table);
         return { round_num, tables: new_table };
       })
 
@@ -1134,7 +1093,6 @@ io.on("connection", async (socket) => {
       //   return { round: _.omit(round, ["card","tables"]), tables: newTable };
       // }),
     );
-    console.log("ROUND", tours[tour_name].rounds);
 
     ///Send tourdata without round
     let select_data = (({ rounds, ...data }) => ({ ...data }))(
@@ -1184,7 +1142,7 @@ io.on("connection", async (socket) => {
       let socket_id = users[player_id].socket_id;
       ///fake id
       // let socket_id = "123";
-      sendCardOneHand({
+      await sendCardOneHand({
         room,
         socket_id,
         direction,
@@ -1279,9 +1237,6 @@ io.on("connection", async (socket) => {
 
           access_playing.bidSuite = winnerSuite;
           access_playing.doubles = access_bidding.doubles;
-          console.log("leader", leader);
-          console.log("declarer", declarer);
-          console.log("before_direct", direction);
 
           ///Send card the opposite declarer to everyone
           let opposite = declarer < 2 ? declarer + 2 : declarer - 2;
@@ -1435,7 +1390,6 @@ io.on("connection", async (socket) => {
         card,
         direction,
       });
-      console.log("communityCards", access_playing.communityCards);
 
       //Save played card
       access_playing.playedCards[access_playing.turn - 1] = await {
@@ -1446,7 +1400,6 @@ io.on("connection", async (socket) => {
         },
       };
 
-      console.log("playedCards", access_playing.playedCards);
 
       /// if initSuite is 'undefined', it mean you are leader.
       access_playing.initSuite =
@@ -1506,7 +1459,6 @@ io.on("connection", async (socket) => {
               access_playing.tricks
             )
           );
-          console.log("score", table_data.score);
           ///Send board summary
           io.to(room).emit(
             "board-summary",
@@ -1646,7 +1598,6 @@ io.on("connection", async (socket) => {
               ].pairs_score.filter((pair) => pair.direction == 1);
               ///Convert to score array
               let getScoreEW = selectEW.map((score) => score.score);
-              console.log("getScoreEW", getScoreEW);
               let [mpEW, percentEW] = score.calBoardMps(getScoreEW);
               ///Select index
               tours[tour_name].boardScores[boardIndex].pairs_score.map(
@@ -1671,7 +1622,6 @@ io.on("connection", async (socket) => {
                 .to("start-room")
                 .emit("score", tours[tour_name].boardScores);
             });
-            console.log("rankPair", tours[tour_name].rankPairs);
             //?Rank
             tours[tour_name].rankPairs.map(({ pair_id }) => {
               let rankIndex = score.findIndexRankPairId(
@@ -1686,14 +1636,10 @@ io.on("connection", async (socket) => {
                 pair_id,
                 tours[tour_name].boardScores
               );
-              console.log("selfIMP", selfIMP);
-              console.log("selfPercent", selfPercent);
               let [totalMps, rankingPercentage] = score.calRankingScore(
                 selfIMP,
                 selfPercent
               );
-              console.log("totalMps", totalMps);
-              console.log("rankingPercentage", rankingPercentage);
               tours[tour_name].rankPairs[rankIndex]["totalMP"] = totalMps;
               tours[tour_name].rankPairs[rankIndex]["rankPercent"] =
                 rankingPercentage;
@@ -1708,12 +1654,12 @@ io.on("connection", async (socket) => {
 
             io.to(room).emit("rank-with-name", rankConvert);
 
-            ///Send finsh all table
-            console.log(
-              "FINISH ALL",
-              count_finish_table,
-              round_data.tables.length
-            );
+            // ///Send finsh all table
+            // console.log(
+            //   "FINISH ALL",
+            //   count_finish_table,
+            //   round_data.tables.length
+            // );
             io.to(tour_name).emit(
               "finish-all-table",
               finish_table,
@@ -1817,7 +1763,6 @@ io.on("connection", async (socket) => {
           played_card_array[2].push(turn["S"]);
           played_card_array[3].push(turn["W"]);
         });
-        console.log("played_card_object", played_card_object);
         ///Select left card
         let left_card_array = [[], [], [], []];
         get_all_cards.map((all, index_all) => {
@@ -2128,7 +2073,6 @@ io.on("connection", async (socket) => {
       users[username].access = "ban";
       io.emit("refuse_user_to_td", (users[username].access = "ban"));
     }
-    console.log("data", users[username]);
     let update_user = await User.updateOne(
       {
         username,
@@ -2147,7 +2091,6 @@ io.on("connection", async (socket) => {
       users[username].access = "user";
       io.emit("refuse_ban_user", (users[username].access = "user"));
     }
-    console.log("data", users[username]);
     let update_user = await User.updateOne(
       {
         username,
