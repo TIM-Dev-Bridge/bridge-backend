@@ -220,16 +220,17 @@ exports.updateTourData = async (req, res) => {
       max_player,
       type,
       password,
-      player_name,
+      players,
       time_start,
       status,
       board_to_play,
       minute_board,
-      board_round,
+      board_per_round,
       movement,
       scoring,
       barometer,
       createBy,
+      mode
     } = req.body;
     //fist time not have
     const haveTour = await TourR.findOne({ tour_name: tour_name });
@@ -248,16 +249,17 @@ exports.updateTourData = async (req, res) => {
           max_player: max_player,
           type: type,
           password: password,
-          player_name: player_name,
+          players: players,
           time_start: time_start,
           status: status,
           board_to_play: board_to_play,
           minute_board: minute_board,
-          board_round: board_round,
+          board_per_round: board_per_round,
           movement: movement,
           scoring: scoring,
           barometer: barometer,
           createBy: createBy,
+          mode: mode
         },
       }
     );
