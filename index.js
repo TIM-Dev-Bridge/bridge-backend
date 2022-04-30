@@ -506,9 +506,9 @@ io.on("connection", async (socket) => {
       // }
 
       // Create tournament on database
-      let tournament = await TourR.create({
-        ...tour_data,
-      });
+      // let tournament = await TourR.create({
+      //   ...tour_data,
+      // });
       console.log("created tournament successful");
 
       tours[tour_data.tour_name] = tour_data;
@@ -539,6 +539,8 @@ io.on("connection", async (socket) => {
           type: String(tours[tour_name].type),
           players: String(tours[tour_name].players.length),
           team_runnum: 1,
+          mode: tours[tour_name].mode,
+          status: tours[tour_name].status
         };
         tourList.push(tourData);
       }
@@ -572,6 +574,8 @@ io.on("connection", async (socket) => {
         title: tours[tour_name].tour_name,
         type: String(tours[tour_name].type),
         players: String(tours[tour_name].players.length),
+        mode: tours[tour_name].mode,
+        status: tours[tour_name].status
       };
       tourList.push(tourData);
     }
@@ -635,23 +639,26 @@ io.on("connection", async (socket) => {
   socket.on("delete-tour", async (tour_name, current_TD) => {
     try {
       //fist time not have
-      const hasTour = await TourR.findOne({ tour_name: tour_name });
-      if (!hasTour) {
-        //callback(false, "This tour already create");
-        return socket.emit(
-          "delete-tour",
-          "This tour name not have in our tournament"
-        );
-      }
-      delete tours[tour_data.tour_name];
-      //Create tournament on database
-      const tournament = await TourR.deleteOne({
-        tour_name: tour_name,
-        createBy: current_TD,
-      });
-      console.log("delete successful");
 
-      io.emit("delete-tour");
+      // const hasTour = await TourR.findOne({ tour_name: tour_name });
+      // if (!hasTour) {
+      //   //callback(false, "This tour already create");
+      //   return socket.emit(
+      //     "delete-tour",
+      //     "This tour name not have in our tournament"
+      //   );
+      // }
+      delete tours[tour_name];
+      //Create tournament on database
+      // const tournament = await TourR.deleteOne({
+      //   tour_name: tour_name,
+      //   createBy: current_TD,
+      // });
+      console.log("delete successful");
+      updateTourList()
+
+      io.to(tour_name).emit('please-leave-tour')
+      // io.emit("delete-tour");
     } catch (error) {
       console.log("error is", error);
       //callback(false, "Failed to create room");
@@ -709,6 +716,7 @@ io.on("connection", async (socket) => {
         io.in(tour_name).emit("");
         io.in(tour_name).emit("update-player-waiting", waitingPlayer);
         updateTourList();
+        callback(true)
         return;
       }
 
@@ -745,11 +753,13 @@ io.on("connection", async (socket) => {
         io.in(tour_name).emit("");
         io.in(tour_name).emit("update-player-waiting", waitingPlayer);
         updateTourList();
+        callback(true)
         ///Comment for test backend : Mark
         // callback(true);
       }
     } catch (error) {
       console.log(`error`, error);
+      callback(false)
     }
     //Send response to client
     socket.emit("join-tour", `${player_name} connected Server`);
@@ -870,6 +880,17 @@ io.on("connection", async (socket) => {
     console.log(clients);
     socket.emit("get-tour-client", clients);
   });
+
+  socket.on("get-tour-data", (tour_name, callback) => {
+    console.log("GETTING ", tours[tour_name])
+    callback(tours[tour_name])
+  })
+
+  socket.on("update-tour-data", (tour_data, callback)=> {
+    tours[tour_data.tour_name] =  tour_data
+    console.log("UPDAIN", tour_data)
+    callback(true)
+  })
 
   socket.on("send-lobby-chat", (sender, message) => {
     console.log(sender, " :=> send message to lobby >>>", message);
