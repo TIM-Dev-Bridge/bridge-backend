@@ -1139,7 +1139,7 @@ io.on("connection", async (socket) => {
    */
   socket.on(
     "join",
-    ({
+    async ({
       player_id,
       player_name,
       tour_name,
@@ -1467,7 +1467,7 @@ io.on("connection", async (socket) => {
 
         /// playing for 13 turn.
         if (
-          access_playing.turn >= 2
+          access_playing.turn >= 13
           //access_table.board_num >= tours[tour_name].board_per_round
         ) {
           ///Calculate score per tables
@@ -1553,7 +1553,7 @@ io.on("connection", async (socket) => {
 
           io.emit("get-tours", tours[tour_name].rounds);
           //Change board
-          if (access_playing.turn >= 2) {
+          if (access_playing.turn >= 13) {
             // if (++table_data.cur_board > tours[tour_name].board_per_round) {
             /// clear all temp var here ...
             ///reset bidding
