@@ -174,10 +174,11 @@ const ioToRoomOnStartBidding = ({
       cur_board: table_data.cur_board,
       board_per_round: tours[tour_name].board_per_round,
       cur_round: round_num,
-      total_round: tours[tour_name].board_to_play / tours[tour_name].board_per_round,
+      total_round:
+        tours[tour_name].board_to_play / tours[tour_name].board_per_round,
     },
-  })
-}
+  });
+};
 
 const ioToRoomOnBiddingPhase = ({
   room = "",
@@ -373,7 +374,6 @@ const specWhilePlaying = ({ socket_id, tour_name, room = "room_1" }) => {
   });
 };
 
-
 // // Authentication user
 // io.use(function (socket, next) {
 //   if (socket.handshake.query && socket.handshake.query.token) {
@@ -397,7 +397,6 @@ const specWhilePlaying = ({ socket_id, tour_name, room = "room_1" }) => {
 // });
 
 io.on("connection", async (socket) => {
-
   if (users[socket.handshake.query.username] == undefined) {
     // let user_db = await User.findOne({
     //   username: socket.handshake.query.username,
@@ -414,8 +413,8 @@ io.on("connection", async (socket) => {
   } else {
     users[socket.handshake.query.username].socket_id = socket.id;
   }
-
-  // console.log(socket.username);
+  // console.log("username", socket.handshake.query.username);
+  // console.log("socket", socket.id);
 
   // console.log("decode = " + JSON.stringify(socket.decoded));
   // console.log("Data of user is " + socket.handshake.query.userName);
@@ -691,28 +690,6 @@ io.on("connection", async (socket) => {
       // socket.emit("join-tour", joinTour);
       // // Force user to the room when time arrive
       // // Test time out emit
-      // const withTimeout = (onSuccess, onTimeout, timeout) => {
-      //   let called = false;
-
-      //   const timer = setTimeout(() => {
-      //     if (called) return;
-      //     called = true;
-      //     onTimeout();
-      //   }, timeout);
-
-      //   return (...args) => {
-      //     if (called) return;
-      //     called = true;
-      //     clearTimeout(timer);
-      //     onSuccess.apply(this, args);
-      //   };
-      // };
-      // console.log(tours[tour_name].player)
-      console.log(tours[tour_name].players.length);
-      console.log(tours[tour_name].max_player);
-      console.log(users[player_name].tour);
-      console.log(player_name);
-      console.log(tours[tour_name].players);
 
       if (tours[tour_name].players.find((player) => player.id == player_name)) {
         console.log("ALREADY EXIST");
@@ -725,8 +702,8 @@ io.on("connection", async (socket) => {
         var pairPlayers = tours[tour_name].players.filter(
           (player) => player.status == "in-pair"
         );
-        let timeStart = TourR.find({ tour_name: tour_name }).time_start;
-        let timeJoin = new Date().getTime();
+        // let timeStart = TourR.find({ tour_name: tour_name }).time_start;
+        // let timeJoin = new Date().getTime();
         //io.timeout(timeJoin - timeStart).emit("test", "Good luck");
         io.in(tour_name).emit("update-player-pair", pairPlayers);
         io.in(tour_name).emit("");
@@ -858,9 +835,6 @@ io.on("connection", async (socket) => {
         const newList = tours[tour_name].players
           .filter((player) => player.status == "waiting")
           .map((player) => player.name);
-        const waitingPlayers = tours[tour_name].players.filter(
-          (player) => player.status == "waiting"
-        );
         var pairPlayers = tours[tour_name].players.filter(
           (player) => player.status == "in-pair"
         );
@@ -888,69 +862,6 @@ io.on("connection", async (socket) => {
       //   .to(tour_name)
       //   .emit("leave-tour", `User ${user} is exit this tournament`);
     } catch (error) {}
-
-    //     if (users[player_name].tour != undefined) {
-    //       const tour_name = users[player_name].tour;
-    //       console.log("player", player_name, "want to leave");
-    //       if (
-    //         tours[tour_name].players.find((player) => player.name == player_name)
-    //           .status == "in-pair"
-    //       ) {
-    //         const yourPair = tours[tour_name].player_pair.find(
-    //           (pair) => pair.user_a == player_name || pair.user_b == player_name
-    //         );
-    //         //remove your pair from list
-    //         const newPair = tours[tour_name].player_pair.filter(
-    //           (pair) => pair != yourPair
-    //         );
-    //         tours[tour_name].player_pair = newPair;
-    //         console.log("pair after remove : ", newPair);
-    //         const yourPairName =
-    //           player_name == yourPair.user_a ? yourPair.user_b : yourPair.user_a;
-    //         //move your pair back to waiting
-    //         tours[tour_name].players.find(
-    //           (player) => player.name == yourPairName
-    //         ).status = "waiting";
-    //         console.log("players after leave :", tours[tour_name].players);
-    //       }
-    //       //remove tour from your data
-    //       users[player_name].tour = undefined;
-    //       console.log("player :=> ", player_name, "leave!");
-    //       //remove you from tour
-    //
-    //       tours[tour_name].players = tours[tour_name].players.filter(
-    //         (player) => player.name != player_name
-    //       );
-    //       const newList = tours[tour_name].players
-    //         .filter((player) => player.status == "waiting")
-    //         .map((player) => player.name);
-    //       const waitingPlayers = tours[tour_name].players.filter(
-    //         (player) => player.status == "waiting"
-    //       );
-    //       console.log(
-    //         "player after really leave ",
-    //         tours[tour_name].players,
-    //         newList
-    //       );
-    //       console.log(tours[tour_name]);
-    //       io.in(tour_name).emit("update-player-waiting", newList);
-    //       io.in(tour_name).emit("update-player-pair", tours[tour_name].player_pair);
-    //
-    //       const tourList = [];
-    //       for (const tour_name in tours) {
-    //         let tourData = {
-    //           host: "",
-    //           title: tours[tour_name].tour_name,
-    //           type: String(tours[tour_name].type),
-    //           players: String(tours[tour_name].players.length),
-    //         };
-    //         if (tour_name == "tour-f2") {
-    //           tourData.players = 10 + tours[tour_name].players.length;
-    //         }
-    //         tourList.push(tourData);
-    //       }
-    //       io.emit("update-tour-list", tourList);
-    //     }
   });
 
   //Get user tour
@@ -1118,7 +1029,7 @@ io.on("connection", async (socket) => {
    */
   socket.on(
     "join",
-    ({
+    async ({
       player_id,
       player_name,
       tour_name,
@@ -1176,7 +1087,7 @@ io.on("connection", async (socket) => {
       /// if fully player, change to 'bidding phase'.
       if (idInRoom.length === 4 && table_data.status == "waiting") {
         table_data.status = "playing";
-        ioToRoomOnStartBidding({ room, tour_name, round_num, table_id,});
+        ioToRoomOnStartBidding({ room, tour_name, round_num, table_id });
         ioToRoomOnBiddingPhase({ room, tour_name, round_num, table_id });
         ///!send table status
         io.to(tours[tour_name]).emit("update-room-status", table_data.status);
@@ -1278,8 +1189,7 @@ io.on("connection", async (socket) => {
             ioToRoomOnPlaying({
               room,
               status: "ending",
-              payload: {
-              },
+              payload: {},
             });
             return;
           }
@@ -1399,7 +1309,6 @@ io.on("connection", async (socket) => {
           //[`D${direction}`]: card,
         },
       };
-
 
       /// if initSuite is 'undefined', it mean you are leader.
       access_playing.initSuite =
@@ -1554,7 +1463,8 @@ io.on("connection", async (socket) => {
               room,
               status: "ending",
               payload: {
-                tricks: access_playing.tricks,},
+                tricks: access_playing.tricks,
+              },
             });
           }
 
@@ -2146,17 +2056,26 @@ io.on("connection", async (socket) => {
   socket.on("getAllUserOnline", () => {
     socket.emit("test", users);
   });
+
+  socket.on("test-join", (name) => {
+    socket.join(name);
+    console.log("my-room", io.sockets.adapter.sids.get(socket.id));
+    console.log("all-room", io.sockets.adapter.rooms);
+  });
+  socket.on("leave-join", (name) => {
+    socket.leave(name);
+  });
   socket.on("disconnect", async () => {
     console.log("User was disconnect");
-    //socket.leaveAll();
-    //console.log("all room", io.sockets.adapter.sids);
-    // console.log("first", await io.sockets.adapter.sids.get(socket.id));
-    // let [...all_room] = io.sockets.adapter.sids.get(socket.id);
-    // console.log("all_room", all_room);
-    // for (let room in all_room) {
-    //   socket.leave(room);
-    //   console.log("user leave", room);
-    // }
+    // console.log("all room", io.sockets.adapter.sids);
+    let this_user = socket.handshake.query.username;
+    let this_tour = users[this_user].tour;
+    if (users[this_user].tour != undefined) {
+      users[this_user].tour = undefined;
+      tours[this_tour].players = tours[this_tour].players.filter(
+        (player) => player.name != this_user
+      );
+    }
   });
 });
 

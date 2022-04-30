@@ -9,131 +9,22 @@
 </head>
 
 <body>
-    <input type="button" onclick="player1()" value="player1()">
-    <input type="button" onclick="player2()" value="player2()">
-    <input type="button" onclick="createTour()" value="createTour()">
-    <input type="button" onclick="manageRoom()" value="manageRoom()">
-    <input type="button" onclick="joinTeam()" value="joinTeam()">
-    <input type="button" onclick="joinTour()" value="joinTour()">
-    <input type="button" onclick="player1invite2()" value="player1invite2()">
-    <input type="button" onclick="player2recieve1()" value="player2recieve1()">
-    <input type="button" onclick="GetTour()" value="GetTour()">
-    <input type="button" onclick="GetUser()" value="GetUser()">
-    <input type="button" onclick="deleteTour()" value="deleteTour()">
-    <input type="button" onclick="updateTour()" value="updateTour()">
-    <input type="button" onclick="join('id_1','mark1')" value="join1()">
-    <input type="button" onclick="join('id_2','mark2')" value="join2()">
-    <input type="button" onclick="join('id_3','mark3')" value="join3()">
-    <input type="button" onclick="join('id_4','mark4')" value="join4()">
+    <input type="button" onclick="join('id_1','mark1','tour1')" value="join1()">
+    <input type="button" onclick="join('id_2','mark2','tour1')" value="join2()">
+    <input type="button" onclick="join('id_3','mark3','tour1')" value="join3()">
+    <input type="button" onclick="join('id_4','mark4','tour1')" value="join4()">
+    <input type="button" onclick="join('id_4','mark4','tour2')" value="join5()">
+    <input type="button" onclick="join('id_4','mark4','tour2')" value="join6()">
+    <input type="button" onclick="join('id_4','mark4','tour3')" value="join7()">
 
 </body>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.1/socket.io.js"></script>
 <script>
-    function player1() {
-        //var socket = io.connect({ query: { token, userName } })
-        const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjE5YTk1ODQyY2M3ZjM3ZmZhMmU4MjJmIiwiZW1haWwiOiJ0ZXN0MUBlbWFpbC5jb20iLCJ1c2VybmFtZSI6InBsYW50QSIsImFjY2VzcyI6InVzZXIiLCJpYXQiOjE2Mzc2MTAwNTgsImV4cCI6MTYzNzYxNzI1OH0.SyvMsRDB1dTRXFFAP6FREhRsM4z-8WomApwK-naiJ8E"
-        const username = "plantA"
-        var socket = io.connect({ query: { token, username } })
-        socket.emit('join-tour', 'Mark', 'tour-f1')
-    }
-    function player2() {
-        const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjE5YTk1OTUyY2M3ZjM3ZmZhMmU4MjMzIiwiZW1haWwiOiJ0ZXN0MkBlbWFpbC5jb20iLCJ1c2VybmFtZSI6InBsYW50QiIsImFjY2VzcyI6InVzZXIiLCJpYXQiOjE2Mzc2MTAwODQsImV4cCI6MTYzNzYxNzI4NH0._qhVVOGF7tkVm591WhJ17cYOEdc813xNDZoVu5pHwQY"
-        const username = "plantB"
-        var socket = io.connect({ query: { token, username } })
-        socket.emit('join-tour', 'Tae', 'tour-f1')
-    }
-    function player1invite2() {
-        socket.emit('invite-team', "tour-f1", 'Mark', 'Tae')
-    }
-    function player2recieve1() {
-        socket.emit('recieve-team', "tour-f1", 'Tae', 'Mark')
-    }
-    function createTour() {
-        var username = "td1"
-        var tourdata = {
-            tour_name: "tour-f2",
-            max_player: 20,
-            type: "Pairs",
-            password: "123",
-            player_name: [],
-            player_team: [],
-            time_start: "11/21/2021, 9:30:00 PM",
-            status: "Pending",
-            board_to_play: 2,
-            minute_board: 2,
-            board_round: 1,
-            movement: "Clocked",
-            scoring: "MP",
-            barometer: true,
-            createBy: username,
-        }
-        let token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjFhOGFiNTU0ZjFiZmVmMmVjOTc3OWZhIiwiZW1haWwiOiJ0ZDFAZW1haWwuY29tIiwidXNlcm5hbWUiOiJ0ZDEiLCJhY2Nlc3MiOiJVc2VyIiwiaWF0IjoxNjM4NDQzODYxLCJleHAiOjE2Mzg0NTEwNjF9.uvXJL5EAy6PEW2RSObJs_THjQeb4P4jYS-OcWlBsMU8"
-        //const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjE4YzA3OWIwM2JlYzIzODNkNjY0OTNhIiwiZW1haWwiOiJ0ZXN0MUBlbWFpbC5jb20iLCJpYXQiOjE2MzY3MjgzMDIsImV4cCI6MTYzNjczNTUwMn0.uQ4t9PbcyTm8bA6Q40Ye7XT1VrK8vlnQ-gCON39wqjg"
-        var socket = io.connect({ query: { token, username } })
-        console.log('Tour 2 working');
-        socket.emit("create-tour", tourdata)
-    }
-    function updateTour() {
-        let username = 'td1'
-        var tourdata = {
-            tour_name: "tour-f2",
-            max_player: 15,
-            type: "Pairs",
-            password: "123",
-            player_name: [],
-            player_team: [],
-            time_start: "11/21/2021, 9:30:00 PM",
-            status: "Pending",
-            board_to_play: 2,
-            minute_board: 2,
-            board_round: 1,
-            movement: "Clocked",
-            scoring: "MP",
-            barometer: true,
-            createBy: username,
-        }
-        let token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjFhOGFiNTU0ZjFiZmVmMmVjOTc3OWZhIiwiZW1haWwiOiJ0ZDFAZW1haWwuY29tIiwidXNlcm5hbWUiOiJ0ZDEiLCJhY2Nlc3MiOiJVc2VyIiwiaWF0IjoxNjM4NDQzODYxLCJleHAiOjE2Mzg0NTEwNjF9.uvXJL5EAy6PEW2RSObJs_THjQeb4P4jYS-OcWlBsMU8"
-        var socket = io.connect({ query: { token, username } })
-        socket.emit("update-tour", tourdata)
-    }
-    function deleteTour() {
-        let username = 'td1'
-        let token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjFhOGFiNTU0ZjFiZmVmMmVjOTc3OWZhIiwiZW1haWwiOiJ0ZDFAZW1haWwuY29tIiwidXNlcm5hbWUiOiJ0ZDEiLCJhY2Nlc3MiOiJVc2VyIiwiaWF0IjoxNjM4NDQzODYxLCJleHAiOjE2Mzg0NTEwNjF9.uvXJL5EAy6PEW2RSObJs_THjQeb4P4jYS-OcWlBsMU8"
-        var socket = io.connect({ query: { token, username } })
-        socket.emit("delete-tour", 'tour-f1', username)
-    }
-    function manageRoom() {
-        var socket = io()
-        socket.emit('manage-room', 'room1')
-    }
-    function joinTeam() {
-        var socket = io()
-        socket.emit('join-team', 'Mark', 'team1')
-    }
-    function joinTour() {
-        const userName = "Mark"
-        var socket = io.connect({ query: { token, userName } })
-        socket.emit('join-tour', userName, 'tour-f1')
-        socket.on('force-user', msg => {
-            console.log('ll', msg);
-        })
-    }
-    function GetTour() {
-        username = 'Ice'
-        var socket = io.connect({ query: { username } })
-        socket.emit("get-tour-client", 'tour-f1')
-        socket.on("get-tour-client", (tour_name) => {
-            console.log(tour_name);
-        });
-    }
-    function GetUser() {
-        var socket = io()
-        socket.emit("get-user-data")
-        console.log('test');
-    }
-    function join(player_id, username) {
-        var socket = io.connect({ query: { username } })
-        socket.on("join", player_id, username)
+
+    function join(player_id, username, name) {
+        var socket = io.connect({ query: {  username } })
+        socket.emit("test-join", name)
+        console.log("test");
     }
 </script>
 
