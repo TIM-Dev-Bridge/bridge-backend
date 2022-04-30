@@ -8,7 +8,7 @@ const userSchema = new mongoose.Schema({
   max_player: { type: Number, default: 20 },
   type: { type: String, default: "Pairs" },
   password: { type: String },
-  player_team: { type: Array, default: [] },
+  players: { type: Array, default: [] },
   rounds: { type: Array, default: [] },
   time_start: { type: String, default: null },
   status: { type: String, default: "Pending" },
@@ -18,8 +18,9 @@ const userSchema = new mongoose.Schema({
   movement: { type: String, default: "Clocked" },
   score_type: { type: String, default: "MP" },
   barometer: { type: Boolean, default: true },
+  mode: { type: String },
   boardScores: { type: Array },
-  count_update: { type: Number, default: 0 },
+  rankPairs: { type: Array },
   createBy: { type: String },
 });
 

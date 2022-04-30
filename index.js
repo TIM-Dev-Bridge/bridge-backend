@@ -540,7 +540,7 @@ io.on("connection", async (socket) => {
           players: String(tours[tour_name].players.length),
           team_runnum: 1,
           mode: tours[tour_name].mode,
-          status: tours[tour_name].status
+          status: tours[tour_name].status,
         };
         tourList.push(tourData);
       }
@@ -575,7 +575,7 @@ io.on("connection", async (socket) => {
         type: String(tours[tour_name].type),
         players: String(tours[tour_name].players.length),
         mode: tours[tour_name].mode,
-        status: tours[tour_name].status
+        status: tours[tour_name].status,
       };
       tourList.push(tourData);
     }
@@ -655,9 +655,9 @@ io.on("connection", async (socket) => {
       //   createBy: current_TD,
       // });
       console.log("delete successful");
-      updateTourList()
+      updateTourList();
 
-      io.to(tour_name).emit('please-leave-tour')
+      io.to(tour_name).emit("please-leave-tour");
       // io.emit("delete-tour");
     } catch (error) {
       console.log("error is", error);
@@ -716,7 +716,7 @@ io.on("connection", async (socket) => {
         io.in(tour_name).emit("");
         io.in(tour_name).emit("update-player-waiting", waitingPlayer);
         updateTourList();
-        callback(true)
+        callback(true);
         return;
       }
 
@@ -753,13 +753,13 @@ io.on("connection", async (socket) => {
         io.in(tour_name).emit("");
         io.in(tour_name).emit("update-player-waiting", waitingPlayer);
         updateTourList();
-        callback(true)
+        callback(true);
         ///Comment for test backend : Mark
         // callback(true);
       }
     } catch (error) {
       console.log(`error`, error);
-      callback(false)
+      callback(false);
     }
     //Send response to client
     socket.emit("join-tour", `${player_name} connected Server`);
@@ -882,15 +882,15 @@ io.on("connection", async (socket) => {
   });
 
   socket.on("get-tour-data", (tour_name, callback) => {
-    console.log("GETTING ", tours[tour_name])
-    callback(tours[tour_name])
-  })
+    console.log("GETTING ", tours[tour_name]);
+    callback(tours[tour_name]);
+  });
 
-  socket.on("update-tour-data", (tour_data, callback)=> {
-    tours[tour_data.tour_name] =  tour_data
-    console.log("UPDAIN", tour_data)
-    callback(true)
-  })
+  socket.on("update-tour-data", (tour_data, callback) => {
+    tours[tour_data.tour_name] = tour_data;
+    console.log("UPDAIN", tour_data);
+    callback(true);
+  });
 
   socket.on("send-lobby-chat", (sender, message) => {
     console.log(sender, " :=> send message to lobby >>>", message);
@@ -1025,6 +1025,8 @@ io.on("connection", async (socket) => {
       //   return { round: _.omit(round, ["card","tables"]), tables: newTable };
       // }),
     );
+    ///Update tour status to running
+    tours[tour_name].status = "running";
 
     ///Send tourdata without round
     let select_data = (({ rounds, ...data }) => ({ ...data }))(
@@ -2077,6 +2079,38 @@ io.on("connection", async (socket) => {
   socket.on("getAllUserOnline", () => {
     socket.emit("test", users);
   });
+  socket.on("getAllFinishedTour", async (/*callback*/) => {
+    try {
+      let endTour = await TourR.find({ status: "finished" });
+      console.log("endTour", endTour);
+      let tourList = [];
+      endTour.map((tour) => {
+        let tourData = {
+          host: tour.createBy,
+          title: tour.tour_name,
+          type: String(tour.type),
+          players: String(tour.players.length),
+          mode: tour.mode,
+          status: tour.status,
+        };
+        tourList.push(tourData);
+      });
+      console.log(`tourList`, tourList);
+      socket.emit("getAllFinishedTour", tourList);
+      // callback(tourList);
+    } catch (error) {
+      console.log("error", error);
+    }
+  });
+  socket.on("getScoreFinishedTour", async (tour_name) => {
+    try {
+      let getFinTour = await TourR.find({ tour_name });
+      console.log("getFinTour", getFinTour);
+      socket.emit("getScoreFinishedTour", getFinTour);
+    } catch (error) {
+      console.log("error", error);
+    }
+  });
 
   socket.on("test-join", (name) => {
     socket.join(name);
@@ -2085,6 +2119,10 @@ io.on("connection", async (socket) => {
   });
   socket.on("leave-join", (name) => {
     socket.leave(name);
+  });
+  socket.on("create-finish-tour", async () => {
+    await TourR.create(bypass.generateFullGameData());
+    console.log("create finish tour successful");
   });
   socket.on("disconnect", async () => {
     console.log("User was disconnect");
