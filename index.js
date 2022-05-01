@@ -545,9 +545,10 @@ io.on("connection", async (socket) => {
         tourList.push(tourData);
       }
       io.emit("update-tour-list", tourList);
-
+      callback(true)
       //callback(true, "Room created");
     } catch (error) {
+      callback(false)
       console.log("error is", error);
       //callback(false, "Failed to create room");
     }
