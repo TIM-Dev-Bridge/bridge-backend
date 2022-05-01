@@ -698,7 +698,7 @@ io.on("connection", async (socket) => {
       // socket.emit("join-tour", joinTour);
       // // Force user to the room when time arrive
       // // Test time out emit
-
+      console.log('players', tours[tour_name].players)
       if (tours[tour_name].players.find((player) => player.id == player_name)) {
         console.log("ALREADY EXIST");
         users[player_name].tour = tour_name;
