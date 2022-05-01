@@ -285,7 +285,7 @@ const matchmaking = async (tour_name) => {
       round_num: round + 1,
       cards: card_handle.random_card(tours[tour_name].board_per_round),
       tables: tables,
-      mp_round: [],
+      status: "playing",
     });
     tables = [];
     let temp_second = second_pair.shift();
@@ -980,11 +980,16 @@ io.on("connection", async (socket) => {
   );
   //#start
   socket.on("start", async (tour_name) => {
+    ///Remove player has not pair_id
+    tours[tour_name].players = tours[tour_name].players.filter(
+      (player) => player.pair_id != undefined
+    );
+
     ///Sort player when player left the room
     tours[tour_name].players.sort((a, b) => {
       return a.pair_id - b.pair_id;
     });
-    let pairIdArray = tours[tour_name].players.map((pair) => pair.pair_id);
+    // let pairIdArray = tours[tour_name].players.map((pair) => pair.pair_id);
     let defaultPairId = [
       ..._.range(1, tours[tour_name].players.length / 2 + 1),
       ..._.range(1, tours[tour_name].players.length / 2 + 1),
@@ -1587,17 +1592,35 @@ io.on("connection", async (socket) => {
 
             io.to(room).emit("rank-with-name", rankConvert);
 
-            // ///Send finsh all table
-            // console.log(
-            //   "FINISH ALL",
-            //   count_finish_table,
-            //   round_data.tables.length
-            // );
             io.to(tour_name).emit(
               "finish-all-table",
               finish_table,
               count_finish_table
             );
+            round_data.status = "Finish";
+            ///Endgame
+            let finish_round = tours[tour_name].rounds.filter(
+              ({ status }) => status == "Finish"
+            );
+            let count_finish_round = finish_round.length;
+            if (
+              count_finish_round >=
+              tours[tour_name].board_to_play / tours[tour_name].board_per_round
+            ) {
+              tours[tour_name].status = "finished";
+              await TourR.updateOne(
+                { tour_name },
+                {
+                  $set: {
+                    boardScores: tours[tour_name].boardScores,
+                    rankPairs: tours[tour_name].rankPairs,
+                    status: tours[tour_name].status,
+                  },
+                }
+              );
+              console.log("finish game");
+              io.to(tour_name).emit("finish-game", "done tour");
+            }
             return;
           }
 
@@ -2111,6 +2134,37 @@ io.on("connection", async (socket) => {
       console.log("error", error);
     }
   });
+  socket.on(
+    "TdEditScore",
+    async (tour_name, board_num, pair_id, typeScore, key, value) => {
+      board_num = parseInt(board_num);
+      pair_id = parseInt(pair_id);
+      value = parseInt(value);
+      let this_tour = await TourR.find({ tour_name });
+      this_tour = this_tour[0];
+      if (typeScore == "boardScores") {
+        let newPairsScore = this_tour.boardScores[
+          board_num - 1
+        ].pairs_score.map((pair) => {
+          if (pair.pair_id == pair_id) {
+            pair[key] = value;
+          }
+          return pair;
+        });
+        this_tour.boardScores[board_num - 1].pairs_score = newPairsScore;
+      } else if (typeScore == "rankPairs") {
+        let newRankPair = this_tour.rankPairs.map((pair) => {
+          if (pair.pair_id == pair_id) {
+            pair[key] = value;
+          }
+          return pair;
+        });
+        this_tour.rankPairs = newRankPair;
+      }
+      await TourR.updateOne({ tour_name }, { $set: { ...this_tour } });
+      io.emit("TdEditScore", this_tour);
+    }
+  );
 
   socket.on("test-join", (name) => {
     socket.join(name);
