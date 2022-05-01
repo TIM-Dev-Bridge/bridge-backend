@@ -2165,7 +2165,9 @@ io.on("connection", async (socket) => {
       io.emit("TdEditScore", this_tour);
     }
   );
-
+  socket.on("getPastScore", (tour_name)=> {
+    
+  })
   socket.on("test-join", (name) => {
     socket.join(name);
     console.log("my-room", io.sockets.adapter.sids.get(socket.id));
