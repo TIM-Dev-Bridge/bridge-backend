@@ -506,9 +506,9 @@ io.on("connection", async (socket) => {
       // }
 
       // Create tournament on database
-      // let tournament = await TourR.create({
-      //   ...tour_data,
-      // });
+      let tournament = await TourR.create({
+        ...tour_data,
+      });
       console.log("created tournament successful");
 
       tours[tour_data.tour_name] = tour_data;
@@ -545,10 +545,10 @@ io.on("connection", async (socket) => {
         tourList.push(tourData);
       }
       io.emit("update-tour-list", tourList);
-      callback(true)
+      callback(true);
       //callback(true, "Room created");
     } catch (error) {
-      callback(false)
+      callback(false);
       console.log("error is", error);
       //callback(false, "Failed to create room");
     }
@@ -1043,6 +1043,12 @@ io.on("connection", async (socket) => {
       tours[tour_name]
     );
     io.to(tour_name).emit("tour-no-round", select_data);
+
+    ///Update players
+    await TourR.updateOne(
+      { tour_name },
+      { $set: { players: tours[tour_name].players } }
+    );
 
     ///Save in database history
     let round_num = _.range(
