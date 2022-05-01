@@ -63,7 +63,7 @@ exports.random_card = (board_per_round) => {
       )
     )
   );
-  console.log('boards', boards)
+  // console.log('boards', boards)
   return boards;
 };
 

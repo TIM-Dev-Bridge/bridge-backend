@@ -774,7 +774,7 @@ io.on("connection", async (socket) => {
         type: String(tours[tour_name].type),
         players: String(tours[tour_name].players.length),
         mode: tours[tour_name].mode,
-        status: tours[tour_name].status
+        status: tours[tour_name].status,
       };
       tourList.push(tourData);
     }
@@ -870,7 +870,7 @@ io.on("connection", async (socket) => {
         //   tourList.push(tourData);
         // }
         // io.emit("update-tour-list", tourList);
-        updateTourList()
+        updateTourList();
       }
       // socket
       //   .to(tour_name)
@@ -2169,9 +2169,26 @@ io.on("connection", async (socket) => {
       io.emit("TdEditScore", this_tour);
     }
   );
-  socket.on("getPastScore", (tour_name)=> {
-    
-  })
+  socket.on("getPastScore", async (tour_name) => {
+    let this_tour = await TourR.find({ tour_name });
+    this_tour = this_tour[0];
+    let getPastScore = this_tour.boardScores.map((board) => {
+      let newScore = board.pairs_score.map((pair) => {
+        let player = this_tour.players.filter(
+          (player) => player.pair_id == pair.pair_id
+        );
+        return {
+          pair_id: pair.pair_id,
+          name1: player[0].name,
+          name2: player[1].name,
+          direction: pair.direction,
+          score: pair.score,
+        };
+      });
+      return { board_num: board.board_num, newScore };
+    });
+    io.emit("getPastScore", getPastScore);
+  });
   socket.on("test-join", (name) => {
     socket.join(name);
     console.log("my-room", io.sockets.adapter.sids.get(socket.id));

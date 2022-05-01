@@ -16,7 +16,6 @@ exports.createSettingBoard = () => {
       vulnerable: vul[i % 4],
     });
   }
-  console.log(`board`, board);
   return board;
 };
 
