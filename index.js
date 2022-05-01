@@ -2113,7 +2113,7 @@ io.on("connection", async (socket) => {
           title: tour.tour_name,
           type: String(tour.type),
           players: String(tour.players.length),
-          mode: tour.mode,
+          mode: tour.score_type,
           status: tour.status,
         };
         tourList.push(tourData);
