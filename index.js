@@ -773,6 +773,8 @@ io.on("connection", async (socket) => {
         title: tours[tour_name].tour_name,
         type: String(tours[tour_name].type),
         players: String(tours[tour_name].players.length),
+        mode: tours[tour_name].mode,
+        status: tours[tour_name].status
       };
       tourList.push(tourData);
     }
@@ -856,17 +858,19 @@ io.on("connection", async (socket) => {
         io.in(tour_name).emit("update-player-waiting", newList);
         io.in(tour_name).emit("update-player-pair", pairPlayers);
 
-        const tourList = [];
-        for (const tour_name in tours) {
-          let tourData = {
-            host: "",
-            title: tours[tour_name].tour_name,
-            type: String(tours[tour_name].type),
-            players: String(tours[tour_name].players.length),
-          };
-          tourList.push(tourData);
-        }
-        io.emit("update-tour-list", tourList);
+        // const tourList = [];
+        // for (const tour_name in tours) {
+        //   let tourData = {
+        //     host: "",
+        //     title: tours[tour_name].tour_name,
+        //     type: String(tours[tour_name].type),
+        //     players: String(tours[tour_name].players.length),
+
+        //   };
+        //   tourList.push(tourData);
+        // }
+        // io.emit("update-tour-list", tourList);
+        updateTourList()
       }
       // socket
       //   .to(tour_name)
@@ -902,7 +906,7 @@ io.on("connection", async (socket) => {
   });
 
   socket.on("send-tour-chat", (sender, tour_name, message) => {
-    console.log(sender, " :=> send message to lobby >>>", message);
+    console.log(sender, " :=> send message to tour >>>", message);
     const newMessage = {
       sender: sender,
       message: message,
@@ -1081,7 +1085,7 @@ io.on("connection", async (socket) => {
       let socket_id = users[player_id].socket_id;
       ///fake id
       // let socket_id = "123";
-      await sendCardOneHand({
+      sendCardOneHand({
         room,
         socket_id,
         direction,
@@ -1212,7 +1216,7 @@ io.on("connection", async (socket) => {
         if (access_bidding.passCount === 4) {
           access_bidding.passCount = 0;
 
-          if (++table_data.cur_board >= tour.maxRound) {
+          if (++table_data.cur_board >= tours.maxRound) {
             /// clear all temp var here ...
             ioToRoomOnPlaying({
               room,
