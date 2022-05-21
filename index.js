@@ -698,7 +698,7 @@ io.on("connection", async (socket) => {
       // socket.emit("join-tour", joinTour);
       // // Force user to the room when time arrive
       // // Test time out emit
-      console.log('players', tours[tour_name].players)
+      console.log("players", tours[tour_name].players);
       if (tours[tour_name].players.find((player) => player.id == player_name)) {
         console.log("ALREADY EXIST");
         users[player_name].tour = tour_name;
@@ -1895,6 +1895,7 @@ io.on("connection", async (socket) => {
     try {
       let SelectNSPair = [];
       let boardIndex = 0;
+      console.log('tours', tours)
       tours[tour_id].boardScores[boardIndex].pairs_score.map((pair) => {
         if (pair.direction == 0) {
           SelectNSPair.push(parseInt(pair.pair_id));
@@ -1922,6 +1923,62 @@ io.on("connection", async (socket) => {
         SelectEWPair.includes(pair.pair_id)
       );
       socket.emit("getEwRankings", getEWRank);
+    } catch (error) {
+      console.log("error", error);
+    }
+  });
+
+  socket.on("getEndedNsRankings", async (tour_name) => {
+    try {
+      let this_tour = await TourR.find({ tour_name });
+      this_tour = this_tour[0];
+      let SelectNSPair = [];
+      let boardIndex = 0;
+      this_tour.boardScores[boardIndex].pairs_score.map((pair) => {
+        if (pair.direction == 0) {
+          SelectNSPair.push(parseInt(pair.pair_id));
+        }
+      });
+      let getNSRank = this_tour.rankPairs.filter((pair) =>
+        SelectNSPair.includes(pair.pair_id)
+      );
+      getNSRank = getNSRank.map((NSRank)=>{
+        return {
+          ...NSRank,
+          players: this_tour.players.filter((pair)=>
+            pair.pair_id == NSRank.pair_id
+          ).map((e)=>e.name)
+        }
+      })
+      socket.emit("getEndedNsRankings", getNSRank);
+    } catch (error) {
+      console.log("error", error);
+    }
+  });
+
+  socket.on("getEndedEwRankings", async (tour_name) => {
+    try {
+      let this_tour = await TourR.find({ tour_name });
+      this_tour = this_tour[0];
+      let SelectEWPair = [];
+      let boardIndex = 0;
+      this_tour.boardScores[boardIndex].pairs_score.map((pair) => {
+        if (pair.direction == 1) {
+          SelectEWPair.push(parseInt(pair.pair_id));
+        }
+      });
+      let getEWRank = this_tour.rankPairs.filter((pair) =>
+        SelectEWPair.includes(pair.pair_id)
+      );
+      getEWRank = getEWRank.map((EWRank)=>{
+        return {
+          ...EWRank,
+          players: this_tour.players.filter((pair)=>
+            pair.pair_id == EWRank.pair_id
+          ).map((e)=>e.name)
+        }
+      })
+      socket.emit("getEndedEwRankings", getEWRank);
     } catch (error) {
       console.log("error", error);
     }
@@ -2177,24 +2234,28 @@ io.on("connection", async (socket) => {
     }
   );
   socket.on("getPastScore", async (tour_name) => {
-    let this_tour = await TourR.find({ tour_name });
-    this_tour = this_tour[0];
-    let getPastScore = this_tour.boardScores.map((board) => {
-      let newScore = board.pairs_score.map((pair) => {
-        let player = this_tour.players.filter(
-          (player) => player.pair_id == pair.pair_id
-        );
-        return {
-          pair_id: pair.pair_id,
-          name1: player[0].name,
-          name2: player[1].name,
-          direction: pair.direction,
-          score: pair.score,
-        };
+    try {
+      let this_tour = await TourR.find({ tour_name });
+      this_tour = this_tour[0];
+      let getPastScore = this_tour.boardScores.map((board) => {
+        let newScore = board.pairs_score.map((pair) => {
+          let player = this_tour.players.filter(
+            (player) => player.pair_id == pair.pair_id
+          );
+          return {
+            pair_id: pair.pair_id,
+            name1: player[0].name,
+            name2: player[1].name,
+            direction: pair.direction,
+            score: pair.score,
+          };
+        });
+        return { board_num: board.board_num, newScore };
       });
-      return { board_num: board.board_num, newScore };
-    });
-    io.emit("getPastScore", getPastScore);
+      io.emit("getPastScore", getPastScore);
+    } catch (error) {
+      console.log("error", error);
+    }
   });
   socket.on("test-join", (name) => {
     socket.join(name);
